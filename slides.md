@@ -73,3 +73,117 @@ mdc: true
 | **MoE × Long Context** | 两者如何结合、前沿工作 |
 | **Demo** | 动手体验环节 |
 | **总结与展望** | 关键 takeaways、开放问题 |
+
+---
+
+# MoE 基础
+
+## 什么是 Mixture of Experts？
+
+<v-clicks>
+
+- 传统 Dense Model：每个 token 经过**所有**参数 → 计算量 ∝ 参数量
+- MoE 的核心思想：将 FFN 层替换为 **N 个并行的 Expert**，每个 token 只激活其中 **Top-k 个**
+- 结果：**总参数量很大，但每次推理的激活参数量很小**
+
+</v-clicks>
+
+<br>
+
+<div v-click class="text-center text-sm opacity-70">
+
+例：Mixtral 8×7B 总参数 ~47B，但每个 token 仅激活 ~13B 参数
+
+</div>
+
+---
+
+# MoE 基础
+
+## MoE Layer 结构
+
+<br>
+
+```
+Input Token x
+      │
+      ▼
+┌─────────────┐
+│   Router    │  ← Gating Network: G(x) = Softmax(W_g · x)
+│  (门控网络)  │
+└─────┬───────┘
+      │ Top-k 选择
+      ▼
+┌─────┬─────┬─────┬─────┐
+│ E_1 │ E_2 │ ... │ E_N │  ← N 个 Expert (各自是一个 FFN)
+└──┬──┴──┬──┴─────┴──┬──┘
+   │     │           │
+   └─────┴─────┬─────┘
+         加权求和 Σ g_i · E_i(x)
+               │
+               ▼
+         Output y
+```
+
+<v-clicks>
+
+- **Router** 为每个 token 计算各 Expert 的权重
+- 只有 **Top-k** 权重最大的 Expert 被激活并计算
+- 输出是被选中 Expert 输出的**加权和**
+
+</v-clicks>
+
+---
+
+# MoE 基础
+
+## 训练挑战与负载均衡
+
+<v-clicks>
+
+- **Expert Collapse（专家坍塌）**：Router 倾向于总是选择少数几个 Expert → 其余 Expert 得不到训练
+- **Auxiliary Loss（辅助损失）**：在训练 loss 中加入负载均衡项，鼓励 token 均匀分配
+
+</v-clicks>
+
+<div v-click>
+
+$\mathcal{L}_{\text{aux}} = \alpha \cdot N \cdot \sum_{i=1}^{N} f_i \cdot P_i$
+
+<div class="text-sm opacity-70 mt-2">
+
+其中 $f_i$ = Expert $i$ 实际接收的 token 比例，$P_i$ = Router 分配给 Expert $i$ 的平均概率
+
+</div>
+
+</div>
+
+<v-clicks>
+
+- **Capacity Factor**：限制每个 Expert 最多处理的 token 数，防止过载
+- **Expert Parallelism**：不同 Expert 可分布在不同 GPU 上，天然适合并行
+
+</v-clicks>
+
+---
+
+# MoE 基础
+
+## 代表性工作一览
+
+<br>
+
+| 模型 | 年份 | Expert 数 | 激活参数 | 总参数 | 上下文长度 |
+|------|------|-----------|----------|--------|-----------|
+| **Switch Transformer** | 2021 | 128 | ~同 T5-Base | 1.6T | 512 |
+| **GShard** | 2021 | 2048 | — | 600B | — |
+| **Mixtral 8×7B** | 2023 | 8 | 13B | 47B | 32K |
+| **DBRX** | 2024 | 16 (4 active) | 36B | 132B | 32K |
+| **DeepSeek-V3** | 2024 | 256 (8 active) | 37B | 671B | 128K |
+
+<v-clicks>
+
+- 趋势：Expert 数量增多、激活比例降低、上下文窗口持续扩大
+- MoE 已从研究走向**生产级部署**（Mixtral、DBRX、DeepSeek 均已开源）
+
+</v-clicks>
