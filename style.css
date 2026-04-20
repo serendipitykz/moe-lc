@@ -1,143 +1,178 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
 
 /* ── Design Tokens ──────────────────────────────────── */
 :root {
-  --bg:        #0f172a;
-  --surface:   #1e293b;
-  --surface2:  #263249;
-  --border:    #334155;
-  --text:      #f1f5f9;
-  --subtext:   #94a3b8;
-  --muted:     #64748b;
-  --primary:   #38bdf8;
-  --accent:    #818cf8;
-  --yellow:    #fbbf24;
-  --highlight: rgba(56, 189, 248, 0.10);
+  --bg:     #f0f2f6;
+  --card:   #ffffff;
+  --border: #d1d5db;
+  --text:   #111827;
+  --sub:    #6b7280;
+  --muted:  #9ca3af;
+  --rail:   #4f46e5;
+  --acc:    #4f46e5;
+  --acc2:   #7c3aed;
+  --yellow: #f59e0b;
+  --hi:     #eef2ff;
+  --rail-w: 68px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background: #000; overflow: hidden; }
 
-body {
-  font-family: 'Inter', 'Noto Sans SC', sans-serif;
-  background: #000;
-  overflow: hidden;
+/* ── Deck ───────────────────────────────────────────── */
+.deck  { width: 100vw; height: 100vh; position: relative; }
+.slide { position: absolute; inset: 0; display: none; background: var(--bg); }
+.slide.on { display: flex; }
+
+/* ── Rail ───────────────────────────────────────────── */
+.rail {
+  width: var(--rail-w);
+  background: var(--rail);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0 1.5rem;
 }
-
-/* ── Slideshow Container ────────────────────────────── */
-.slideshow {
-  width: 100vw;
-  height: 100vh;
+.rail .num {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+.rail .vbar {
+  flex: 1;
+  width: 2px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 2px;
+  margin: 1.2rem 0;
   position: relative;
 }
-
-.slide {
+.rail .vfill {
   position: absolute;
-  inset: 0;
-  display: none;
-  flex-direction: column;
-  background: var(--bg);
-  color: var(--text);
-  padding: 3.5rem 5rem;
+  top: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.75);
+  border-radius: 2px;
 }
-.slide.active { display: flex; }
+.rail .of {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.35);
+}
 
-/* ── Title Slide ────────────────────────────────────── */
-.slide.title-slide {
-  background: linear-gradient(135deg, #0f2354 0%, #1a0a3d 60%, #0f172a 100%);
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 0.6rem;
-}
-.title-slide h1 {
-  font-size: 3.4rem;
-  font-weight: 700;
-  line-height: 1.25;
-  background: linear-gradient(100deg, #38bdf8 30%, #a78bfa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.title-slide .en-title {
-  font-size: 1.2rem;
-  font-weight: 300;
-  color: var(--subtext);
-  font-style: italic;
-}
-.title-slide .course {
-  font-size: 0.9rem;
-  color: var(--muted);
-  margin-top: 2rem;
-  letter-spacing: 0.04em;
+/* ── Body ───────────────────────────────────────────── */
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 3rem 4.5rem;
 }
 
 /* ── Slide Header ───────────────────────────────────── */
-.slide-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-.slide-header h2 {
-  font-size: 1.8rem;
-  font-weight: 600;
-}
-.slide-header .en {
-  font-size: 0.9rem;
-  color: var(--muted);
-  font-style: italic;
-  margin-top: 0.2rem;
-}
+.hd { margin-bottom: 1.6rem; }
+.hd h2 { font-size: 2.4rem; font-weight: 700; color: var(--text); }
+.hd .en { font-size: 0.95rem; color: var(--sub); font-style: italic; margin-top: 0.25rem; }
+.rule { height: 2px; background: linear-gradient(90deg, var(--acc), transparent); margin-bottom: 1.8rem; }
 
 /* ── Bullet List ────────────────────────────────────── */
-ul.bullets {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  flex: 1;
-}
-ul.bullets li {
+ul.bl { list-style: none; display: flex; flex-direction: column; gap: 1.1rem; flex: 1; }
+ul.bl li {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  font-size: 1.1rem;
+  gap: 0.8rem;
+  font-size: 1.45rem;
   line-height: 1.65;
+  color: var(--text);
 }
-ul.bullets li::before {
+ul.bl li::before {
   content: '▸';
-  color: var(--primary);
-  font-size: 0.85rem;
-  margin-top: 0.35rem;
+  color: var(--acc);
+  font-size: 1rem;
+  margin-top: 0.4rem;
   flex-shrink: 0;
 }
-ul.bullets em     { color: var(--primary); font-style: normal; font-weight: 500; }
-ul.bullets strong { color: var(--text); font-weight: 600; }
+ul.bl em     { color: var(--acc); font-style: normal; font-weight: 600; }
+ul.bl strong { font-weight: 700; }
 
-/* ── Agenda List ────────────────────────────────────── */
-.agenda {
-  list-style: none;
+/* ── Callout ────────────────────────────────────────── */
+.box {
+  background: var(--hi);
+  border-left: 4px solid var(--acc);
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.5rem;
+  font-size: 1.3rem;
+  line-height: 1.6;
+  color: var(--text);
+  margin-top: 0.9rem;
+}
+.box.warn { background: #fffbeb; border-color: var(--yellow); }
+.box strong { color: var(--acc); }
+
+/* ── Two Column ─────────────────────────────────────── */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; flex: 1; }
+
+/* ── Card ───────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  flex: 1;
-  justify-content: center;
+  gap: 0.8rem;
 }
+.card.hi { border-color: rgba(79,70,229,0.5); background: var(--hi); }
+.card h3 { font-size: 1.3rem; font-weight: 600; color: var(--text); }
+.card ul.bl { gap: 0.7rem; }
+.card ul.bl li { font-size: 1.2rem; }
+
+/* ── Formula Block ──────────────────────────────────── */
+.formula {
+  background: #e0e7ff;
+  border-radius: 8px;
+  padding: 0.8rem 1.4rem;
+  margin-top: auto;
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--acc);
+}
+
+/* ── KaTeX overrides ────────────────────────────────── */
+.katex { font-size: 1.1em; }
+.formula .katex-display { margin: 0; }
+.formula .katex-display .katex { font-size: 1.3rem; }
+
+/* ── Tag ────────────────────────────────────────────── */
+.tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-left: 0.4rem;
+  background: var(--acc);
+  color: #fff;
+}
+
+/* ── Agenda ─────────────────────────────────────────── */
+.agenda { list-style: none; display: flex; flex-direction: column; flex: 1; justify-content: center; }
 .agenda li {
   display: flex;
   align-items: center;
   gap: 1.2rem;
-  font-size: 1.2rem;
-  color: var(--subtext);
+  font-size: 1.3rem;
+  color: var(--sub);
   padding: 0.85rem 0;
   border-bottom: 1px solid var(--border);
 }
 .agenda li:last-child { border-bottom: none; }
-.agenda .num {
+.agenda .n {
   font-family: 'Fira Code', monospace;
   font-size: 0.75rem;
-  color: var(--primary);
-  background: var(--highlight);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--acc);
+  background: var(--hi);
+  border: 1px solid rgba(79,70,229,0.3);
   border-radius: 4px;
   padding: 0.2rem 0.5rem;
   min-width: 2.5rem;
@@ -145,117 +180,80 @@ ul.bullets strong { color: var(--text); font-weight: 600; }
   flex-shrink: 0;
 }
 
-/* ── Two-Column Layout ──────────────────────────────── */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  flex: 1;
-}
+/* ── Title Slide ────────────────────────────────────── */
+.slide.title { background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%); }
+.title .rail  { background: rgba(255,255,255,0.08); }
+.title .rail .num { color: rgba(255,255,255,0.45); }
+.title .rail .vbar { background: rgba(255,255,255,0.1); }
+.title .body  { justify-content: center; gap: 0.8rem; }
+.title h1 { font-size: 3.8rem; font-weight: 800; color: #fff; line-height: 1.2; }
+.title .ent   { font-size: 1.25rem; color: rgba(255,255,255,0.5); font-style: italic; }
+.title .course{ font-size: 0.9rem; color: rgba(255,255,255,0.3); margin-top: 1.5rem; }
 
-/* ── Card ───────────────────────────────────────────── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
+/* ── Section Divider ────────────────────────────────── */
+.slide.section {
+  background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 6rem;
+  overflow: hidden;
 }
-.card.accent {
-  border-color: rgba(56, 189, 248, 0.35);
-  background: var(--surface2);
-}
-.card h3 { font-size: 1.2rem; font-weight: 600; }
-.card ul.bullets { gap: 0.7rem; }
-.card ul.bullets li { font-size: 1rem; }
-
-/* ── Callout ────────────────────────────────────────── */
-.callout {
-  background: var(--highlight);
-  border-left: 3px solid var(--primary);
-  border-radius: 0 8px 8px 0;
-  padding: 0.9rem 1.4rem;
-  font-size: 1.05rem;
-  line-height: 1.6;
-  margin-top: 1rem;
-}
-.callout.warning {
-  background: rgba(251, 191, 36, 0.08);
-  border-color: var(--yellow);
-}
-.callout strong { color: var(--primary); }
-
-/* ── Formula ────────────────────────────────────────── */
-.formula {
+.section .sec-wrap { display: flex; flex-direction: column; gap: 1rem; }
+.section .sec-num  {
   font-family: 'Fira Code', monospace;
-  font-size: 1rem;
-  color: var(--primary);
-  background: rgba(56, 189, 248, 0.06);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 6px;
-  padding: 0.75rem 1.2rem;
-  margin-top: auto;
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.4);
 }
-.formula sub, .formula sup { font-size: 0.75em; }
-
-/* ── Tag / Badge ────────────────────────────────────── */
-.tag {
-  display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  vertical-align: middle;
-  margin-left: 0.4rem;
-  background: var(--primary);
-  color: #0f172a;
-  letter-spacing: 0.04em;
+.section h2 { font-size: 3.5rem; font-weight: 800; color: #fff; line-height: 1.1; }
+.section .sec-en {
+  font-size: 1.3rem;
+  color: rgba(255,255,255,0.45);
+  font-style: italic;
+  font-weight: 300;
+}
+.section .ghost {
+  position: absolute;
+  right: -0.05em;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.04);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* ── Progress Bar ───────────────────────────────────── */
-#progress {
+#prog {
   position: fixed;
   top: 0; left: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  transition: width 0.3s ease;
+  height: 3px;
+  background: var(--acc);
+  transition: width 0.3s;
   z-index: 200;
 }
 
-/* ── Navigation Controls ────────────────────────────── */
-.controls {
-  position: fixed;
-  bottom: 1.2rem;
-  right: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  z-index: 200;
-}
-.controls button {
-  width: 36px;
-  height: 36px;
+/* ── Controls ───────────────────────────────────────── */
+.nav { position: fixed; bottom: 1rem; right: 1.5rem; display: flex; align-items: center; gap: 0.6rem; z-index: 200; }
+.nav button {
+  width: 34px; height: 34px;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--card);
   color: var(--text);
-  font-size: 1rem;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  font-size: 0.9rem;
 }
-.controls button:hover:not(:disabled) {
-  background: var(--surface2);
-  border-color: var(--primary);
-}
-.controls button:disabled { opacity: 0.3; cursor: not-allowed; }
-.slide-counter {
+.nav button:hover:not(:disabled) { border-color: var(--acc); }
+.nav button:disabled { opacity: .3; cursor: default; }
+.nav .ct {
   font-family: 'Fira Code', monospace;
   font-size: 0.8rem;
-  color: var(--muted);
-  background: var(--surface);
+  color: var(--sub);
+  background: var(--card);
   border: 1px solid var(--border);
-  padding: 0.3rem 0.7rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 6px;
 }

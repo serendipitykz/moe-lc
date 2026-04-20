@@ -5,116 +5,242 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>混合专家模型与长上下文 · MoE &amp; Long Context</title>
   <link rel="stylesheet" href="style.css">
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script defer src="nav.js"></script>
+  <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$',  right: '$',  display: false}
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
 </head>
 <body>
 
-<div id="progress"></div>
+<div id="prog"></div>
 
-<div class="slideshow">
+<div class="deck">
 
-  <!-- ═══════════════════════ 1. Title ══════════════════════════ -->
-  <section class="slide title-slide active">
-    <h1>混合专家模型<br>与长上下文</h1>
-    <p class="en-title">Mixture of Experts &amp; Long Context</p>
-    <p class="course">CS2916-01 大语言模型 &nbsp;·&nbsp; ACM Class 2026 &nbsp;·&nbsp; StarryPurple</p>
-  </section>
-
-  <!-- ═══════════════════════ 2. Agenda ═════════════════════════ -->
-  <section class="slide">
-    <div class="slide-header">
-      <h2>目录</h2>
-      <div class="en">Agenda</div>
+  <!-- ═══ 1. Title ═══════════════════════════════════════════════ -->
+  <section class="slide title on">
+    <div class="rail">
+      <span class="num">01</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
     </div>
-    <ul class="agenda">
-      <li><span class="num">01</span> 背景：规模定律的代价</li>
-      <li><span class="num">02</span> 混合专家模型（MoE）</li>
-      <li><span class="num">03</span> 长上下文技术</li>
-      <li><span class="num">04</span> MoE 与长上下文的结合</li>
-      <li><span class="num">05</span> 动手演示</li>
-      <li><span class="num">06</span> 关键假说</li>
-    </ul>
-  </section>
-
-  <!-- ═══════════════════════ 3. Scaling Laws ═══════════════════ -->
-  <section class="slide">
-    <div class="slide-header">
-      <h2>规模定律：越大越好？</h2>
-      <div class="en">Scaling Laws</div>
-    </div>
-    <ul class="bullets">
-      <li>Kaplan et al. (2020)：性能随参数量 <em>N</em>、数据量 <em>D</em>、算力 <em>C</em> 呈<strong>幂律增长</strong></li>
-      <li>Chinchilla (2022)：算力最优训练中，<em>N</em> 与 <em>D</em> 应<strong>同比例增长</strong></li>
-      <li>GPT-3：1,750 亿参数 &nbsp;→&nbsp; Llama 3：4,050 亿参数 &nbsp;→&nbsp; 还要更大？</li>
-    </ul>
-    <div class="callout warning">
-      核心矛盾：参数量 10× &nbsp;⇒&nbsp; 推理成本 10×。模型训练一次，但推理成千上万次。
-    </div>
-    <div class="callout">
-      能否让模型<strong>「拥有」更多参数</strong>，却只<strong>「使用」其中一部分</strong>？
+    <div class="body">
+      <h1>混合专家模型<br>与长上下文</h1>
+      <p class="ent">Mixture of Experts &amp; Long Context</p>
+      <p class="course">CS2916-01 大语言模型 &nbsp;·&nbsp; ACM Class 2026 &nbsp;·&nbsp; StarryPurple</p>
     </div>
   </section>
 
-  <!-- ═══════════════════════ 4. Dense vs Sparse ════════════════ -->
+  <!-- ═══ 2. Agenda ═══════════════════════════════════════════════ -->
   <section class="slide">
-    <div class="slide-header">
-      <h2>稠密 vs 稀疏激活</h2>
-      <div class="en">Dense vs Sparse Activation</div>
+    <div class="rail">
+      <span class="num">02</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
     </div>
-    <div class="two-col">
-      <div class="card">
-        <h3>Dense（稠密）</h3>
-        <ul class="bullets">
-          <li>每个 token 激活<strong>全部</strong>参数</li>
-          <li>计算量正比于总参数量</li>
-          <li>代表模型：GPT-4、Llama 3</li>
-        </ul>
-        <div class="formula">FLOPs ≈ 2 · N · T</div>
+    <div class="body">
+      <div class="hd"><h2>目录</h2><div class="en">Agenda</div></div>
+      <div class="rule"></div>
+      <ul class="agenda">
+        <li><span class="n">01</span> 背景：规模定律的代价</li>
+        <li><span class="n">02</span> 混合专家模型（MoE）</li>
+        <li><span class="n">03</span> 长上下文技术</li>
+        <li><span class="n">04</span> MoE 与长上下文的结合</li>
+        <li><span class="n">05</span> 动手演示</li>
+        <li><span class="n">06</span> 关键假说</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 3. Scaling Laws ══════════════════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">03</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>规模定律：越大越好？</h2><div class="en">Scaling Laws</div></div>
+      <div class="rule"></div>
+      <ul class="bl">
+        <li>Kaplan et al. (2020)：性能随参数量 $N$、数据量 $D$、算力 $C$ 呈<strong>幂律增长</strong></li>
+        <li>Chinchilla (2022)：算力最优训练中，$N$ 与 $D$ 应<strong>同比例增长</strong></li>
+        <li>GPT-3：1,750 亿参数 &nbsp;→&nbsp; Llama 3：4,050 亿参数 &nbsp;→&nbsp; 还要更大？</li>
+      </ul>
+      <div class="box warn">核心矛盾：参数量 $10\times$ &nbsp;⇒&nbsp; 推理成本 $10\times$。模型训练一次，但推理成千上万次。</div>
+      <div class="box">能否让模型<strong>「拥有」更多参数</strong>，却只<strong>「使用」其中一部分</strong>？</div>
+    </div>
+  </section>
+
+  <!-- ═══ 4. Dense vs Sparse ═══════════════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">04</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>稠密 vs 稀疏激活</h2><div class="en">Dense vs Sparse Activation</div></div>
+      <div class="rule"></div>
+      <div class="two">
+        <div class="card">
+          <h3>Dense（稠密）</h3>
+          <ul class="bl">
+            <li>每个 token 激活<strong>全部</strong>参数</li>
+            <li>计算量正比于总参数量</li>
+            <li>代表：GPT-4、Llama 3</li>
+          </ul>
+          <div class="formula">$$\text{FLOPs} \approx 2 \cdot N \cdot T$$</div>
+        </div>
+        <div class="card hi">
+          <h3>Sparse <span class="tag">MoE</span></h3>
+          <ul class="bl">
+            <li>每个 token 只激活<strong>少数</strong>专家</li>
+            <li>计算量正比于激活参数量</li>
+            <li>代表：Mixtral、DeepSeek-V2</li>
+          </ul>
+          <div class="formula">$$\text{FLOPs} \approx 2 \cdot N_{\text{act}} \cdot T \quad (N_{\text{act}} \ll N)$$</div>
+        </div>
       </div>
-      <div class="card accent">
-        <h3>Sparse <span class="tag">MoE</span></h3>
-        <ul class="bullets">
-          <li>每个 token 只激活<strong>少数</strong>专家</li>
-          <li>计算量正比于<em>激活参数量</em></li>
-          <li>代表模型：Mixtral、DeepSeek-V2</li>
-        </ul>
-        <div class="formula">FLOPs ≈ 2 · N<sub>act</sub> · T &nbsp;&nbsp;(N<sub>act</sub> ≪ N)</div>
+      <div class="box">以 <strong>Dense 级别的推理开销</strong>，撬动<strong>更大的模型容量</strong></div>
+    </div>
+  </section>
+
+  <!-- ═══ 5. MoE Core Mechanism ════════════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">05</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>MoE 核心机制</h2><div class="en">How MoE Works</div></div>
+      <div class="rule"></div>
+      <ul class="bl">
+        <li>将 Transformer 各层的 <strong>FFN</strong> 替换为 $E$ 个并行的<strong>专家网络</strong></li>
+        <li><strong>门控网络（Router）</strong>为每个 token 计算专家得分，选取 $\text{top-}k$ 个专家</li>
+        <li>仅被选中的 $k$ 个专家参与前向计算，其余保持静默</li>
+        <li>各专家输出按路由权重加权求和，得到该层最终输出</li>
+      </ul>
+      <div class="formula">
+        $$y = \sum_{i \,\in\, \text{TopK}(x)} G_i(x) \cdot \text{Expert}_i(x)$$
+      </div>
+      <div class="box">典型配置：$E = 8$ 个专家，$k = 2$（top-2 路由）</div>
+    </div>
+  </section>
+
+  <!-- ═══ 6. Load Balancing ════════════════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">06</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>负载均衡挑战</h2><div class="en">Load Balancing</div></div>
+      <div class="rule"></div>
+      <ul class="bl">
+        <li>若不加约束，路由器倾向于反复选择<strong>同几个专家</strong>，其余专家几乎从不激活</li>
+        <li>称为<strong>专家崩塌（Expert Collapse）</strong>：大量参数被浪费，模型容量无法利用</li>
+        <li>解决方案：在训练损失中加入<strong>辅助均衡损失</strong> $\mathcal{L}_{\text{aux}}$</li>
+      </ul>
+      <div class="formula">
+        $$\mathcal{L}_{\text{aux}} = \alpha \sum_{i=1}^{E} f_i \cdot P_i$$
+      </div>
+      <div class="box">
+        $f_i$：token 路由至专家 $i$ 的比例 &nbsp;·&nbsp;
+        $P_i$：专家 $i$ 的平均路由概率 &nbsp;·&nbsp;
+        $\alpha$：均衡系数
       </div>
     </div>
-    <div class="callout">
-      稀疏激活：以 <strong>Dense 级别的推理开销</strong>，撬动<strong>更大的模型容量</strong>
-    </div>
   </section>
 
-  <!-- ═══════════════════════ 5. MoE Core Mechanism ════════════ -->
+  <!-- ═══ 7. Mixtral 8×7B ══════════════════════════════════════════ -->
   <section class="slide">
-    <div class="slide-header">
-      <h2>MoE 核心机制</h2>
-      <div class="en">How MoE Works</div>
+    <div class="rail">
+      <span class="num">07</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
     </div>
-    <ul class="bullets">
-      <li>将 Transformer 各层的 <strong>FFN</strong> 替换为 <em>E</em> 个并行的<strong>专家网络</strong></li>
-      <li><strong>门控网络（Router）</strong>为每个 token 计算专家得分，选取 top-<em>k</em> 个专家</li>
-      <li>仅被选中的 <em>k</em> 个专家参与前向计算，其余保持静默</li>
-      <li>各专家输出按路由权重加权求和，得到该层最终输出</li>
-    </ul>
-    <div class="formula">
-      y = &sum;<sub>i &isin; TopK(x)</sub> &nbsp; G<sub>i</sub>(x) &middot; Expert<sub>i</sub>(x)
-    </div>
-    <div class="callout">
-      Mixtral 8×7B：总参数 ~46.7B，每 token 激活 ~12.9B（≈ 7B dense 的推理成本）
+    <div class="body">
+      <div class="hd"><h2>Mixtral 8×7B 解析</h2><div class="en">A Modern MoE in Practice</div></div>
+      <div class="rule"></div>
+      <div class="two">
+        <div class="card">
+          <h3>架构参数</h3>
+          <ul class="bl">
+            <li>32 层 Transformer，每层 FFN → 8 专家</li>
+            <li>路由：top-2，每 token 激活 2 个专家</li>
+            <li>上下文长度：32K tokens</li>
+            <li>激活函数：SwiGLU</li>
+          </ul>
+        </div>
+        <div class="card hi">
+          <h3>规模与效果</h3>
+          <ul class="bl">
+            <li>总参数：$\sim\!46.7\text{B}$</li>
+            <li>每 token 激活：$\sim\!12.9\text{B}$（≈ 7B dense 成本）</li>
+            <li>超越 Llama 2 70B（多数基准）</li>
+            <li>推理成本仅为同体量 dense 的 $\frac{1}{4}$</li>
+          </ul>
+        </div>
+      </div>
+      <div class="box">$\frac{N_{\text{act}}}{N} = \frac{12.9\text{B}}{46.7\text{B}} \approx 27.6\%$ &nbsp;— 用不到三成的参数完成每步计算</div>
     </div>
   </section>
 
-  <!-- ═══════════════════════ [future slides] ═══════════════════ -->
+  <!-- ═══ 8. Section: Long Context ═════════════════════════════════ -->
+  <section class="slide section">
+    <div class="ghost">03</div>
+    <div class="sec-wrap">
+      <span class="sec-num">SECTION 03</span>
+      <h2>长上下文技术</h2>
+      <p class="sec-en">Long Context Techniques</p>
+    </div>
+  </section>
 
-</div><!-- .slideshow -->
+  <!-- ═══ 9. Why Attention Struggles ══════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">09</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of">/ 9</span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>注意力机制的扩展瓶颈</h2><div class="en">Why Attention Doesn't Scale</div></div>
+      <div class="rule"></div>
+      <ul class="bl">
+        <li>标准自注意力的时间与显存复杂度均为 $O(n^2)$，$n$ 为序列长度</li>
+        <li>注意力矩阵 $n \times n$：当 $n = 128\text{K}$ 时，单层需 $\sim\!32\text{GB}$（fp16）</li>
+        <li>上下文需求持续增长：GPT-4 128K → Claude 3 200K → Gemini 1.5 <strong>1M</strong></li>
+      </ul>
+      <div class="formula">
+        $$\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+      </div>
+      <div class="box warn">瓶颈在于 $QK^\top$ 的计算和存储：序列每增长 $10\times$，成本增长 $100\times$。</div>
+    </div>
+  </section>
 
-<nav class="controls">
+  <!-- ═══ [future slides] ══════════════════════════════════════════ -->
+
+</div><!-- .deck -->
+
+<nav class="nav">
   <button id="prev" disabled>←</button>
-  <span id="counter" class="slide-counter">1 / 5</span>
+  <span id="counter" class="ct">1 / 9</span>
   <button id="next">→</button>
 </nav>
 
-<script src="nav.js"></script>
 </body>
 </html>
