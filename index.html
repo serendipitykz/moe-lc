@@ -85,17 +85,23 @@
       <div style="display:flex;gap:2rem;align-items:flex-start;">
         <div style="flex:1.3;display:flex;flex-direction:column;gap:0.9rem;">
           <ul class="bl-sm">
-            <li><div>Kaplan (2020)：性能随 $N$、$D$、$C$ 呈<strong>幂律增长</strong>，暂无明显上限
+            <li><div>Kaplan (2020)：性能随 $N$、$D$、$C$ 呈<strong>幂律增长</strong>，幂指数约 0.076，暂无明显上限
               <div class="formula" style="margin-top:0.4rem">$L \approx \bigl(N_c/N\bigr)^{0.076}$</div>
+              <ul class="il" style="margin-top:0.35rem">
+                <li>实证：GPT-2 (1.5B) → GPT-3 (175B)，参数 ×117，多项 benchmark 提升 ≥30pp，loss 降幅与公式吻合</li>
+              </ul>
             </div></li>
             <li><div>Chinchilla (2022)：计算最优时 $N$ 与 $D$ 应<strong>同比例扩大</strong>，token 数约为 <strong>20×参数量</strong>
               <div class="formula" style="margin-top:0.4rem">$N_{\text{opt}} \propto C^{0.5},\quad D_{\text{opt}} \propto C^{0.5}$</div>
+              <ul class="il" style="margin-top:0.35rem">
+                <li>实证：Chinchilla-70B 以 <strong>相同算力预算</strong>在 MMLU 等评测上全面超越 Gopher-280B，推理成本仅 1/4</li>
+              </ul>
             </div></li>
-            <li>GPT-3 仅用 300B token 训练 175B 模型 → <em>数据严重不足</em>；Llama 3 修正为 15T token + 405B 参数</li>
-            <li>推理成本不可压缩：每 token 需 $2N$ FLOP，ChatGPT 峰值约 <strong>3 万 A100 并发</strong>才能支撑服务</li>
+            <li>token:参数比演变：GPT-3 ≈ 1:0.6（<em>严重不足</em>）→ Llama 2 ≈ 1:29 → Llama 3 ≈ 1:37，比 Chinchilla 建议更数据密集</li>
+            <li>推理成本不可压缩：每 token 需 $2N$ FLOP，ChatGPT 峰值约 <strong>3 万 A100 并发</strong>，按 $2.5/GPU·时估算月均超 <strong>$5000 万</strong></li>
           </ul>
-          <div class="box warn">核心矛盾：参数量 $10\times$ ⇒ 推理成本 $10\times$。模型训练一次，但推理<strong>每次请求都要重做</strong>。</div>
-          <div class="box">能否让模型<strong>「拥有」更多参数</strong>，却只<strong>「使用」其中一部分</strong>？</div>
+          <div class="box warn">核心矛盾：参数量 $10\times$ ⇒ 推理成本 $10\times$。模型训练一次，但推理<strong>每次请求都要重做</strong>，成本随用户量线性增长。</div>
+          <div class="box">能否让模型<strong>「拥有」更多参数</strong>，却只<strong>「使用」其中一部分</strong>？<br><span style="font-size:0.9em;color:var(--sub)">→ 稀疏激活（Sparse Activation）正是这个思路</span></div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:0.6rem;">
           <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Chinchilla 最优分配</div>
@@ -108,19 +114,25 @@
               <tr><td>$10^{25}$ FLOP</td><td>~220B</td><td class="hi">~4.4T ← Llama 3</td></tr>
             </tbody>
           </table>
-          <div style="font-size:0.88rem;color:var(--sub)">
-            推理 FLOPs/token ≈ $2N$：<br>
-            175B Dense → <strong>350 GFLOP/tok</strong><br>
-            Llama 3 405B → <strong>810 GFLOP/tok</strong>
-          </div>
+          <!-- Gopher vs Chinchilla head-to-head -->
+          <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-top:0.4rem">案例对比：相同算力</div>
+          <table class="tbl">
+            <thead><tr><th></th><th>Gopher</th><th>Chinchilla</th></tr></thead>
+            <tbody>
+              <tr><td>参数量</td><td>280B</td><td class="hi">70B</td></tr>
+              <tr><td>训练 tokens</td><td>300B</td><td class="hi">1.4T</td></tr>
+              <tr><td>推理成本</td><td>4×</td><td class="hi">1×</td></tr>
+              <tr><td>MMLU 5-shot</td><td>60.0%</td><td class="hi">67.5% ↑</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- ── Live demo ── -->
       <div class="demo-panel">
-        <div style="font-size:0.82rem;font-weight:600;color:var(--acc);margin-bottom:0.55rem;text-transform:uppercase;letter-spacing:.05em">现场演算 · 推理成本估算器</div>
+        <div style="font-size:0.82rem;font-weight:600;color:var(--acc);margin-bottom:0.55rem;text-transform:uppercase;letter-spacing:.05em">现场演算 · Dense vs MoE 推理成本</div>
         <div style="display:flex;align-items:center;gap:0.55rem;flex-wrap:wrap;margin-bottom:0.5rem;">
-          <span style="font-size:0.88rem;color:var(--sub)">参数量：</span>
+          <span style="font-size:0.88rem;color:var(--sub)">Dense 参数量：</span>
           <button class="demo-btn" onclick="s3calc(7,this)">7B</button>
           <button class="demo-btn" onclick="s3calc(70,this)">70B</button>
           <button class="demo-btn" onclick="s3calc(175,this)">175B</button>
@@ -129,7 +141,7 @@
           <button class="demo-btn active" id="s3r1" onclick="s3setR(1e6,this)">100 万</button>
           <button class="demo-btn" id="s3r2" onclick="s3setR(1e7,this)">1000 万</button>
         </div>
-        <div id="s3out" style="font-size:0.9rem;color:var(--sub);line-height:1.7">← 点击模型规格开始计算</div>
+        <div id="s3out" style="font-size:0.88rem;color:var(--sub);line-height:1.85">← 点击模型规格开始计算</div>
       </div>
       <script>
         var _s3n=0,_s3r=1e6;
@@ -141,22 +153,23 @@
         }
         function s3calc(n,btn){
           _s3n=n;
-          document.querySelectorAll('.demo-panel .demo-btn').forEach(b=>{ if(b.textContent===n+'B') b.classList.add('active'); else if(!b.id) b.classList.remove('active'); });
-          var flop=2*n*1e9, daily=flop*256*_s3r, gpu=daily/312e12/3600;
-          var cost=(gpu/24*30*2.5).toFixed(0);
+          document.querySelectorAll('.demo-panel .demo-btn:not([id])').forEach(b=>b.classList.toggle('active', b.textContent===n+'B'));
+          var flop=2*n*1e9, daily=flop*256*_s3r, gpu=daily/312e12/3600, cost=(gpu/24*30*2.5).toFixed(0);
+          // MoE: same active params, 4x total (top-2 of 8 experts, 25% activation rate)
+          var moeTotal=n*4, moeCost=cost; // same active FLOPs → same inference cost
           document.getElementById('s3out').innerHTML=
-            '<strong>'+n+'B Dense</strong>：'+
-            '每 token ≈ <em>'+(flop/1e9).toFixed(0)+' GFLOP</em>　|　'+
-            '日均 '+(_s3r/1e6).toFixed(0)+'M 请求 × 256 tok → <em>'+(daily/1e18).toFixed(2)+' EFLOPs/天</em>　|　'+
-            '≈ <em>'+gpu.toFixed(0)+' A100·时/天</em>　|　月均 ≈ <strong>$'+cost+'</strong>';
+            '🔵 <strong>Dense '+n+'B</strong>：每 token <em>'+(flop/1e9).toFixed(0)+' GFLOP</em>　|　'
+            +'日均 '+(_s3r/1e6).toFixed(0)+'M 请求 → <em>'+gpu.toFixed(0)+' A100·时/天</em>　|　月均 <strong>$'+cost+'</strong><br>'
+            +'🟢 <strong>MoE '+moeTotal+'B</strong>（激活 '+n+'B，top-2/8）：推理成本<em>相同</em>　|　模型容量 <strong>4× ↑</strong>　|　月均同为 <strong>$'+moeCost+'</strong>';
         }
       </script>
     </div>
     <aside class="notes">
-      <p>规模定律的核心结论是：更大的模型、更多的数据、更多的算力，都会带来可预测的性能提升，且暂无拐点。Kaplan 给出的参数量幂律指数约为 0.076，意思是参数量每增加 10 倍，loss 大约降低 0.076 个 nats。</p>
-      <p>Chinchilla 的贡献是：在固定算力下，参数量和训练 token 数应该同步扩大，比例约为 1:20。这意味着 GPT-3 的 300B token 对 175B 模型来说严重不足。Llama 3 用 15T token 训练 405B 模型，比例约为 1:37，比 Chinchilla 建议的还要更数据密集。</p>
-      <p>推理成本这件事需要特别强调：训练只做一次，但推理是每一次用户请求都要做的。据估计 ChatGPT 在高峰期需要约三万块 A100 才能维持响应延迟——这是一个非常惊人的数字。</p>
-      <p>【现场演算】现在请观众选一个模型规模，我们一起算算每天服务一千万次请求大概需要多少算力和钱。选 175B，日请求量 1000 万：可以看到每天需要约 X 块 A100 整天运行，月费约 Y 万美元。这就是推理成本压力的直观体现，也正是 MoE 要解决的问题。</p>
+      <p>规模定律的核心结论是：更大的模型、更多的数据、更多的算力，都会带来可预测的性能提升，且暂无拐点。Kaplan 给出的参数量幂律指数约为 0.076，意思是参数量每增加 10 倍，loss 大约降低 0.076 个 nats。GPT-2 到 GPT-3 参数量增加了 117 倍，多项 benchmark 提升超过 30 个百分点，降幅与公式吻合。</p>
+      <p>Chinchilla 的贡献是：在固定算力下，参数量和训练 token 数应该同步扩大，比例约为 1:20。最有力的实证就是 Chinchilla-70B 超越了 Gopher-280B——用四分之一的参数量、相同的算力预算，MMLU 从 60% 提升到 67.5%，推理成本也只有 Gopher 的四分之一。</p>
+      <p>token 与参数比的演变也很有意思：GPT-3 是 0.6:1，严重数据不足；Llama 2 修正到 29:1；Llama 3 进一步到 37:1，比 Chinchilla 建议的 20:1 还激进，说明大家越来越认为数据是比参数更重要的瓶颈。</p>
+      <p>但无论怎么优化训练，推理成本的线性增长是无法回避的。ChatGPT 峰值需要约三万块 A100，按公有云价格估算月均开销超过五千万美元——这直接转化为每次用户请求的成本。</p>
+      <p>【现场演算】现在我们来直观感受一下。选 70B Dense，日请求 1000 万：可以看到 Dense 每月花费是 X 万美元。如果换成 MoE，同样激活 70B 参数，总参数量可以扩展到 280B，推理成本完全不变，但模型的「知识容量」扩大了四倍——这就是 MoE 的核心价值。</p>
     </aside>
   </section>
 
