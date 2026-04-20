@@ -58,8 +58,8 @@
 ## 进度追踪
 
 - [x] 第一部分：开场与背景 (Slides 1-5)
-- [ ] 第二部分：MoE 基础 (Slides 6-9)
-- [ ] 第三部分：Long Context 基础 (Slides 10-13)
+- [x] 第二部分：MoE 基础 (Slides 6-9)
+- [x] 第三部分：Long Context 基础 (Slides 10-13)
 - [ ] 第四部分：MoE × Long Context (Slides 14-16)
 - [ ] 第五部分：Demo (Slides 17-18)
 - [ ] 第六部分：总结与展望 (Slides 19-21)
