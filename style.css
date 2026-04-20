@@ -559,3 +559,18 @@ ul.il li::before { content: '·'; position: absolute; left: 0; color: var(--mute
 /* Prevent formula from floating to card bottom via margin:auto */
 .card .formula { margin-top: 0.6rem; }
 
+/* Interactive demo buttons */
+.demo-btn {
+  font-family: 'Fira Code', monospace; font-size: 0.85rem; font-weight: 600;
+  padding: 0.25rem 0.75rem; border-radius: 6px;
+  border: 1px solid var(--acc); color: var(--acc);
+  background: transparent; cursor: pointer; transition: background .15s, color .15s;
+}
+.demo-btn:hover, .demo-btn.active {
+  background: var(--acc); color: #fff;
+}
+.demo-panel {
+  background: var(--hi); border: 1px solid rgba(79,70,229,0.3);
+  border-radius: 10px; padding: 0.9rem 1.3rem; margin-top: 0.8rem;
+}
+
