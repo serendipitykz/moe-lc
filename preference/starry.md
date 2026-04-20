@@ -13,3 +13,8 @@
 - KaTeX for inline and display math
 - Delimiters: `$...$` for inline, `$$...$$` for display
 - No raw subscript text like `N_act`; use proper $N_{\text{act}}$ notation
+- Formula blocks: light neutral background (`#f8fafc`) with a subtle border — **not** colored/tinted
+
+## Content style
+- Hand-made graphs encouraged: timelines (for evolution/history), HTML tables (for comparisons), attention pattern grids, diagrams with CSS boxes and arrows
+- Concrete examples or mini-annotations recommended alongside bullet descriptions (e.g. a side panel or inline callout with a specific number / model name)

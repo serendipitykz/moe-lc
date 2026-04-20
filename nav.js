@@ -6,7 +6,8 @@ const progress = document.getElementById('prog');
 
 let current = 0;
 
-/* Set each slide rail's vfill to reflect its position in the deck */
+/* Fill in total slide count and per-slide vfill heights */
+document.querySelectorAll('.of').forEach(el => { el.textContent = `/ ${slides.length}`; });
 slides.forEach((sl, i) => {
   const vf = sl.querySelector('.vfill');
   if (vf) vf.style.height = `${(i + 1) / slides.length * 100}%`;

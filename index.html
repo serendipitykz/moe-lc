@@ -33,7 +33,7 @@
     <div class="rail">
       <span class="num">01</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <h1>混合专家模型<br>与长上下文</h1>
@@ -47,7 +47,7 @@
     <div class="rail">
       <span class="num">02</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <div class="hd"><h2>目录</h2><div class="en">Agenda</div></div>
@@ -68,7 +68,7 @@
     <div class="rail">
       <span class="num">03</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <div class="hd"><h2>规模定律：越大越好？</h2><div class="en">Scaling Laws</div></div>
@@ -88,7 +88,7 @@
     <div class="rail">
       <span class="num">04</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <div class="hd"><h2>稠密 vs 稀疏激活</h2><div class="en">Dense vs Sparse Activation</div></div>
@@ -122,7 +122,7 @@
     <div class="rail">
       <span class="num">05</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <div class="hd"><h2>MoE 核心机制</h2><div class="en">How MoE Works</div></div>
@@ -145,7 +145,7 @@
     <div class="rail">
       <span class="num">06</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <div class="hd"><h2>负载均衡挑战</h2><div class="en">Load Balancing</div></div>
@@ -171,7 +171,7 @@
     <div class="rail">
       <span class="num">07</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <div class="hd"><h2>Mixtral 8×7B 解析</h2><div class="en">A Modern MoE in Practice</div></div>
@@ -215,7 +215,7 @@
     <div class="rail">
       <span class="num">09</span>
       <div class="vbar"><div class="vfill"></div></div>
-      <span class="of">/ 9</span>
+      <span class="of"></span>
     </div>
     <div class="body">
       <div class="hd"><h2>注意力机制的扩展瓶颈</h2><div class="en">Why Attention Doesn't Scale</div></div>
@@ -232,13 +232,155 @@
     </div>
   </section>
 
+  <!-- ═══ 10. RoPE & Positional Encoding ══════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">10</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>旋转位置编码（RoPE）</h2><div class="en">Rotary Position Embedding</div></div>
+      <div class="rule"></div>
+      <ul class="bl">
+        <li>Transformer 并行处理所有 token，需额外编码<strong>顺序信息</strong></li>
+        <li>绝对正弦编码（Vaswani 2017）：固定函数，泛化到训练外长度时性能下降</li>
+        <li>RoPE (Su et al., 2021)：将位置编码为 $Q$/$K$ 的<strong>旋转变换</strong>，天然捕获相对位置</li>
+      </ul>
+      <div class="rope-diag">
+        <div class="rope-col">
+          <div class="rope-col-title">编码过程</div>
+          <div class="rope-row">
+            <div class="rope-box">$q$</div>
+            <div class="rope-op">×</div>
+            <div class="rope-box acc">$R_\theta^m$</div>
+            <div class="rope-op">=</div>
+            <div class="rope-box">$q_m$</div>
+          </div>
+          <div class="rope-row">
+            <div class="rope-box">$k$</div>
+            <div class="rope-op">×</div>
+            <div class="rope-box acc">$R_\theta^n$</div>
+            <div class="rope-op">=</div>
+            <div class="rope-box">$k_n$</div>
+          </div>
+        </div>
+        <div class="rope-col">
+          <div class="rope-col-title">关键性质</div>
+          <div class="formula" style="margin-top:0">
+            $$q_m^\top k_n = q^\top R_\theta^{n-m}\, k$$
+          </div>
+          <div class="box" style="margin-top:0.6rem">
+            得分只依赖<strong>相对位置 $(n - m)$</strong>，与绝对位置无关。<br>
+            外推到训练外长度时，相对关系保持稳定。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 11. Efficient Attention ══════════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">11</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>高效注意力机制</h2><div class="en">Efficient Attention</div></div>
+      <div class="rule"></div>
+      <div style="display:flex; gap:2.5rem; flex:1; align-items:flex-start;">
+        <table class="tbl" style="flex:1.6">
+          <thead>
+            <tr><th>方法</th><th>时间复杂度</th><th>显存</th><th>精确？</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>标准注意力</td><td class="warn">$O(n^2)$</td><td class="warn">$O(n^2)$</td><td class="ok">✓</td></tr>
+            <tr><td>FlashAttention</td><td class="warn">$O(n^2)$</td><td class="ok">$O(n)$</td><td class="ok">✓</td></tr>
+            <tr><td>滑动窗口注意力</td><td class="ok">$O(n \cdot w)$</td><td class="ok">$O(n \cdot w)$</td><td class="warn">近似</td></tr>
+            <tr><td>GQA（分组查询）</td><td class="warn">$O(n^2)$</td><td class="ok">$O(n^2/g)$</td><td class="ok">✓</td></tr>
+          </tbody>
+        </table>
+        <div class="attn-wrap" style="flex:1; flex-direction:column; align-items:flex-start;">
+          <div style="display:flex; gap:2rem;">
+            <div class="attn-block">
+              <div class="attn-title">标准注意力</div>
+              <div class="attn-grid">
+                <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div></div>
+                <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div></div>
+                <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div></div>
+                <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div></div>
+                <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div></div>
+              </div>
+            </div>
+            <div class="attn-block">
+              <div class="attn-title">滑动窗口（$w=1$）</div>
+              <div class="attn-grid">
+                <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac"></div><div class="ac"></div><div class="ac"></div></div>
+                <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac"></div><div class="ac"></div></div>
+                <div class="attn-row"><div class="ac"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac"></div></div>
+                <div class="attn-row"><div class="ac"></div><div class="ac"></div><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div></div>
+                <div class="attn-row"><div class="ac"></div><div class="ac"></div><div class="ac"></div><div class="ac on"></div><div class="ac on"></div></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:0.88rem; color:var(--sub); margin-top:0.6rem;">行 = Query，列 = Key；蓝色 = 可注意到</div>
+        </div>
+      </div>
+      <div class="box" style="margin-top:0.8rem;">FlashAttention 将 $QK^\top V$ 分块计算，避免完整矩阵落盘 → 显存降至 $O(n)$，速度提升 2–4×</div>
+    </div>
+  </section>
+
+  <!-- ═══ 12. Context Window Timeline ══════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">12</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>上下文窗口扩展历程</h2><div class="en">Context Window Evolution</div></div>
+      <div class="rule"></div>
+      <div class="timeline">
+        <div class="tl-labels">
+          <div class="tl-label"><b>1K</b><span>GPT-2</span></div>
+          <div class="tl-label"><b>2K</b><span>GPT-3</span></div>
+          <div class="tl-label"><b>16K</b><span>GPT-3.5</span></div>
+          <div class="tl-label"><b>128K</b><span>GPT-4</span></div>
+          <div class="tl-label"><b>128K</b><span>Llama 3</span></div>
+          <div class="tl-label"><b>200K</b><span>Claude 3</span></div>
+          <div class="tl-label hi"><b>1M</b><span>Gemini 1.5</span></div>
+        </div>
+        <div class="tl-track">
+          <div class="tl-dot"></div>
+          <div class="tl-dot"></div>
+          <div class="tl-dot"></div>
+          <div class="tl-dot"></div>
+          <div class="tl-dot"></div>
+          <div class="tl-dot"></div>
+          <div class="tl-dot last"></div>
+        </div>
+        <div class="tl-years">
+          <span class="tl-year">2019</span>
+          <span class="tl-year">2020</span>
+          <span class="tl-year">2022</span>
+          <span class="tl-year">2023</span>
+          <span class="tl-year">2024</span>
+          <span class="tl-year">2024</span>
+          <span class="tl-year">2024</span>
+        </div>
+      </div>
+      <div class="box">每一次突破背后，都伴随着<strong>位置编码</strong>（RoPE、ALiBi）、<strong>注意力算法</strong>（FlashAttention）或<strong>训练策略</strong>（长文本微调）的创新</div>
+    </div>
+  </section>
+
   <!-- ═══ [future slides] ══════════════════════════════════════════ -->
 
 </div><!-- .deck -->
 
 <nav class="nav">
   <button id="prev" disabled>←</button>
-  <span id="counter" class="ct">1 / 9</span>
+  <span id="counter" class="ct">1 / 12</span>
   <button id="next">→</button>
 </nav>
 
