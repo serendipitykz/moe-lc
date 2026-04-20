@@ -390,3 +390,91 @@ ul.bl strong { font-weight: 700; }
 .ac.on  { background: var(--acc); }
 .ac.dim { background: #c7d2fe; }
 
+/* ── Three-column challenge cards ───────────────────── */
+.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; flex: 1; }
+.chal-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.chal-card:nth-child(1) { border-top: 3px solid #e11d48; }
+.chal-card:nth-child(2) { border-top: 3px solid #d97706; }
+.chal-card:nth-child(3) { border-top: 3px solid #0891b2; }
+.chal-icon { font-size: 1.6rem; }
+.chal-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.chal-card p  { font-size: 1rem; color: var(--sub); line-height: 1.6; flex: 1; }
+.chal-num { font-family: 'Fira Code',monospace; font-size: 0.78rem; color: var(--muted); }
+
+/* ── KV cache bar diagram ────────────────────────────── */
+.kv-compare { display: flex; gap: 1.5rem; align-items: flex-end; margin: 0.5rem 0; }
+.kv-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.kv-bar { width: 52px; border-radius: 6px 6px 0 0; background: var(--acc); }
+.kv-bar.small { background: #86efac; }
+.kv-label { font-size: 0.85rem; color: var(--sub); text-align: center; font-weight: 600; }
+.kv-val { font-family: 'Fira Code',monospace; font-size: 0.8rem; color: var(--muted); }
+
+/* ── Demo Steps ──────────────────────────────────────── */
+.steps { list-style: none; display: flex; flex-direction: column; gap: 0.85rem; flex: 1; }
+.step  { display: flex; align-items: flex-start; gap: 1rem; }
+.step-num {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--acc); color: white;
+  font-weight: 700; font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 0.15rem;
+}
+.step-body { font-size: 1.3rem; line-height: 1.6; color: var(--text); flex: 1; }
+.step-note { font-size: 1rem; color: var(--sub); margin-top: 0.2rem; display: block; }
+.needle-box {
+  background: #1e293b; color: #e2e8f0;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.92rem; line-height: 1.65;
+  border-radius: 8px; padding: 1rem 1.3rem;
+}
+.needle-box .hl { color: #fbbf24; font-weight: 600; }
+.needle-box .cm { color: #64748b; }
+
+/* ── Hypothesis Cards ────────────────────────────────── */
+.hyp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; flex: 1; }
+.hyp-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 0.7rem;
+}
+.hyp-card:nth-child(1) { border-top: 3px solid var(--acc); }
+.hyp-card:nth-child(2) { border-top: 3px solid var(--acc2); }
+.hyp-card:nth-child(3) { border-top: 3px solid #0891b2; }
+.hyp-tag { font-family: 'Fira Code',monospace; font-size: 0.78rem; font-weight: 600; }
+.hyp-card:nth-child(1) .hyp-tag { color: var(--acc); }
+.hyp-card:nth-child(2) .hyp-tag { color: var(--acc2); }
+.hyp-card:nth-child(3) .hyp-tag { color: #0891b2; }
+.hyp-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+.hyp-card p  { font-size: 1rem; color: var(--sub); line-height: 1.65; flex: 1; }
+.hyp-open    { font-size: 0.95rem; font-style: italic; margin-top: 0.2rem; }
+.hyp-card:nth-child(1) .hyp-open { color: var(--acc); }
+.hyp-card:nth-child(2) .hyp-open { color: var(--acc2); }
+.hyp-card:nth-child(3) .hyp-open { color: #0891b2; }
+
+/* ── Lost-in-Middle chart ────────────────────────────── */
+.litm-wrap { display: flex; flex-direction: column; gap: 0.4rem; }
+.litm-label { font-size: 0.82rem; color: var(--sub); display: flex; justify-content: space-between; }
+.litm { display: flex; align-items: flex-end; gap: 3px; height: 72px; }
+.lb { flex: 1; border-radius: 3px 3px 0 0; }
+.lb.hi  { background: var(--acc); }
+.lb.mid { background: #c7d2fe; }
+.lb.lo  { background: #e5e7eb; }
+.litm-axis { height: 1px; background: var(--border); margin: 0; }
+
+/* ── Reference grid ──────────────────────────────────── */
+.ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.1rem 2.5rem; flex: 1; align-content: start; }
+.ref { padding: 0.55rem 0; border-bottom: 1px solid var(--border); }
+.ref-title  { font-size: 0.98rem; font-weight: 600; color: var(--text); line-height: 1.35; }
+.ref-meta   { font-size: 0.85rem; color: var(--sub); margin-top: 0.15rem; }
+.ref-venue  { font-style: italic; color: var(--muted); }
+

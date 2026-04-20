@@ -374,13 +374,268 @@
     </div>
   </section>
 
-  <!-- ═══ [future slides] ══════════════════════════════════════════ -->
+  <!-- ═══ 13. Section: MoE × Long Context ════════════════════════ -->
+  <section class="slide section">
+    <div class="ghost">04</div>
+    <div class="sec-wrap">
+      <span class="sec-num">SECTION 04</span>
+      <h2>MoE 与<br>长上下文的结合</h2>
+      <p class="sec-en">When MoE Meets Long Context</p>
+    </div>
+  </section>
+
+  <!-- ═══ 14. MoE × Long Context Challenges ═══════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">14</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>结合时的三重挑战</h2><div class="en">Three Tensions</div></div>
+      <div class="rule"></div>
+      <div class="three">
+        <div class="chal-card">
+          <div class="chal-num">挑战 01</div>
+          <h3>KV 缓存膨胀</h3>
+          <p>KV cache 大小随序列长度 $n$ 线性增长，与 MoE 架构无关。每层每 token 需缓存 $2 \cdot n_{\text{heads}} \cdot d_k$ 的浮点数，128K 上下文下单模型可达数十 GB。</p>
+        </div>
+        <div class="chal-card">
+          <div class="chal-num">挑战 02</div>
+          <h3>路由独立性</h3>
+          <p>每个 token 独立做路由决策，长序列中相邻 token 可能被分发至截然不同的专家。跨位置的<strong>语义连贯性</strong>无法通过路由机制保证。</p>
+        </div>
+        <div class="chal-card">
+          <div class="chal-num">挑战 03</div>
+          <h3>分布式通信开销</h3>
+          <p>分布式训练中专家分散在不同设备上，每层均需 all-to-all 通信。序列越长，通信量越大，成为扩展时的主要瓶颈之一。</p>
+        </div>
+      </div>
+      <div class="box" style="margin-top:0.8rem">核心矛盾：MoE 扩大了<strong>参数容量</strong>，长上下文扩大了<strong>信息容量</strong>，但两者叠加后的<strong>显存压力</strong>也随之倍增</div>
+    </div>
+  </section>
+
+  <!-- ═══ 15. DeepSeek-V2 Case Study ══════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">15</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>案例：DeepSeek-V2</h2><div class="en">MoE + Long Context in Practice</div></div>
+      <div class="rule"></div>
+      <div class="two">
+        <div style="display:flex;flex-direction:column;gap:1rem;flex:1">
+          <ul class="bl">
+            <li>总参数 <strong>236B</strong>，每 token 激活 <strong>21B</strong>，上下文 <strong>128K</strong></li>
+            <li>MoE 架构：2 个<em>共享专家</em> + 160 个<em>路由专家</em>，激活 top-6</li>
+            <li>引入 <strong>MLA（Multi-head Latent Attention）</strong>压缩 KV 缓存</li>
+            <li>训练成本仅为 GPT-4 级别 dense 模型的约 $\frac{1}{10}$</li>
+          </ul>
+          <div class="box">推理时 KV 缓存：标准 MHA 每 token ~576 维 → MLA 压缩至 ~512 维低秩向量，节省 <strong>93.3%</strong></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.8rem;align-items:flex-start">
+          <div style="font-size:0.88rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">KV 缓存对比（每 token）</div>
+          <div class="kv-compare" style="width:100%;justify-content:center">
+            <div class="kv-bar-wrap">
+              <div class="kv-bar" style="height:130px"></div>
+              <div class="kv-label">标准 MHA</div>
+              <div class="kv-val">~576 维</div>
+            </div>
+            <div style="font-size:1.8rem;color:var(--sub);padding-bottom:2rem">→</div>
+            <div class="kv-bar-wrap">
+              <div class="kv-bar small" style="height:9px"></div>
+              <div class="kv-label">MLA</div>
+              <div class="kv-val">~38 维</div>
+            </div>
+          </div>
+          <div style="font-size:0.88rem;color:var(--sub);text-align:center;width:100%">（压缩后需上采样恢复 K/V，推理时延增加可忽略）</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 16. Section: Demo ════════════════════════════════════════ -->
+  <section class="slide section">
+    <div class="ghost">05</div>
+    <div class="sec-wrap">
+      <span class="sec-num">SECTION 05</span>
+      <h2>动手演示</h2>
+      <p class="sec-en">Hands-on Exercise</p>
+    </div>
+  </section>
+
+  <!-- ═══ 17. Demo — Needle in a Haystack ════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">17</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>大海捞针测试</h2><div class="en">Needle in a Haystack</div></div>
+      <div class="rule"></div>
+      <div class="two">
+        <ol class="steps">
+          <li class="step">
+            <span class="step-num">1</span>
+            <div class="step-body">打开任意支持长上下文的模型
+              <span class="step-note">推荐：Claude / GPT-4o / Gemini 1.5</span>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-num">2</span>
+            <div class="step-body">复制一篇 2000+ 字的中文文章
+              <span class="step-note">例：维基百科「人工智能」词条</span>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-num">3</span>
+            <div class="step-body">在文章<strong>正中间</strong>插入一句"针"
+              <span class="step-note">例："小明的幸运数字是 <strong>XK-2048</strong>"</span>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-num">4</span>
+            <div class="step-body">在提示末尾提问，观察模型回答
+              <span class="step-note">尝试把"针"放在开头、中间、结尾对比结果</span>
+            </div>
+          </li>
+        </ol>
+        <div style="display:flex;flex-direction:column;gap:0.8rem;flex:1">
+          <div style="font-size:0.88rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">示例 Prompt</div>
+          <div class="needle-box">
+            <span class="cm">…（文章前半段）…</span><br><br>
+            <span class="hl">小明的幸运数字是 XK-2048。</span><br><br>
+            <span class="cm">…（文章后半段）…</span><br><br>
+            请问：小明的幸运数字是什么？
+          </div>
+          <div class="box" style="font-size:1rem">
+            <strong>预期结果：</strong>短上下文模型（截断中段）→ 无法回答；<br>
+            长上下文模型 → 能准确返回 <code style="font-family:'Fira Code';color:var(--acc)">XK-2048</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 18. Section: Critical Hypotheses ════════════════════════ -->
+  <section class="slide section">
+    <div class="ghost">06</div>
+    <div class="sec-wrap">
+      <span class="sec-num">SECTION 06</span>
+      <h2>关键假说</h2>
+      <p class="sec-en">Critical Hypotheses</p>
+    </div>
+  </section>
+
+  <!-- ═══ 19. Critical Hypotheses ════════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">19</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>三个值得追问的假说</h2><div class="en">Open Questions</div></div>
+      <div class="rule"></div>
+      <div class="hyp-grid">
+        <div class="hyp-card">
+          <div class="hyp-tag">假说 01</div>
+          <h3>专家真的「专业化」了吗？</h3>
+          <p>MoE 中的专家是否学到了不同的语言/语义技能？还是负载均衡掩盖了随机性？研究表明部分专家偏向特定语言或句法结构，但机制尚不明朗。</p>
+          <div class="hyp-open">如果专业化是假象，MoE 的可解释性优势是否不存在？</div>
+        </div>
+        <div class="hyp-card">
+          <div class="hyp-tag">假说 02</div>
+          <h3>长上下文真的被用到了吗？</h3>
+          <p>Liu et al. (2023) 发现：模型对<strong>开头和结尾</strong>的信息利用率最高，中间段容易被遗忘。即使上下文窗口达 1M，有效利用率可能远低于预期。</p>
+          <div class="litm-wrap" style="margin-top:0.3rem">
+            <div class="litm">
+              <!-- U-shape: hi lo lo lo lo hi -->
+              <div class="lb hi"  style="height:92%"></div>
+              <div class="lb mid" style="height:70%"></div>
+              <div class="lb lo"  style="height:42%"></div>
+              <div class="lb lo"  style="height:28%"></div>
+              <div class="lb lo"  style="height:28%"></div>
+              <div class="lb lo"  style="height:35%"></div>
+              <div class="lb lo"  style="height:42%"></div>
+              <div class="lb mid" style="height:65%"></div>
+              <div class="lb hi"  style="height:90%"></div>
+            </div>
+            <div class="litm-label"><span>开头</span><span>← 位置 →</span><span>结尾</span></div>
+          </div>
+          <div class="hyp-open">「长上下文」≠「有效利用长上下文」</div>
+        </div>
+        <div class="hyp-card">
+          <div class="hyp-tag">假说 03</div>
+          <h3>MoE + 长上下文是否相互增强？</h3>
+          <p>MoE 扩大了参数容量，长上下文扩大了信息容量，两者是否真正协同？还是各自独立地解决不同问题，叠加只带来了更高的系统复杂度？</p>
+          <div class="hyp-open">未来架构是否存在更优雅的统一方案？</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 20. References ════════════════════════════════════════════ -->
+  <section class="slide">
+    <div class="rail">
+      <span class="num">20</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>参考文献</h2><div class="en">References</div></div>
+      <div class="rule"></div>
+      <div class="ref-grid">
+        <div class="ref">
+          <div class="ref-title">Outrageously Large Neural Networks: The Sparsely-Gated MoE Layer</div>
+          <div class="ref-meta">Shazeer et al. &nbsp;·&nbsp; <span class="ref-venue">ICLR 2017</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">Switch Transformers: Scaling to Trillion Parameter Models</div>
+          <div class="ref-meta">Fedus et al. &nbsp;·&nbsp; <span class="ref-venue">JMLR 2022</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">Mixtral of Experts</div>
+          <div class="ref-meta">Jiang et al. &nbsp;·&nbsp; <span class="ref-venue">arXiv 2024</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">DeepSeek-V2: A Strong, Economical, and Efficient MoE Language Model</div>
+          <div class="ref-meta">DeepSeek-AI &nbsp;·&nbsp; <span class="ref-venue">arXiv 2024</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">Scaling Laws for Neural Language Models</div>
+          <div class="ref-meta">Kaplan et al. &nbsp;·&nbsp; <span class="ref-venue">arXiv 2020</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">Training Compute-Optimal Large Language Models (Chinchilla)</div>
+          <div class="ref-meta">Hoffmann et al. &nbsp;·&nbsp; <span class="ref-venue">NeurIPS 2022</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">RoFormer: Enhanced Transformer with Rotary Position Embedding</div>
+          <div class="ref-meta">Su et al. &nbsp;·&nbsp; <span class="ref-venue">Neurocomputing 2024</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">FlashAttention: Fast and Memory-Efficient Exact Attention</div>
+          <div class="ref-meta">Dao et al. &nbsp;·&nbsp; <span class="ref-venue">NeurIPS 2022</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">Lost in the Middle: How Language Models Use Long Contexts</div>
+          <div class="ref-meta">Liu et al. &nbsp;·&nbsp; <span class="ref-venue">TACL 2023</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ [end] ══════════════════════════════════════════════════════ -->
 
 </div><!-- .deck -->
 
 <nav class="nav">
   <button id="prev" disabled>←</button>
-  <span id="counter" class="ct">1 / 12</span>
+  <span id="counter" class="ct">1 / 20</span>
   <button id="next">→</button>
 </nav>
 
