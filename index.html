@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>混合专家模型与长上下文 · MoE &amp; Long Context</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="progress"></div>
+
+<div class="slideshow">
+
+  <!-- ═══════════════════════ 1. Title ══════════════════════════ -->
+  <section class="slide title-slide active">
+    <h1>混合专家模型<br>与长上下文</h1>
+    <p class="en-title">Mixture of Experts &amp; Long Context</p>
+    <p class="course">CS2916-01 大语言模型 &nbsp;·&nbsp; ACM Class 2026 &nbsp;·&nbsp; StarryPurple</p>
+  </section>
+
+  <!-- ═══════════════════════ 2. Agenda ═════════════════════════ -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>目录</h2>
+      <div class="en">Agenda</div>
+    </div>
+    <ul class="agenda">
+      <li><span class="num">01</span> 背景：规模定律的代价</li>
+      <li><span class="num">02</span> 混合专家模型（MoE）</li>
+      <li><span class="num">03</span> 长上下文技术</li>
+      <li><span class="num">04</span> MoE 与长上下文的结合</li>
+      <li><span class="num">05</span> 动手演示</li>
+      <li><span class="num">06</span> 关键假说</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════ 3. Scaling Laws ═══════════════════ -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>规模定律：越大越好？</h2>
+      <div class="en">Scaling Laws</div>
+    </div>
+    <ul class="bullets">
+      <li>Kaplan et al. (2020)：性能随参数量 <em>N</em>、数据量 <em>D</em>、算力 <em>C</em> 呈<strong>幂律增长</strong></li>
+      <li>Chinchilla (2022)：算力最优训练中，<em>N</em> 与 <em>D</em> 应<strong>同比例增长</strong></li>
+      <li>GPT-3：1,750 亿参数 &nbsp;→&nbsp; Llama 3：4,050 亿参数 &nbsp;→&nbsp; 还要更大？</li>
+    </ul>
+    <div class="callout warning">
+      核心矛盾：参数量 10× &nbsp;⇒&nbsp; 推理成本 10×。模型训练一次，但推理成千上万次。
+    </div>
+    <div class="callout">
+      能否让模型<strong>「拥有」更多参数</strong>，却只<strong>「使用」其中一部分</strong>？
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 4. Dense vs Sparse ════════════════ -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>稠密 vs 稀疏激活</h2>
+      <div class="en">Dense vs Sparse Activation</div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h3>Dense（稠密）</h3>
+        <ul class="bullets">
+          <li>每个 token 激活<strong>全部</strong>参数</li>
+          <li>计算量正比于总参数量</li>
+          <li>代表模型：GPT-4、Llama 3</li>
+        </ul>
+        <div class="formula">FLOPs ≈ 2 · N · T</div>
+      </div>
+      <div class="card accent">
+        <h3>Sparse <span class="tag">MoE</span></h3>
+        <ul class="bullets">
+          <li>每个 token 只激活<strong>少数</strong>专家</li>
+          <li>计算量正比于<em>激活参数量</em></li>
+          <li>代表模型：Mixtral、DeepSeek-V2</li>
+        </ul>
+        <div class="formula">FLOPs ≈ 2 · N<sub>act</sub> · T &nbsp;&nbsp;(N<sub>act</sub> ≪ N)</div>
+      </div>
+    </div>
+    <div class="callout">
+      稀疏激活：以 <strong>Dense 级别的推理开销</strong>，撬动<strong>更大的模型容量</strong>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 5. MoE Core Mechanism ════════════ -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>MoE 核心机制</h2>
+      <div class="en">How MoE Works</div>
+    </div>
+    <ul class="bullets">
+      <li>将 Transformer 各层的 <strong>FFN</strong> 替换为 <em>E</em> 个并行的<strong>专家网络</strong></li>
+      <li><strong>门控网络（Router）</strong>为每个 token 计算专家得分，选取 top-<em>k</em> 个专家</li>
+      <li>仅被选中的 <em>k</em> 个专家参与前向计算，其余保持静默</li>
+      <li>各专家输出按路由权重加权求和，得到该层最终输出</li>
+    </ul>
+    <div class="formula">
+      y = &sum;<sub>i &isin; TopK(x)</sub> &nbsp; G<sub>i</sub>(x) &middot; Expert<sub>i</sub>(x)
+    </div>
+    <div class="callout">
+      Mixtral 8×7B：总参数 ~46.7B，每 token 激活 ~12.9B（≈ 7B dense 的推理成本）
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ [future slides] ═══════════════════ -->
+
+</div><!-- .slideshow -->
+
+<nav class="controls">
+  <button id="prev" disabled>←</button>
+  <span id="counter" class="slide-counter">1 / 5</span>
+  <button id="next">→</button>
+</nav>
+
+<script src="nav.js"></script>
+</body>
+</html>
