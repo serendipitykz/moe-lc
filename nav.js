@@ -1,8 +1,9 @@
 const slides = Array.from(document.querySelectorAll('.slide'));
-const counter  = document.getElementById('counter');
-const prevBtn  = document.getElementById('prev');
-const nextBtn  = document.getElementById('next');
-const progress = document.getElementById('prog');
+const counter   = document.getElementById('counter');
+const prevBtn   = document.getElementById('prev');
+const nextBtn   = document.getElementById('next');
+const notesBtn  = document.getElementById('notes-btn');
+const progress  = document.getElementById('prog');
 
 let current = 0;
 
@@ -26,9 +27,11 @@ function go(n) {
 document.addEventListener('keydown', e => {
   if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); go(current + 1); }
   else if (['ArrowLeft', 'ArrowUp'].includes(e.key))    { e.preventDefault(); go(current - 1); }
+  else if (e.key === 'n' || e.key === 'N')              { document.body.classList.toggle('notes-on'); }
 });
 
-prevBtn.addEventListener('click', () => go(current - 1));
-nextBtn.addEventListener('click', () => go(current + 1));
+prevBtn.addEventListener('click',  () => go(current - 1));
+nextBtn.addEventListener('click',  () => go(current + 1));
+notesBtn.addEventListener('click', () => document.body.classList.toggle('notes-on'));
 
 go(0);
