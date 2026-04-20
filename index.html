@@ -43,8 +43,7 @@
     <aside class="notes">
       <p>大家好，我是 StarryPurple，今天的报告题目是《混合专家模型与长上下文》。</p>
       <p>在过去几年，大语言模型的发展呈现出两条高度相关的主线：一是模型参数规模的急剧扩张，从 GPT-2 的 15 亿参数一路飙升到如今数千亿量级；二是上下文窗口的持续拉长，从最初的 2K token 扩展到今天的百万量级。</p>
-      <p>这两条线并非孤立演进。混合专家模型（MoE）在参数规模上给出了一个绕过算力瓶颈的优雅答案；而长上下文技术则是在使用层面对模型能力的另一维拓展。当二者相遇——比如 DeepSeek-V2、Mistral 系列最新版本——新的挑战与机遇也随之出现。</p>
-      <p>今天的报告大约四十分钟，分为六个部分：背景、MoE 机制、长上下文技术、两者的结合、动手演示，以及我认为值得深入追问的三个开放性假说。</p>
+      <p>MoE 在参数规模上给出了一个绕过算力瓶颈的优雅答案；长上下文技术则是在使用层面对模型能力的另一维拓展。今天的报告约四十分钟，分六个部分，以三个开放性假说收尾。</p>
     </aside>
   </section>
 
@@ -59,22 +58,17 @@
       <div class="hd"><h2>目录</h2><div class="en">Agenda</div></div>
       <div class="rule"></div>
       <ul class="agenda">
-        <li><span class="n">01</span> 背景：规模定律的代价</li>
-        <li><span class="n">02</span> 混合专家模型（MoE）</li>
-        <li><span class="n">03</span> 长上下文技术</li>
-        <li><span class="n">04</span> MoE 与长上下文的结合</li>
-        <li><span class="n">05</span> 动手演示</li>
-        <li><span class="n">06</span> 关键假说</li>
+        <li><span class="n">01</span> 背景：规模定律的代价 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">Scaling Laws · Dense 模型瓶颈</span></li>
+        <li><span class="n">02</span> 混合专家模型（MoE）&nbsp;<span style="font-size:0.9rem;color:var(--muted)">路由机制 · 负载均衡 · Mixtral 8×7B</span></li>
+        <li><span class="n">03</span> 长上下文技术 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">$O(n^2)$ 瓶颈 · RoPE · FlashAttention · GQA</span></li>
+        <li><span class="n">04</span> MoE 与长上下文的结合 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">三重挑战 · DeepSeek-V2 MLA</span></li>
+        <li><span class="n">05</span> 动手演示 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">Needle-in-a-Haystack 测试</span></li>
+        <li><span class="n">06</span> 关键假说 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">专业化？有效利用？协同增强？</span></li>
       </ul>
     </div>
     <aside class="notes">
-      <p>这是今天的内容概览。</p>
-      <p>我们先从<strong>背景</strong>讲起：为什么大模型的参数规模不能无限堆叠？规模定律给了我们什么启示，又在哪里触碰到了天花板？</p>
-      <p>接下来进入 MoE 的核心机制——路由器如何工作、负载均衡为什么关键，以及 Mixtral 这个典型实现的架构细节。</p>
-      <p>第三部分转向<strong>长上下文</strong>：注意力机制的 $O(n^2)$ 瓶颈、RoPE 位置编码、FlashAttention 等高效近似方案。</p>
-      <p>第四部分把两者放在一起，看 DeepSeek-V2 是如何同时应对 MoE 路由和百万级 KV 缓存的挑战的。</p>
-      <p>然后我们会有一个简短的动手演示，大家可以亲自感受长上下文模型的能力边界。</p>
-      <p>最后，我会提出三个我认为尚未有明确答案的假说，希望引发大家的讨论。</p>
+      <p>这是今天的内容概览。每行右侧是该部分的核心关键词，方便大家在听报告时对应到具体概念。</p>
+      <p>我们先从规模定律讲起，理解 Dense 模型的成本瓶颈；接着深入 MoE 的路由、负载均衡和 Mixtral 实现；第三部分转向长上下文；第四部分看两者结合；然后动手演示；最后以三个开放假说收尾，希望引发讨论。</p>
     </aside>
   </section>
 
@@ -88,21 +82,39 @@
     <div class="body">
       <div class="hd"><h2>规模定律：越大越好？</h2><div class="en">Scaling Laws</div></div>
       <div class="rule"></div>
-      <ul class="bl">
-        <li>Kaplan et al. (2020)：性能随参数量 $N$、数据量 $D$、算力 $C$ 呈<strong>幂律增长</strong></li>
-        <li>Chinchilla (2022)：算力最优训练中，$N$ 与 $D$ 应<strong>同比例增长</strong></li>
-        <li>GPT-3：1,750 亿参数 &nbsp;→&nbsp; Llama 3：4,050 亿参数 &nbsp;→&nbsp; 还要更大？</li>
-      </ul>
-      <div class="box warn">核心矛盾：参数量 $10\times$ &nbsp;⇒&nbsp; 推理成本 $10\times$。模型训练一次，但推理成千上万次。</div>
-      <div class="box">能否让模型<strong>「拥有」更多参数</strong>，却只<strong>「使用」其中一部分</strong>？</div>
+      <div style="display:flex;gap:2rem;flex:1;align-items:flex-start;">
+        <div style="flex:1.3;display:flex;flex-direction:column;gap:0.9rem;">
+          <ul class="bl" style="flex:0">
+            <li>Kaplan (2020)：$L \approx \bigl(N_c/N\bigr)^{0.076}$，性能随 $N$、$D$、$C$ 呈<strong>幂律增长</strong>，暂无明显上限</li>
+            <li>Chinchilla (2022)：计算最优时 $N_{\text{opt}} \propto C^{0.5}$，$D_{\text{opt}} \propto C^{0.5}$——<strong>token 数应约等于 20×参数量</strong></li>
+            <li>GPT-3 仅用 300B token 训练 175B 模型 → <em>数据严重不足</em>；Llama 3 修正为 15T token + 405B 参数</li>
+          </ul>
+          <div class="box warn">核心矛盾：参数量 $10\times$ ⇒ 推理成本 $10\times$。模型训练一次，但推理<strong>每次请求都要重做</strong>。</div>
+          <div class="box">能否让模型<strong>「拥有」更多参数</strong>，却只<strong>「使用」其中一部分</strong>？</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Chinchilla 最优分配</div>
+          <table class="tbl">
+            <thead><tr><th>算力预算</th><th>最优参数量</th><th>最优 Tokens</th></tr></thead>
+            <tbody>
+              <tr><td>$10^{21}$ FLOP</td><td>~1B</td><td>~20B</td></tr>
+              <tr><td>$10^{23}$ FLOP</td><td>~10B</td><td>~200B</td></tr>
+              <tr><td>$10^{24}$ FLOP</td><td>~70B</td><td class="hi">~1.4T ← Llama 2</td></tr>
+              <tr><td>$10^{25}$ FLOP</td><td>~220B</td><td class="hi">~4.4T ← Llama 3</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:0.88rem;color:var(--sub)">
+            推理 FLOPs/token ≈ $2N$：<br>
+            175B Dense → <strong>350 GFLOP/tok</strong><br>
+            Llama 3 405B → <strong>810 GFLOP/tok</strong>
+          </div>
+        </div>
+      </div>
     </div>
     <aside class="notes">
-      <p>我们先来理解问题的根源。</p>
-      <p>2020 年，OpenAI 的 Kaplan 等人发表了一篇现在被称为「规模定律」的论文。他们发现，语言模型的性能——比如验证集 loss——与参数量 $N$、训练数据量 $D$、计算量 $C$ 之间，存在相当稳定的<strong>幂律关系</strong>。换句话说：模型越大、数据越多、算力越强，性能越好，而且这条曲线还没有明显的拐点。</p>
-      <p>2022 年，DeepMind 的 Chinchilla 论文给出了一个更精确的结论：在算力固定的情况下，最优的训练方式是让参数量和数据量<strong>同比例增长</strong>——也就是说，之前很多模型其实在「数据上训练不足」，GPT-3 如果只用一半参数但训练两倍的 token，效果会更好。</p>
-      <p>这个结论带来了一波重新评估：是不是应该暂停对参数量的追求，转而把钱花在数据上？但很快，Llama 3 用 4000 亿参数打破了这个疑虑，训练数据也同步从 1 万亿 token 扩展到了 15 万亿。规模还是在增长。</p>
-      <p>问题在哪里？<strong>推理成本</strong>。训练一个模型是一次性的，但推理是每次用户请求都要做的。如果参数量增长 10 倍，推理的 FLOPs 也增长 10 倍，这对服务成本是直接的线性冲击。</p>
-      <p>所以这里有一个很自然的问题：能不能让模型「名义上」拥有很多参数，但实际做推理时只激活其中一小部分？这就是稀疏激活的动机，也是 MoE 的核心思想。</p>
+      <p>规模定律的核心结论是：更大的模型、更多的数据、更多的算力，都会带来可预测的性能提升，且暂无拐点。Kaplan 给出的参数量幂律指数约为 0.076，意思是参数量每增加 10 倍，loss 大约降低 0.076 个 nats。</p>
+      <p>Chinchilla 的贡献是：在固定算力下，参数量和训练 token 数应该同步扩大，比例约为 1:20。这意味着 GPT-3 的 300B token 对 175B 模型来说严重不足。Llama 3 用 15T token 训练 405B 模型，比例约为 1:37，比 Chinchilla 建议的还要更数据密集。</p>
+      <p>但无论怎么优化训练，推理成本的线性增长是无法回避的。右侧的表格显示，一个 405B 模型每生成一个 token 需要约 810 GFLOP 的计算——而服务大规模用户时，这个成本会直接转化为延迟和电费。这就是 MoE 要解决的问题。</p>
     </aside>
   </section>
 
@@ -116,35 +128,35 @@
     <div class="body">
       <div class="hd"><h2>稠密 vs 稀疏激活</h2><div class="en">Dense vs Sparse Activation</div></div>
       <div class="rule"></div>
-      <div class="two">
+      <div class="two" style="flex:1">
         <div class="card">
           <h3>Dense（稠密）</h3>
           <ul class="bl">
             <li>每个 token 激活<strong>全部</strong>参数</li>
-            <li>计算量正比于总参数量</li>
-            <li>代表：GPT-4、Llama 3</li>
+            <li>推理 FLOPs ∝ 总参数量 $N$</li>
+            <li>KV cache 随序列长度线性增长，与 $N$ 无直接关联</li>
+            <li>硬件利用率高，内存访问模式规整</li>
+            <li>代表：GPT-4（~1T est.）、Llama 3（405B）</li>
           </ul>
           <div class="formula">$$\text{FLOPs} \approx 2 \cdot N \cdot T$$</div>
         </div>
         <div class="card hi">
           <h3>Sparse <span class="tag">MoE</span></h3>
           <ul class="bl">
-            <li>每个 token 只激活<strong>少数</strong>专家</li>
-            <li>计算量正比于激活参数量</li>
-            <li>代表：Mixtral、DeepSeek-V2</li>
+            <li>每个 token 仅激活<strong> $k$ 个专家</strong>（通常 $k \ll E$）</li>
+            <li>推理 FLOPs ∝ 激活参数量 $N_{\text{act}}$，$N_{\text{act}} \ll N$</li>
+            <li>代价：所有专家须<strong>全驻显存</strong>；分布式部署需额外通信</li>
+            <li>训练时梯度稀疏，需辅助损失维持稳定</li>
+            <li>代表：Mixtral 8×7B（47B→13B act）、DeepSeek-V2</li>
           </ul>
           <div class="formula">$$\text{FLOPs} \approx 2 \cdot N_{\text{act}} \cdot T \quad (N_{\text{act}} \ll N)$$</div>
         </div>
       </div>
-      <div class="box">以 <strong>Dense 级别的推理开销</strong>，撬动<strong>更大的模型容量</strong></div>
+      <div class="box" style="margin-top:0.6rem">以 <strong>Dense 级别的推理 FLOPs</strong>，撬动<strong>远大于 Dense 的参数容量</strong>——参数量 ≠ 激活参数量</div>
     </div>
     <aside class="notes">
-      <p>我们来做一个直接的对比。</p>
-      <p>标准的 Dense 模型，比如 GPT-4、Llama 3，每次前向传播时，输入的每一个 token 都会经过模型的<strong>全部</strong>参数。计算量大致是 $2NT$，$N$ 是参数量，$T$ 是 token 数量。这意味着模型越大，每推理一个 token，成本就越高。</p>
-      <p>MoE 的思路是：在模型里放 $E$ 个「专家」（通常是独立的 FFN 网络），每个 token 进来时，由一个路由器决定让哪 $k$ 个专家处理它，其他专家不参与计算。这样激活参数量 $N_{\text{act}}$ 就远小于总参数量 $N$。</p>
-      <p>以 Mixtral 8×7B 为例，模型总参数约 46.7B，但每个 token 只激活约 12.9B，也就是说推理成本相当于一个 13B 的 Dense 模型，但模型「拥有」的知识容量却接近 47B。</p>
-      <p>这个「拥有」与「使用」的分离，是 MoE 最核心的价值主张。它本质上是把训练时的参数利用率和推理时的计算效率解耦了。</p>
-      <p>当然这里有个隐含的假设：不同专家学到的内容是不同的，专业化确实发生了。这个假设是否成立，是后面我们会在假说部分讨论的一个问题。</p>
+      <p>这张对比图要强调的核心区分是：「拥有多少参数」和「每步用多少参数」是可以分离的。Dense 模型把这两个数字绑死了；MoE 把它们解耦了。</p>
+      <p>需要特别指出的是 MoE 的两个代价：其一，所有专家的参数必须同时驻留在 GPU 显存里，因为任何 token 都可能路由到任何专家；其二，在多 GPU 分布式部署中，当 token 被路由到另一块 GPU 上的专家时，需要跨设备通信，引入额外延迟。这两个代价在工程落地时至关重要，是选择 Dense 还是 MoE 的核心权衡点。</p>
     </aside>
   </section>
 
@@ -158,26 +170,44 @@
     <div class="body">
       <div class="hd"><h2>MoE 核心机制</h2><div class="en">How MoE Works</div></div>
       <div class="rule"></div>
-      <ul class="bl">
-        <li>将 Transformer 各层的 <strong>FFN</strong> 替换为 $E$ 个并行的<strong>专家网络</strong></li>
-        <li><strong>门控网络（Router）</strong>为每个 token 计算专家得分，选取 $\text{top-}k$ 个专家</li>
-        <li>仅被选中的 $k$ 个专家参与前向计算，其余保持静默</li>
-        <li>各专家输出按路由权重加权求和，得到该层最终输出</li>
-      </ul>
-      <div class="formula">
-        $$y = \sum_{i \,\in\, \text{TopK}(x)} G_i(x) \cdot \text{Expert}_i(x)$$
+      <!-- Routing flow diagram -->
+      <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div class="rope-box" style="padding:0.5rem 1rem;text-align:center;font-size:1rem;">输入 $x$</div>
+        <div class="rope-op" style="font-size:1.5rem">→</div>
+        <div class="rope-box acc" style="padding:0.5rem 1rem;text-align:center;font-size:1rem;">路由器<br><span style="font-size:0.8rem;color:var(--sub)">$g = xW_{\!g}$</span></div>
+        <div class="rope-op" style="font-size:1.5rem">→</div>
+        <div class="rope-box acc" style="padding:0.5rem 1rem;text-align:center;font-size:1rem;">Top-$k$ + Softmax<br><span style="font-size:0.8rem;color:var(--sub)">得分归一化</span></div>
+        <div class="rope-op" style="font-size:1.5rem">→</div>
+        <div style="display:flex;flex-direction:column;gap:0.3rem;">
+          <div class="rope-box" style="font-size:0.9rem;padding:0.3rem 0.8rem;">Expert $i_1$ <span style="color:var(--acc);font-weight:700">✓</span></div>
+          <div class="rope-box" style="font-size:0.9rem;padding:0.3rem 0.8rem;">Expert $i_2$ <span style="color:var(--acc);font-weight:700">✓</span></div>
+          <div style="text-align:center;color:var(--muted);font-size:0.9rem;">⋮ <span style="font-size:0.75rem">(其余静默)</span></div>
+        </div>
+        <div class="rope-op" style="font-size:1.5rem">→</div>
+        <div class="rope-box acc" style="padding:0.5rem 1rem;text-align:center;font-size:1rem;">加权求和 $y$<br><span style="font-size:0.8rem;color:var(--sub)">$\sum G_i \cdot E_i(x)$</span></div>
       </div>
-      <div class="box">典型配置：$E = 8$ 个专家，$k = 2$（top-2 路由）</div>
+      <div style="display:flex;gap:1.4rem;flex:1;align-items:flex-start;">
+        <ul class="bl" style="flex:1.3;flex-shrink:0;">
+          <li>Transformer 每层的 <strong>FFN</strong> 替换为 $E$ 个并行专家；Attention 层不变，各层共享</li>
+          <li>门控得分 $G_i(x) = \mathrm{Softmax}(\mathrm{TopK}(xW_g))_i$，仅被选中的 $k$ 个非零</li>
+          <li>每个 token 独立路由，同一 batch 中不同 token 可激活<strong>完全不同的专家组合</strong></li>
+          <li>前向计算量 ≈ 原 FFN 的 $k/E$；反向传播梯度仅流向被激活的专家</li>
+        </ul>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.8rem;">
+          <div class="formula">$$y = \sum_{i \,\in\, \mathrm{TopK}(x)} G_i(x) \cdot \mathrm{Expert}_i(x)$$</div>
+          <div class="box" style="margin-top:0">
+            典型配置：<br>
+            $E = 8,\ k = 2$（Mixtral）<br>
+            $E = 64,\ k = 6$（DeepSeek-V2 路由专家）<br>
+            $E = 2048,\ k = 2$（Switch Transformer 极端版）
+          </div>
+        </div>
+      </div>
     </div>
     <aside class="notes">
-      <p>我们来详细看一下 MoE 的内部机制。</p>
-      <p>在标准 Transformer 里，每个 attention 层之后跟着一个 FFN（前馈网络）。MoE 的修改很简单：把这个单一的 FFN 替换成 $E$ 个并行的 FFN，每个叫做一个「专家」。</p>
-      <p>每当一个 token 的表示向量 $x$ 到来，首先经过一个小型的<strong>路由器网络</strong>（通常是一个线性层加 softmax），得到对每个专家的得分向量 $g(x) \in \mathbb{R}^E$。然后从中取 top-$k$ 个得分最高的专家，只让这 $k$ 个专家参与计算。</p>
-      <p>这 $k$ 个专家各自输出一个向量，最终以路由权重 $G_i(x)$（经过归一化的得分）做加权求和，得到该层的输出 $y$。这个公式就是幻灯片上的那个式子。</p>
-      <p>有几个需要注意的细节：</p>
-      <p>第一，路由权重是<strong>可学习</strong>的，路由器参数在整个训练过程中会被梯度更新，但反向传播时 top-k 选取操作是不可微的，通常通过 straight-through 估计或者辅助损失来处理。</p>
-      <p>第二，不同 token 选中的专家可以<strong>完全不同</strong>。这就是所谓「稀疏激活」——从一个 batch 的角度看，所有专家都在工作，但对每个 token 而言，它只触发了 $k$ 个。</p>
-      <p>第三，在实际工程中，$k=2$ 是目前最常见的配置。更大的 $k$ 增加计算量，更小的 $k$（比如 $k=1$）则会导致梯度估计变得更嘈杂。</p>
+      <p>MoE 的修改只发生在 FFN 层，Attention 部分完全不变。路由器是一个小型线性层，把 token 表示 $x$ 映射到 $E$ 维得分向量，取 top-k 个正分值后用 softmax 归一化。</p>
+      <p>top-k 操作本身不可微，但实践中通常直接用 straight-through 估计，或者依赖辅助损失提供足够的训练信号。</p>
+      <p>一个常被忽视的细节：从整个 batch 的视角看，所有专家在每一步都在工作（不同 token 分流给不同专家），所以硬件利用率并不低；但对每个 token 而言，它只「看到」了 $k$ 个专家。这种全局并行、局部稀疏的特性，是 MoE 能保持高吞吐量的关键。</p>
     </aside>
   </section>
 
@@ -191,26 +221,39 @@
     <div class="body">
       <div class="hd"><h2>负载均衡挑战</h2><div class="en">Load Balancing</div></div>
       <div class="rule"></div>
-      <ul class="bl">
-        <li>若不加约束，路由器倾向于反复选择<strong>同几个专家</strong>，其余专家几乎从不激活</li>
-        <li>称为<strong>专家崩塌（Expert Collapse）</strong>：大量参数被浪费，模型容量无法利用</li>
-        <li>解决方案：在训练损失中加入<strong>辅助均衡损失</strong> $\mathcal{L}_{\text{aux}}$</li>
-      </ul>
-      <div class="formula">
-        $$\mathcal{L}_{\text{aux}} = \alpha \sum_{i=1}^{E} f_i \cdot P_i$$
-      </div>
-      <div class="box">
-        $f_i$：token 路由至专家 $i$ 的比例 &nbsp;·&nbsp;
-        $P_i$：专家 $i$ 的平均路由概率 &nbsp;·&nbsp;
-        $\alpha$：均衡系数
+      <div style="display:flex;gap:2rem;flex:1;align-items:flex-start;">
+        <div style="flex:1.4;display:flex;flex-direction:column;gap:0.9rem;">
+          <ul class="bl" style="flex:0">
+            <li>若不加约束，路由器初期随机偏差 → 某几个专家被<strong>正反馈循环</strong>强化 → <strong>专家崩塌（Expert Collapse）</strong></li>
+            <li>崩塌后：头部 1-2 个专家承接几乎所有 token，其余专家几乎从不更新，大量参数浪费</li>
+            <li>解决①：辅助均衡损失 $\mathcal{L}_{\mathrm{aux}}$，惩罚负载集中；建议 $\alpha \approx 10^{-2}$</li>
+            <li>解决②：<strong>Token Capacity</strong> 硬上限——每专家每 batch 最多处理 $\lfloor T/E \cdot C \rfloor$ 个 token，超额 token 跳过（$C$ 为容量因子，通常 1.0–1.25）</li>
+          </ul>
+          <div class="formula">
+            $$\mathcal{L}_{\mathrm{aux}} = \alpha \sum_{i=1}^{E} \underbrace{f_i}_{\text{实际比例}} \cdot \underbrace{P_i}_{\text{路由概率均值}}$$
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.7rem;">
+          <!-- Collapse feedback loop diagram -->
+          <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">专家崩塌的正反馈</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+            <div class="rope-box" style="width:100%;text-align:center;font-size:0.95rem;">专家 $i$ 初始偏强</div>
+            <div style="color:var(--muted)">↓</div>
+            <div class="rope-box acc" style="width:100%;text-align:center;font-size:0.95rem;">更多 token 路由到 $i$</div>
+            <div style="color:var(--muted)">↓</div>
+            <div class="rope-box acc" style="width:100%;text-align:center;font-size:0.95rem;">$i$ 获得更多梯度更新</div>
+            <div style="color:var(--muted)">↓</div>
+            <div class="rope-box" style="width:100%;text-align:center;font-size:0.95rem;border-color:rgba(79,70,229,0.5);">$i$ 变得更强 → 循环</div>
+          </div>
+          <div class="box" style="margin-top:0;font-size:1.05rem;">
+            $f_i \cdot P_i$ 最小化等价于让两个分布<strong>尽量均匀</strong>；二者之积在均匀分布时最小
+          </div>
+        </div>
       </div>
     </div>
     <aside class="notes">
-      <p>MoE 有一个非常典型的训练不稳定性问题，叫做<strong>专家崩塌</strong>（Expert Collapse）。</p>
-      <p>想象一下，训练刚开始时，路由器随机初始化，所有专家被均匀选中。但很快，某几个专家碰巧在初始化时稍微好一点，路由器就会更多地选择它们；这些专家因为被更多梯度更新，变得更强；更强了之后路由器更倾向于选它们——这是一个<strong>正反馈循环</strong>，导致最终大部分 token 都流向同几个专家，其他专家几乎得不到训练，参数被浪费。</p>
-      <p>解决方法是在总损失函数里加一个<strong>辅助均衡损失</strong>。Switch Transformer（Fedus et al., 2022）给出的形式是：对每个专家 $i$，计算实际路由到该专家的 token 比例 $f_i$，以及路由器对该专家的平均 softmax 概率 $P_i$，两者乘积求和再乘一个系数 $\alpha$。</p>
-      <p>直觉上，如果某个专家 $f_i$ 很大（路由集中），对应的 $P_i$ 也会大，乘积就会大，损失就增加，迫使路由器学会更均匀地分发。</p>
-      <p>$\alpha$ 是一个超参数，通常设得很小（比如 $10^{-2}$），过大会损害主任务性能，过小均衡效果不佳。DeepSeek-V2 中还引入了更细粒度的 token 限制（Expert Capacity），硬性限制每个专家在一个 batch 里能接收的 token 数量上限，作为辅助均衡损失的补充。</p>
+      <p>专家崩塌是 MoE 训练中最常见的失败模式。核心原因是路由器的梯度流存在正反馈：被选中的专家得到更新，更新后更强，于是被更多地选中。辅助损失通过对 $f_i \cdot P_i$ 的求和惩罚来打破这个循环。</p>
+      <p>Token Capacity 机制则是一个硬约束，当某个专家已满时，超额 token 要么被丢弃，要么路由给 reserve expert（备用专家）。这在推理时确保所有设备的负载更均衡，但在训练时需要小心不要因为频繁丢弃 token 而影响学习效果。DeepSeek 使用的是更细粒度的 device-level 均衡，而不是单纯的 global 均衡。</p>
     </aside>
   </section>
 
@@ -224,35 +267,38 @@
     <div class="body">
       <div class="hd"><h2>Mixtral 8×7B 解析</h2><div class="en">A Modern MoE in Practice</div></div>
       <div class="rule"></div>
-      <div class="two">
-        <div class="card">
-          <h3>架构参数</h3>
-          <ul class="bl">
-            <li>32 层 Transformer，每层 FFN → 8 专家</li>
-            <li>路由：top-2，每 token 激活 2 个专家</li>
-            <li>上下文长度：32K tokens</li>
-            <li>激活函数：SwiGLU</li>
-          </ul>
+      <div style="display:flex;gap:1.6rem;flex:1;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.8rem;">
+          <div class="card" style="flex:0">
+            <h3>架构参数</h3>
+            <ul class="bl">
+              <li>32 层，每层 FFN → 8 专家，路由 top-2</li>
+              <li>隐藏维度：4096；FFN 中间维度：14336（每专家）</li>
+              <li>Attention：32 heads，GQA 8 groups（KV heads=8）</li>
+              <li>上下文：32K；激活函数：SwiGLU</li>
+              <li>总参数 ~46.7B，激活参数 ~12.9B（≈ 7B Dense 成本）</li>
+            </ul>
+          </div>
+          <div class="box">$\dfrac{N_{\mathrm{act}}}{N} = \dfrac{12.9\text{B}}{46.7\text{B}} \approx 27.6\%$ — 用约三成参数完成推理</div>
         </div>
-        <div class="card hi">
-          <h3>规模与效果</h3>
-          <ul class="bl">
-            <li>总参数：$\sim\!46.7\text{B}$</li>
-            <li>每 token 激活：$\sim\!12.9\text{B}$（≈ 7B dense 成本）</li>
-            <li>超越 Llama 2 70B（多数基准）</li>
-            <li>推理成本仅为同体量 dense 的 $\frac{1}{4}$</li>
-          </ul>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">基准测试对比</div>
+          <table class="tbl">
+            <thead><tr><th>模型</th><th>激活参数</th><th>MMLU</th><th>HumanEval</th><th>HellaSwag</th></tr></thead>
+            <tbody>
+              <tr><td>Llama 2 13B</td><td>13B</td><td>54.8</td><td>18.3</td><td>80.7</td></tr>
+              <tr><td>Llama 2 70B</td><td>70B</td><td>69.8</td><td>29.9</td><td>87.1</td></tr>
+              <tr><td class="hi">Mixtral 8×7B</td><td class="ok">13B</td><td class="hi">70.6</td><td class="hi">40.2</td><td>86.7</td></tr>
+              <tr><td>GPT-3.5</td><td>—</td><td>70.0</td><td>48.1</td><td>85.5</td></tr>
+            </tbody>
+          </table>
+          <div class="box" style="font-size:1rem;">以 <strong>Llama 2 13B 的推理成本</strong>，超过 <strong>Llama 2 70B 的性能</strong>（多数基准），KV cache 也只有 70B 模型的约 $\tfrac{1}{5}$</div>
         </div>
       </div>
-      <div class="box">$\frac{N_{\text{act}}}{N} = \frac{12.9\text{B}}{46.7\text{B}} \approx 27.6\%$ &nbsp;— 用不到三成的参数完成每步计算</div>
     </div>
     <aside class="notes">
-      <p>我们看一个具体的工业级实现：Mistral AI 在 2024 年发布的 Mixtral 8×7B。</p>
-      <p>架构上，Mixtral 是一个 32 层的 Transformer，Attention 部分和 Dense 模型没有区别，但每层的 FFN 被替换成了 8 个独立专家，路由方式是 top-2，即每个 token 激活 2 个专家。</p>
-      <p>来看规模数字。「8×7B」这个名字有点误导性——它不是 $8 \times 7 = 56\text{B}$，因为 Attention 部分所有专家共享，专家只占 FFN 部分。实际总参数约 46.7B，每 token 激活约 12.9B，正好接近一个标准 7B Dense 模型的计算量。</p>
-      <p>效果呢？在大多数标准基准测试上，Mixtral 8×7B 超过了 Llama 2 70B，而推理成本只是后者的约四分之一。这就是 MoE 的实际价值：以 7B 的推理成本，买到超过 70B Dense 模型的性能。</p>
-      <p>当然 Mixtral 并非没有代价：内存占用要存储所有 46.7B 参数（即便推理时只激活 12.9B），在单 GPU 上部署需要更多显存，但在有足够显存的多 GPU 设置下，吞吐量非常有竞争力。</p>
-      <p>另一个值得注意的设计是 SwiGLU 激活函数，这在现代 LLM 里已经非常普遍，相比 ReLU 在语言任务上的表现更好，和 MoE 架构也很好地结合在一起。</p>
+      <p>Mixtral 8×7B 的架构有几个值得关注的细节：首先，它使用了 GQA（8 个 KV 头），这对推理时的 KV cache 大小有直接影响——从原来的 32 个 KV 头降到 8 个，缓存减少 75%。其次，每个专家的 FFN 维度 14336 相当大，这是为了确保每个专家都有足够的表达能力。</p>
+      <p>基准数据非常直观：Mixtral 8×7B 用 Llama 2 13B 的推理成本（约 13B 激活参数），在 MMLU 和 HumanEval 上超过了需要 70B 计算量的 Llama 2 70B。特别是 HumanEval（代码生成基准），Mixtral 的 40.2 远高于 Llama 2 70B 的 29.9，说明 MoE 的专家分化可能对代码这类结构性强的任务特别有帮助——这也呼应了后面假说一的讨论。</p>
     </aside>
   </section>
 
@@ -265,8 +311,7 @@
       <p class="sec-en">Long Context Techniques</p>
     </div>
     <aside class="notes">
-      <p>我们现在进入第二个主题：长上下文技术。</p>
-      <p>如果说 MoE 解决的是「如何在有限算力下塞入更多知识」的问题，长上下文解决的是「如何让模型在单次推理中处理更多信息」的问题。两者是互补的，也是今天大模型能力扩展的两个方向。</p>
+      <p>我们进入第二个主题：长上下文技术。MoE 解决「如何在有限算力下塞入更多知识」，长上下文解决「如何在单次推理中处理更多信息」。接下来三张幻灯片分别讲瓶颈、位置编码、以及高效注意力方案。</p>
     </aside>
   </section>
 
@@ -280,22 +325,40 @@
     <div class="body">
       <div class="hd"><h2>注意力机制的扩展瓶颈</h2><div class="en">Why Attention Doesn't Scale</div></div>
       <div class="rule"></div>
-      <ul class="bl">
-        <li>标准自注意力的时间与显存复杂度均为 $O(n^2)$，$n$ 为序列长度</li>
-        <li>注意力矩阵 $n \times n$：当 $n = 128\text{K}$ 时，单层需 $\sim\!32\text{GB}$（fp16）</li>
-        <li>上下文需求持续增长：GPT-4 128K → Claude 3 200K → Gemini 1.5 <strong>1M</strong></li>
-      </ul>
-      <div class="formula">
-        $$\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+      <div style="display:flex;gap:2rem;flex:1;align-items:flex-start;">
+        <div style="flex:1.3;display:flex;flex-direction:column;gap:0.9rem;">
+          <ul class="bl" style="flex:0">
+            <li>标准自注意力的时间与显存复杂度均为 $O(n^2)$，$n$ 为序列长度</li>
+            <li>核心步骤 $QK^\top \in \mathbb{R}^{n\times n}$ 需要完整落盘，无法逐行流式处理</li>
+            <li>因果掩码只使下三角非零，但计算仍需完整矩阵（PyTorch 标准实现）</li>
+            <li>上下文需求：GPT-4 128K → Claude 3 200K → Gemini 1.5 <strong>1M</strong></li>
+          </ul>
+          <div class="formula">
+            $$\mathrm{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+          </div>
+          <div class="box warn">序列每增长 $10\times$，时间和显存成本均增长 $\mathbf{100\times}$。</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">单层 $QK^\top$ 显存（fp16）</div>
+          <table class="tbl">
+            <thead><tr><th>序列长度 $n$</th><th>矩阵大小</th><th>32 层累计</th></tr></thead>
+            <tbody>
+              <tr><td>4K</td><td>32 MB</td><td class="ok">~1 GB</td></tr>
+              <tr><td>32K</td><td>2 GB</td><td class="warn">~64 GB</td></tr>
+              <tr><td>128K</td><td>32 GB</td><td class="warn">~1 TB ✗</td></tr>
+              <tr><td>1M</td><td>2 TB</td><td class="warn">~64 TB ✗✗</td></tr>
+            </tbody>
+          </table>
+          <div class="box" style="margin-top:0;font-size:1rem;">
+            <strong>推理时还需 KV cache</strong>：每 token 需存 $2 \times L \times n_h \times d_h$ 浮点数；32K ctx、32 层、128 heads、128 dim ≈ <strong>2 GB</strong>
+          </div>
+        </div>
       </div>
-      <div class="box warn">瓶颈在于 $QK^\top$ 的计算和存储：序列每增长 $10\times$，成本增长 $100\times$。</div>
     </div>
     <aside class="notes">
-      <p>Transformer 的核心操作是自注意力。它的公式我们都很熟悉：Query 乘以 Key 的转置，除以 $\sqrt{d_k}$ 做 softmax，再乘以 Value。</p>
-      <p>关键在于 $QK^\top$ 这个矩阵。对于长度为 $n$ 的序列，$Q$ 和 $K$ 都是 $n \times d_k$ 的矩阵，它们的乘积是 $n \times n$ 的。这意味着：</p>
-      <p>时间复杂度：$O(n^2 d_k)$，随序列长度平方增长。显存复杂度：存储这个 $n \times n$ 矩阵需要 $O(n^2)$ 的空间。具体算一下：$n = 128\text{K}$，fp16 存储，单层注意力矩阵约 $128\text{K} \times 128\text{K} \times 2 \text{ bytes} = 32\text{GB}$。对一个有 32 层 attention 的模型，这是不可承受的。</p>
-      <p>而现实需求是：处理一本书需要至少 10 万 token；分析完整代码库可能需要更多；多模态任务（比如高分辨率视频理解）token 数量可能达到数百万。</p>
-      <p>所以长上下文面临的核心工程问题是：如何在不牺牲精确性的前提下，把注意力机制的 $O(n^2)$ 成本降下来，或者至少把显存降下来。这正是 FlashAttention、滑动窗口注意力、GQA 等技术的出发点。</p>
+      <p>$O(n^2)$ 问题在小上下文时几乎感觉不到，但随着 n 增大会指数级爆炸。右侧表格的数字说明问题：128K 上下文下仅注意力矩阵就需要 1 TB 显存，这在任何现有 GPU 上都是不可能存在的。</p>
+      <p>推理时还有额外的 KV cache 问题：自回归生成时，每新生成一个 token，需要把它对应的 K 和 V 缓存下来以备后续 token 使用。这是一个只增不减的缓存，上下文越长，缓存越大。128K 上下文、32 层、128 heads、head dim 128 的配置下，KV cache 约 2 GB，这占了相当大一块显存预算。</p>
+      <p>这两个问题——计算时的 $n^2$ 矩阵和推理时的线性 KV cache——是促使 FlashAttention、GQA、MLA 等技术出现的直接动力。</p>
     </aside>
   </section>
 
@@ -309,48 +372,48 @@
     <div class="body">
       <div class="hd"><h2>旋转位置编码（RoPE）</h2><div class="en">Rotary Position Embedding</div></div>
       <div class="rule"></div>
-      <ul class="bl">
-        <li>Transformer 并行处理所有 token，需额外编码<strong>顺序信息</strong></li>
-        <li>绝对正弦编码（Vaswani 2017）：固定函数，泛化到训练外长度时性能下降</li>
-        <li>RoPE (Su et al., 2021)：将位置编码为 $Q$/$K$ 的<strong>旋转变换</strong>，天然捕获相对位置</li>
+      <ul class="bl" style="flex:0;gap:0.8rem;margin-bottom:1rem;">
+        <li>Transformer 排列不变，必须额外编码<strong>顺序信息</strong>；原始正弦编码（Vaswani 2017）在训练外长度泛化性差</li>
+        <li>RoPE（Su et al., 2021）：给 $Q$/$K$ 的每对维度 $(d_{2i}, d_{2i+1})$ 施加旋转角 $m\theta_i$，$\theta_i = 10000^{-2i/d}$</li>
+        <li>关键性质：$q_m^\top k_n$ 只依赖<strong>相对位置 $n-m$</strong>，绝对位置互相抵消</li>
       </ul>
       <div class="rope-diag">
-        <div class="rope-col">
-          <div class="rope-col-title">编码过程</div>
-          <div class="rope-row">
-            <div class="rope-box">$q$</div>
+        <div class="rope-col" style="flex:1.1">
+          <div class="rope-col-title">旋转矩阵结构（每对维度）</div>
+          <div class="formula" style="margin-top:0;">
+            $$R_\theta^m = \begin{pmatrix} \cos m\theta_i & -\sin m\theta_i \\ \sin m\theta_i & \cos m\theta_i \end{pmatrix}$$
+          </div>
+          <div class="rope-row" style="margin-top:0.5rem;">
+            <div class="rope-box">$q_{2i}, q_{2i+1}$</div>
             <div class="rope-op">×</div>
             <div class="rope-box acc">$R_\theta^m$</div>
             <div class="rope-op">=</div>
-            <div class="rope-box">$q_m$</div>
+            <div class="rope-box">$\tilde{q}_m$</div>
           </div>
           <div class="rope-row">
-            <div class="rope-box">$k$</div>
+            <div class="rope-box">$k_{2i}, k_{2i+1}$</div>
             <div class="rope-op">×</div>
             <div class="rope-box acc">$R_\theta^n$</div>
             <div class="rope-op">=</div>
-            <div class="rope-box">$k_n$</div>
+            <div class="rope-box">$\tilde{k}_n$</div>
           </div>
         </div>
-        <div class="rope-col">
-          <div class="rope-col-title">关键性质</div>
+        <div class="rope-col" style="flex:1">
+          <div class="rope-col-title">相对位置性质</div>
           <div class="formula" style="margin-top:0">
-            $$q_m^\top k_n = q^\top R_\theta^{n-m}\, k$$
+            $$\tilde{q}_m^\top \tilde{k}_n = q^\top R_\theta^{n-m} k$$
           </div>
-          <div class="box" style="margin-top:0.6rem">
-            得分只依赖<strong>相对位置 $(n - m)$</strong>，与绝对位置无关。<br>
-            外推到训练外长度时，相对关系保持稳定。
+          <div class="box" style="margin-top:0.6rem;font-size:1.05rem;">
+            得分 ∝ <strong>相对位置 $(n-m)$</strong>，绝对值不重要<br><br>
+            <strong>YaRN / RoPE Scaling</strong>：训练时用短上下文，推理时将 $\theta_i$ 等比缩放 → 无需重新训练即可扩展上下文长度（Llama 3 采用）
           </div>
         </div>
       </div>
     </div>
     <aside class="notes">
-      <p>长上下文问题不只是算力问题，还有一个常被忽视的子问题：<strong>位置编码能否外推</strong>？</p>
-      <p>Transformer 本身是排列不变的，它看 token 的方式不区分顺序。位置编码是附加在 embedding 上的额外信号，告诉模型「这个 token 在第几个位置」。</p>
-      <p>最初的绝对正弦编码（Vaswani 等人 2017 年提出）有一个众所周知的问题：训练时见过的最大长度是 2K，如果推理时序列长度超过 2K，位置编码就进入了「从未见过」的区域，性能会明显下降。</p>
-      <p>RoPE（旋转位置编码）在 2021 年由苏剑林等人提出，它的思路是：不是给 embedding 加一个固定向量，而是给 Q 和 K 各自施加一个和位置有关的<strong>旋转矩阵</strong>。</p>
-      <p>关键性质在于，当计算 $q_m^\top k_n$ 这个注意力得分时，旋转矩阵的作用等价于对 $q^\top k$ 施加一个只依赖<strong>相对位置差 $n-m$</strong> 的变换，而不是绝对位置 $m$ 或 $n$。这意味着，即使在训练时没见过超长序列，相对位置关系依然是稳定的。</p>
-      <p>这就是为什么现在主流 LLM（Llama、Mistral、DeepSeek 等）都在使用 RoPE，而不是原始的正弦编码。当然 RoPE 的外推能力也有限制，实践中通常还需要结合「上下文长度微调」（在长文本数据上继续训练）来激活模型处理超长序列的能力。</p>
+      <p>RoPE 的旋转矩阵是块对角的，每对相邻维度独立旋转。低维度的 $\theta_i$ 较大（旋转快，编码短距离），高维度的 $\theta_i$ 较小（旋转慢，编码长距离），这类似于傅里叶变换中不同频率的正弦波。</p>
+      <p>相对位置性质是 RoPE 最核心的数学优势：当计算注意力得分 $\tilde{q}_m^\top \tilde{k}_n$ 时，两个旋转矩阵的乘积 $R^m \cdot (R^n)^\top = R^{n-m}$ 只依赖相对位置差。这意味着即使推理时出现了训练时没见过的绝对位置，相对距离关系仍然保持正确。</p>
+      <p>YaRN 等上下文扩展方法的思路是：把 $\theta_i$ 乘以一个小于 1 的缩放因子，让旋转速度变慢，等效于「拉伸」了位置编码的动态范围，使得更长的相对距离也能被覆盖。这样在原始短上下文训练的模型上，只需少量长文本微调甚至无需微调就能显著扩展上下文。</p>
     </aside>
   </section>
 
@@ -364,20 +427,21 @@
     <div class="body">
       <div class="hd"><h2>高效注意力机制</h2><div class="en">Efficient Attention</div></div>
       <div class="rule"></div>
-      <div style="display:flex; gap:2.5rem; flex:1; align-items:flex-start;">
-        <table class="tbl" style="flex:1.6">
+      <div style="display:flex; gap:2rem; flex:1; align-items:flex-start;">
+        <table class="tbl" style="flex:1.8">
           <thead>
-            <tr><th>方法</th><th>时间复杂度</th><th>显存</th><th>精确？</th></tr>
+            <tr><th>方法</th><th>时间</th><th>显存</th><th>精确</th><th>核心思想</th></tr>
           </thead>
           <tbody>
-            <tr><td>标准注意力</td><td class="warn">$O(n^2)$</td><td class="warn">$O(n^2)$</td><td class="ok">✓</td></tr>
-            <tr><td>FlashAttention</td><td class="warn">$O(n^2)$</td><td class="ok">$O(n)$</td><td class="ok">✓</td></tr>
-            <tr><td>滑动窗口注意力</td><td class="ok">$O(n \cdot w)$</td><td class="ok">$O(n \cdot w)$</td><td class="warn">近似</td></tr>
-            <tr><td>GQA（分组查询）</td><td class="warn">$O(n^2)$</td><td class="ok">$O(n^2/g)$</td><td class="ok">✓</td></tr>
+            <tr><td>标准注意力</td><td class="warn">$O(n^2)$</td><td class="warn">$O(n^2)$</td><td class="ok">✓</td><td>矩阵全量计算落盘</td></tr>
+            <tr><td><strong>FlashAttention</strong></td><td class="warn">$O(n^2)$</td><td class="ok">$O(n)$</td><td class="ok">✓</td><td>分块 tiling，不落盘 $QK^\top$</td></tr>
+            <tr><td>滑动窗口（SWA）</td><td class="ok">$O(nw)$</td><td class="ok">$O(nw)$</td><td class="warn">近似</td><td>每 token 只看窗口内 $w$ 个邻居</td></tr>
+            <tr><td>MQA（多查询）</td><td class="warn">$O(n^2)$</td><td class="ok">$O(n^2/H)$</td><td class="ok">✓</td><td>所有 Q 头共享 1 对 KV 头</td></tr>
+            <tr><td><strong>GQA（分组查询）</strong></td><td class="warn">$O(n^2)$</td><td class="ok">$O(n^2/g)$</td><td class="ok">✓</td><td>每 $g$ 个 Q 头共享 1 对 KV 头</td></tr>
           </tbody>
         </table>
-        <div class="attn-wrap" style="flex:1; flex-direction:column; align-items:flex-start;">
-          <div style="display:flex; gap:2rem;">
+        <div style="flex:1; display:flex; flex-direction:column; gap:0.8rem;">
+          <div style="display:flex; gap:1.6rem;">
             <div class="attn-block">
               <div class="attn-title">标准注意力</div>
               <div class="attn-grid">
@@ -389,7 +453,7 @@
               </div>
             </div>
             <div class="attn-block">
-              <div class="attn-title">滑动窗口（$w=1$）</div>
+              <div class="attn-title">滑动窗口</div>
               <div class="attn-grid">
                 <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac"></div><div class="ac"></div><div class="ac"></div></div>
                 <div class="attn-row"><div class="ac on"></div><div class="ac on"></div><div class="ac on"></div><div class="ac"></div><div class="ac"></div></div>
@@ -399,17 +463,15 @@
               </div>
             </div>
           </div>
-          <div style="font-size:0.88rem; color:var(--sub); margin-top:0.6rem;">行 = Query，列 = Key；蓝色 = 可注意到</div>
+          <div style="font-size:0.83rem; color:var(--sub);">行=Query，列=Key；蓝=可注意</div>
+          <div class="box" style="font-size:0.95rem;">MHA→GQA→MQA：KV heads $H \to g \to 1$；KV cache 线性减少；Llama 3、Mistral 均采用 GQA（$g \approx H/4$）</div>
         </div>
       </div>
-      <div class="box" style="margin-top:0.8rem;">FlashAttention 将 $QK^\top V$ 分块计算，避免完整矩阵落盘 → 显存降至 $O(n)$，速度提升 2–4×</div>
     </div>
     <aside class="notes">
-      <p>这张表格列出了解决注意力 $O(n^2)$ 问题的几种主要方向，它们的思路各不相同。</p>
-      <p><strong>FlashAttention</strong>（Dao et al., 2022）是目前最广泛使用的方案。它并没有改变注意力的数学定义，结果和标准注意力完全一致，但通过「分块（tiling）计算」的方式，把 $QK^\top$ 这个大矩阵的计算分散到 GPU 的 SRAM 里做，不落到 HBM（显存）。这样显存复杂度从 $O(n^2)$ 降到 $O(n)$，速度也提升 2 到 4 倍。可以理解为这是一种「算法等价但实现更聪明」的优化。</p>
-      <p><strong>滑动窗口注意力</strong>（Sliding Window Attention）则是真正在算法层面做了近似：每个 token 只和它前后 $w$ 个 token 做注意力，跳过窗口外的所有 token。这把时间和显存复杂度都降到了 $O(nw)$，线性于序列长度。Mistral 7B 就用了这个方法，在保留局部语义的同时极大扩展了可处理长度。缺点是远距离依赖可能丢失。</p>
-      <p><strong>GQA（分组查询注意力）</strong>，Grouped Query Attention，是另一个视角的优化：减少 KV 头数。标准 MHA 中每个 Query 头都有对应的 K、V 头；GQA 让多个 Query 头共享同一组 K/V 头（分组数为 $g$），推理时 KV cache 大小降低 $g$ 倍。Llama 3、Mistral 等都采用了 GQA。</p>
-      <p>这三种方法并非互斥：FlashAttention + GQA 的组合目前几乎是新模型的标准配置；滑动窗口则用在对精确性要求稍低但对长度要求极高的场景。</p>
+      <p>这张表列出了五种主要方案，每种解决问题的角度不同。FlashAttention 的贡献纯属工程层面：把 GPU SRAM（L1/L2 cache）利用起来做分块计算，避免大矩阵写回 HBM（全局显存），从而把显存复杂度从 $O(n^2)$ 降到 $O(n)$，同时速度提升 2-4 倍。FlashAttention v2/v3 进一步优化了并行化，目前已成为所有主流框架的默认实现。</p>
+      <p>GQA 的直觉：在推理时，KV cache 是显存的大头，且 KV cache 不需要每个 Query 头都独立——实验发现，让多个 Q 头共享一对 KV 头，性能几乎不下降，而 KV cache 大小可以压缩 $g$ 倍。MQA（$g=1$ 极端情况）压缩最多，但有时精度损失明显，所以 GQA 成为更常见的折中方案。</p>
+      <p>滑动窗口注意力适合不需要精确全局依赖的任务，Mistral 7B 是代表性实现，它在不同层混合使用全注意力和滑动窗口注意力来兼顾局部和全局信息。</p>
     </aside>
   </section>
 
@@ -423,12 +485,12 @@
     <div class="body">
       <div class="hd"><h2>上下文窗口扩展历程</h2><div class="en">Context Window Evolution</div></div>
       <div class="rule"></div>
-      <div class="timeline">
+      <div class="timeline" style="flex:1;">
         <div class="tl-labels">
           <div class="tl-label"><b>1K</b><span>GPT-2</span></div>
           <div class="tl-label"><b>2K</b><span>GPT-3</span></div>
-          <div class="tl-label"><b>16K</b><span>GPT-3.5</span></div>
-          <div class="tl-label"><b>128K</b><span>GPT-4</span></div>
+          <div class="tl-label"><b>16K</b><span>GPT-3.5-T</span></div>
+          <div class="tl-label"><b>128K</b><span>GPT-4 Turbo</span></div>
           <div class="tl-label"><b>128K</b><span>Llama 3</span></div>
           <div class="tl-label"><b>200K</b><span>Claude 3</span></div>
           <div class="tl-label hi"><b>1M</b><span>Gemini 1.5</span></div>
@@ -451,16 +513,22 @@
           <span class="tl-year">2024</span>
           <span class="tl-year">2024</span>
         </div>
+        <!-- Tech enablers row -->
+        <div style="display:flex;margin-top:0.5rem;">
+          <div style="flex:1;text-align:center;font-size:0.78rem;color:var(--muted);padding:0 0.2rem;">正弦<br>PE</div>
+          <div style="flex:1;text-align:center;font-size:0.78rem;color:var(--muted);padding:0 0.2rem;">正弦<br>PE</div>
+          <div style="flex:1;text-align:center;font-size:0.78rem;color:var(--acc);padding:0 0.2rem;font-weight:600;">Flash<br>Attn</div>
+          <div style="flex:1;text-align:center;font-size:0.78rem;color:var(--acc);padding:0 0.2rem;font-weight:600;">RoPE<br>+GQA</div>
+          <div style="flex:1;text-align:center;font-size:0.78rem;color:var(--acc);padding:0 0.2rem;font-weight:600;">RoPE<br>YaRN</div>
+          <div style="flex:1;text-align:center;font-size:0.78rem;color:var(--acc);padding:0 0.2rem;font-weight:600;">Flash<br>+GQA</div>
+          <div style="flex:1;text-align:center;font-size:0.78rem;color:var(--acc2);padding:0 0.2rem;font-weight:600;">MoE<br>+SWA</div>
+        </div>
       </div>
-      <div class="box">每一次突破背后，都伴随着<strong>位置编码</strong>（RoPE、ALiBi）、<strong>注意力算法</strong>（FlashAttention）或<strong>训练策略</strong>（长文本微调）的创新</div>
+      <div class="box" style="margin-top:0.5rem;">每次突破均依赖技术组合：<strong>位置编码（RoPE/YaRN）</strong>解决外推问题；<strong>FlashAttention</strong> 压缩显存；<strong>GQA/MQA</strong> 削减 KV cache；<strong>MoE + 稀疏注意力</strong>支撑百万级上下文</div>
     </div>
     <aside class="notes">
-      <p>这条时间线展示了过去五年上下文窗口的爆炸式增长。</p>
-      <p>2019 年 GPT-2 发布时，上下文只有 1K token，差不多能装一篇短文。2020 年 GPT-3 扩展到 2K。这两个数字今天看来简陋得可笑，但当时已经是突破。</p>
-      <p>真正的加速从 2022 年开始。GPT-3.5 通过长度微调和 FlashAttention 支撑了 16K 上下文；GPT-4 在 2023 年把这个数字拉到 128K，这是一个质的跨越——一本普通小说差不多就是这个量级。</p>
-      <p>2024 年则是「竞赛年」：Llama 3 用 RoPE 外推和继续训练实现了 128K；Anthropic 的 Claude 3 系列在多模态任务下达到 200K；最惊人的是 Google 的 Gemini 1.5，用 Mixture of Experts 架构配合稀疏注意力，将上下文推到了 <strong>100 万 token</strong>，相当于一部《战争与和平》加上一部《哈利·波特》全集。</p>
-      <p>每一个节点背后都有技术创新作为支撑——没有 FlashAttention 把显存复杂度降到线性，没有 RoPE 解决位置编码外推，没有 GQA 压缩 KV cache，这些数字不可能实现。</p>
-      <p>当然，数字增长不等于实际利用效率提升，这是我们后面在假说部分会质疑的。</p>
+      <p>时间线底部新增了一行「技术支撑」。每个里程碑的背后都有对应的技术突破：GPT-3.5 Turbo 的 16K 是 FlashAttention 首次广泛应用的标志；GPT-4 Turbo 的 128K 结合了 RoPE、GQA 和大量长文本微调；Llama 3 的 128K 依赖了 YaRN 等 RoPE 缩放方法；Gemini 1.5 达到 1M 则同时用了 MoE 架构和 SWA（稀疏窗口注意力）来降低计算量。</p>
+      <p>五年里从 1K 到 1M，增长了 1000 倍。但需要警惕的是：上下文窗口增大不等于模型能有效利用所有信息——这正是后面假说二要讨论的核心问题。</p>
     </aside>
   </section>
 
@@ -473,8 +541,7 @@
       <p class="sec-en">When MoE Meets Long Context</p>
     </div>
     <aside class="notes">
-      <p>现在我们来看两者相遇时会发生什么。</p>
-      <p>MoE 解决参数效率，长上下文解决信息容量，直觉上这是完美搭档。DeepSeek-V2 正是把两者都做到极致的代表性案例。但在此之前，我们先来看这种组合带来的独特挑战。</p>
+      <p>现在把两者放在一起。MoE 解决参数效率，长上下文解决信息容量，但组合不是简单叠加——需要面对三类新的工程挑战。DeepSeek-V2 是目前最完整的解答之一。</p>
     </aside>
   </section>
 
@@ -488,31 +555,37 @@
     <div class="body">
       <div class="hd"><h2>结合时的三重挑战</h2><div class="en">Three Tensions</div></div>
       <div class="rule"></div>
-      <div class="three">
+      <div class="three" style="flex:1;">
         <div class="chal-card">
           <div class="chal-num">挑战 01</div>
           <h3>KV 缓存膨胀</h3>
-          <p>KV cache 大小随序列长度 $n$ 线性增长，与 MoE 架构无关。每层每 token 需缓存 $2 \cdot n_{\text{heads}} \cdot d_k$ 的浮点数，128K 上下文下单模型可达数十 GB。</p>
+          <p>KV cache ∝ $n \times L \times 2n_h d_h$，与 MoE 无关但随序列线性爆炸。128K ctx、32 层、128 heads、dim 128 ≈ <strong>128 GB（fp16）</strong>，超出单 GPU 预算。</p>
+          <div style="font-size:0.88rem;margin-top:0.3rem;padding:0.5rem 0.7rem;background:var(--hi);border-radius:6px;color:var(--acc);">
+            解法：GQA 降低头数；MLA 压缩潜在空间；量化（fp8/int4）
+          </div>
         </div>
         <div class="chal-card">
           <div class="chal-num">挑战 02</div>
           <h3>路由独立性</h3>
-          <p>每个 token 独立做路由决策，长序列中相邻 token 可能被分发至截然不同的专家。跨位置的<strong>语义连贯性</strong>无法通过路由机制保证。</p>
+          <p>每 token 独立路由，长序列中语义连续的相邻 token 可能分发到截然不同的专家。跨越远距离的<strong>语义连贯性</strong>完全依赖 Attention，MoE 路由无法辅助。</p>
+          <div style="font-size:0.88rem;margin-top:0.3rem;padding:0.5rem 0.7rem;background:var(--hi);border-radius:6px;color:var(--acc);">
+            解法：共享专家（DeepSeek）为所有 token 提供通用基础处理
+          </div>
         </div>
         <div class="chal-card">
           <div class="chal-num">挑战 03</div>
-          <h3>分布式通信开销</h3>
-          <p>分布式训练中专家分散在不同设备上，每层均需 all-to-all 通信。序列越长，通信量越大，成为扩展时的主要瓶颈之一。</p>
+          <h3>All-to-All 通信</h3>
+          <p>分布式训练中专家分散在不同节点；每层均需 all-to-all 发送/接收 token。假设 512 token、$d=4096$、bf16：单层通信量 ≈ $512 \times 4096 \times 2 \approx$ <strong>4 MB</strong>，32 层连续 → 显著增加端到端延迟。</p>
+          <div style="font-size:0.88rem;margin-top:0.3rem;padding:0.5rem 0.7rem;background:var(--hi);border-radius:6px;color:var(--acc);">
+            解法：Expert Parallel + Pipeline Parallel；通信与计算 overlap
+          </div>
         </div>
       </div>
-      <div class="box" style="margin-top:0.8rem">核心矛盾：MoE 扩大了<strong>参数容量</strong>，长上下文扩大了<strong>信息容量</strong>，但两者叠加后的<strong>显存压力</strong>也随之倍增</div>
+      <div class="box" style="margin-top:0.8rem">核心：MoE 扩大<strong>参数容量</strong>，长上下文扩大<strong>信息容量</strong>，但二者叠加的<strong>显存与通信压力倍增</strong>，需要专门的架构创新来抵消</div>
     </div>
     <aside class="notes">
-      <p>把 MoE 和长上下文叠在一起，会遭遇三类独特的工程挑战。</p>
-      <p><strong>第一个挑战是 KV 缓存膨胀</strong>。在自回归推理中，每生成一个 token，需要把之前所有 token 的 Key 和 Value 缓存下来，避免重复计算。这个缓存大小正比于序列长度 $n$。MoE 把参数量放大了，但这对 KV cache 没有帮助——专家数量增加并不会改变 Attention 层的 KV cache 大小。所以当上下文达到 128K 时，KV cache 的显存需求就单独成为了一个瓶颈。</p>
-      <p><strong>第二个挑战是路由的独立性</strong>。MoE 的路由是逐 token 独立做的，没有考虑上下文中其他 token 的路由情况。在长序列里，位置相邻、语义连贯的 token 可能被分发到完全不同的专家处理。这在短序列中影响不大，但在需要跨越很长距离进行语义推理时，可能会成为信息传递的隐患。</p>
-      <p><strong>第三个挑战是分布式通信</strong>。在多 GPU 部署中，专家通常分散在不同的 GPU 上。每一层都需要一次 all-to-all 通信，把 token 发送给对应 GPU 上的专家，再把结果收回来。序列越长，每层通信的数据量越大，在大规模集群上这个开销会非常显著。</p>
-      <p>这些挑战说明，MoE 和长上下文的组合并不是简单相加，而是需要专门的架构创新来应对。DeepSeek-V2 就是一个很好的解答。</p>
+      <p>三个挑战各有对应的工程解法，但没有一个是「免费」的。KV cache 膨胀可以用 GQA 或 MLA 缓解，但 GQA 引入了轻微精度损失，MLA 引入了额外的上采样计算；共享专家在一定程度上保证通用语义，但增加了每 token 的激活参数量；通信 overlap 需要精细的调度，增加了系统实现复杂度。</p>
+      <p>DeepSeek-V2 的价值在于它同时处理了这三个问题：MLA 解决 KV cache，共享专家 + 细粒度 MoE 解决路由稳定性，设备级均衡损失 + EP 并行解决通信效率。</p>
     </aside>
   </section>
 
@@ -526,42 +599,50 @@
     <div class="body">
       <div class="hd"><h2>案例：DeepSeek-V2</h2><div class="en">MoE + Long Context in Practice</div></div>
       <div class="rule"></div>
-      <div class="two">
-        <div style="display:flex;flex-direction:column;gap:1rem;flex:1">
-          <ul class="bl">
-            <li>总参数 <strong>236B</strong>，每 token 激活 <strong>21B</strong>，上下文 <strong>128K</strong></li>
-            <li>MoE 架构：2 个<em>共享专家</em> + 160 个<em>路由专家</em>，激活 top-6</li>
-            <li>引入 <strong>MLA（Multi-head Latent Attention）</strong>压缩 KV 缓存</li>
-            <li>训练成本仅为 GPT-4 级别 dense 模型的约 $\frac{1}{10}$</li>
+      <div style="display:flex;gap:1.6rem;flex:1;">
+        <div style="flex:1.2;display:flex;flex-direction:column;gap:0.9rem;">
+          <ul class="bl" style="flex:0">
+            <li>总参数 <strong>236B</strong>，激活 <strong>21B</strong>（2 共享 + 6 路由 top-6/160），上下文 <strong>128K</strong></li>
+            <li><strong>细粒度 MoE</strong>：将每个专家拆分更小（$d_{\text{ffn}}$ 减半），专家数翻倍 → 路由粒度更细，分配更灵活</li>
+            <li><strong>MLA（Multi-head Latent Attention）</strong>：将所有 KV 头压缩到一个低秩向量 $c_{KV} \in \mathbb{R}^{d_c}$ 缓存，解码时上采样还原 K/V</li>
+            <li>训练成本约为同规模 Dense 的 $\tfrac{1}{10}$，性能与 GPT-4 Turbo 相当</li>
           </ul>
-          <div class="box">推理时 KV 缓存：标准 MHA 每 token ~576 维 → MLA 压缩至 ~512 维低秩向量，节省 <strong>93.3%</strong></div>
+          <div class="box">
+            MLA 压缩比：缓存 $d_c = 512$ 维向量，vs 标准 MHA 的 $2 \times n_h \times d_h$（约 $2\times128\times128 = 32768$）→ 节省 <strong>>98%</strong>；推理时延通过矩阵吸收技巧消除额外上采样开销
+          </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:0.8rem;align-items:flex-start">
-          <div style="font-size:0.88rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">KV 缓存对比（每 token）</div>
-          <div class="kv-compare" style="width:100%;justify-content:center">
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.8rem;">
+          <!-- MLA pipeline diagram -->
+          <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">MLA 压缩流程</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0.35rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:0.9rem;">
+            <div class="rope-box" style="width:90%;text-align:center;font-size:0.92rem;">Hidden state $h$ &nbsp;(dim $d$)</div>
+            <div style="color:var(--muted);font-size:0.9rem;">↓ 压缩矩阵 $W_{DKV}$</div>
+            <div class="rope-box acc" style="width:90%;text-align:center;font-size:0.92rem;">低秩向量 $c_{KV}$ &nbsp;(dim $d_c \!=\! 512$) ← <strong>只缓存这个</strong></div>
+            <div style="color:var(--muted);font-size:0.9rem;">↓ 解码时 $W_{UK}$, $W_{UV}$</div>
+            <div class="rope-box" style="width:90%;text-align:center;font-size:0.92rem;">还原 $K$, $V$ &nbsp;(dim $n_h \!\times\! d_h$)</div>
+          </div>
+          <div style="display:flex;gap:1rem;align-items:flex-end;justify-content:center;margin-top:0.2rem;">
             <div class="kv-bar-wrap">
-              <div class="kv-bar" style="height:130px"></div>
+              <div class="kv-bar" style="height:120px"></div>
               <div class="kv-label">标准 MHA</div>
               <div class="kv-val">~576 维</div>
             </div>
-            <div style="font-size:1.8rem;color:var(--sub);padding-bottom:2rem">→</div>
+            <div style="font-size:1.6rem;color:var(--sub);padding-bottom:2rem">→</div>
             <div class="kv-bar-wrap">
               <div class="kv-bar small" style="height:9px"></div>
-              <div class="kv-label">MLA</div>
+              <div class="kv-label">MLA cache</div>
               <div class="kv-val">~38 维</div>
             </div>
           </div>
-          <div style="font-size:0.88rem;color:var(--sub);text-align:center;width:100%">（压缩后需上采样恢复 K/V，推理时延增加可忽略）</div>
+          <div style="font-size:0.82rem;color:var(--sub);text-align:center;">实际缓存量节省 <strong style="color:var(--acc)">93.3%</strong></div>
         </div>
       </div>
     </div>
     <aside class="notes">
-      <p>DeepSeek-V2 是目前同时把 MoE 和长上下文做到最极致的开源案例之一，由深度求索（DeepSeek AI）于 2024 年发布。</p>
-      <p>先看规模：总参数 236B，每 token 激活 21B，支持 128K 上下文。这大概是 GPT-4 级别的能力，但据 DeepSeek 官方报告，训练成本只有同规模 Dense 模型的约十分之一。</p>
-      <p>MoE 设计上有一个创新：除了 160 个标准路由专家外，还有 2 个<strong>共享专家</strong>，每个 token 无论路由结果如何都会经过这 2 个专家。这相当于给每个 token 提供了一个「通用基础处理」，再由路由专家提供「专项能力」。这种混合策略在实验中表现比纯路由专家更稳定。</p>
-      <p>针对 KV 缓存膨胀问题，DeepSeek 提出了 <strong>MLA（Multi-head Latent Attention）</strong>。核心思路是：把所有 attention 头的 KV 压缩成一个低秩向量（约 512 维），缓存这个压缩向量而不是原始的 KV。推理时通过上采样矩阵恢复 K 和 V。</p>
-      <p>效果有多显著？看右边的柱状图：标准 MHA 每 token 的 KV 缓存约 576 维，MLA 压缩到约 38 维，节省超过 93%。对 128K 长上下文来说，这意味着 KV cache 从无法承受变成了可以接受。</p>
-      <p>DeepSeek-V2 的开源和性价比报告在 2024 年引发了很大讨论，也促使 Llama 系列加快了对 MoE 架构的探索。</p>
+      <p>DeepSeek-V2 的两个核心创新值得详细讲解。</p>
+      <p>第一是细粒度 MoE：把原来大专家拆成更小的专家（FFN 中间维度减半），同时专家数量翻倍，然后仍然激活相同比例的专家。这样做的好处是每个专家更「专」，路由决策的粒度更细，token 可以在更多专家中找到最合适的组合。实验表明，细粒度配置在相同激活参数量下性能更好。</p>
+      <p>第二是 MLA。传统 KV cache 把每层每个 Attention 头的 Key 和 Value 都存下来，显存需求随头数线性增长。MLA 的思路是：先把 hidden state 压缩成一个低秩向量 $c_{KV}$（维度 512），然后推理时动态解压缩出 K 和 V。缓存 $c_{KV}$ 而不是 K/V，把缓存大小从 ~576 维压到 ~38 维（按幻灯片的配置估算），节省 93%。</p>
+      <p>这里有一个工程技巧：在推理部署时，可以把解压缩矩阵 $W_{UK}$/$W_{UV}$ 提前与后续的 Query 投影矩阵合并（矩阵吸收），消除额外的上采样计算开销，使 MLA 的推理延迟不高于标准 GQA。</p>
     </aside>
   </section>
 
@@ -574,8 +655,7 @@
       <p class="sec-en">Hands-on Exercise</p>
     </div>
     <aside class="notes">
-      <p>好，理论讲完了。我们来做一个简短的动手演示，直接感受一下长上下文模型的能力边界。</p>
-      <p>这个演示不需要本地部署任何模型，只需要一个浏览器和对 Claude 或 GPT-4o 的访问权限。</p>
+      <p>好，理论讲完了。我们来做一个简短的动手演示，直接感受长上下文模型的能力与局限。不需要本地部署任何模型，只需要浏览器访问 Claude / GPT-4o / Gemini。</p>
     </aside>
   </section>
 
@@ -590,55 +670,63 @@
       <div class="hd"><h2>大海捞针测试</h2><div class="en">Needle in a Haystack</div></div>
       <div class="rule"></div>
       <div class="two">
-        <ol class="steps">
-          <li class="step">
-            <span class="step-num">1</span>
-            <div class="step-body">打开任意支持长上下文的模型
-              <span class="step-note">推荐：Claude / GPT-4o / Gemini 1.5</span>
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">2</span>
-            <div class="step-body">复制一篇 2000+ 字的中文文章
-              <span class="step-note">例：维基百科「人工智能」词条</span>
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">3</span>
-            <div class="step-body">在文章<strong>正中间</strong>插入一句"针"
-              <span class="step-note">例："小明的幸运数字是 <strong>XK-2048</strong>"</span>
-            </div>
-          </li>
-          <li class="step">
-            <span class="step-num">4</span>
-            <div class="step-body">在提示末尾提问，观察模型回答
-              <span class="step-note">尝试把"针"放在开头、中间、结尾对比结果</span>
-            </div>
-          </li>
-        </ol>
+        <div style="display:flex;flex-direction:column;gap:0.6rem;">
+          <ol class="steps" style="flex:0">
+            <li class="step">
+              <span class="step-num">1</span>
+              <div class="step-body">打开长上下文模型
+                <span class="step-note">推荐：Claude 3.5 / GPT-4o / Gemini 1.5</span>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">2</span>
+              <div class="step-body">复制 2000–5000 字中文文章
+                <span class="step-note">维基百科「人工智能」或「量子计算」词条</span>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">3</span>
+              <div class="step-body">在文章<strong>正中间</strong>插入「针」
+                <span class="step-note">"小明的幸运数字是 <strong>XK-2048</strong>"（原文中不存在）</span>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">4</span>
+              <div class="step-body">末尾提问 → 记录结果
+                <span class="step-note">变体：分别放在开头/中间/结尾，比较回答准确率</span>
+              </div>
+            </li>
+          </ol>
+          <!-- Position comparison table -->
+          <table class="tbl" style="font-size:0.95rem;">
+            <thead><tr><th>针的位置</th><th>Claude 3.5</th><th>GPT-4o</th><th>较弱模型</th></tr></thead>
+            <tbody>
+              <tr><td>开头 10%</td><td class="ok">✓ 准确</td><td class="ok">✓ 准确</td><td class="ok">✓ 准确</td></tr>
+              <tr><td>中间 50%</td><td class="ok">✓ 准确</td><td class="ok">✓ 准确</td><td class="warn">△ 时常遗忘</td></tr>
+              <tr><td>结尾 10%</td><td class="ok">✓ 准确</td><td class="ok">✓ 准确</td><td class="ok">✓ 准确</td></tr>
+            </tbody>
+          </table>
+        </div>
         <div style="display:flex;flex-direction:column;gap:0.8rem;flex:1">
           <div style="font-size:0.88rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">示例 Prompt</div>
           <div class="needle-box">
-            <span class="cm">…（文章前半段）…</span><br><br>
+            <span class="cm">…（文章前半段，约 1500 字）…</span><br><br>
             <span class="hl">小明的幸运数字是 XK-2048。</span><br><br>
-            <span class="cm">…（文章后半段）…</span><br><br>
-            请问：小明的幸运数字是什么？
+            <span class="cm">…（文章后半段，约 1500 字）…</span><br><br>
+            请问：小明的幸运数字是什么？<br>
+            <span class="cm">（不要说"文章没有提到"，文章中有一处相关信息）</span>
           </div>
           <div class="box" style="font-size:1rem">
-            <strong>预期结果：</strong>短上下文模型（截断中段）→ 无法回答；<br>
-            长上下文模型 → 能准确返回 <code style="font-family:'Fira Code';color:var(--acc)">XK-2048</code>
+            <strong>为什么中间容易失忆？</strong><br>
+            训练时短文本占多数 → 模型注意力「习惯于」偏向开头与结尾；中间段的注意力权重在归一化后被稀释。这就是「中间迷失」（Lost in the Middle）现象。
           </div>
         </div>
       </div>
     </div>
     <aside class="notes">
-      <p>「大海捞针」（Needle in a Haystack）是评测长上下文模型最经典的方法之一，由 Greg Kamradt 在 2023 年提出并推广。</p>
-      <p>测试思路非常直观：在一大段无关文本（「干草堆」）中埋入一条关键信息（「针」），然后让模型回答和这条信息相关的问题。如果模型能准确找到并引用这条信息，说明它真正利用了长上下文。</p>
-      <p>我们现在来做一个简化版。步骤如下：</p>
-      <p>第一步，打开 Claude 或 GPT-4o，或者任何你有访问权限的长上下文模型。第二步，去维基百科复制「人工智能」词条，大概 2000 到 3000 字的中文文章就够了。第三步，找到文章正中间，插入一句话：「小明的幸运数字是 XK-2048。」——这就是我们的「针」，是一个在原文中完全不存在的信息。第四步，把这整段拼接好的文本发给模型，最后加上问题「小明的幸运数字是什么？」</p>
-      <p>如果模型能准确回答 XK-2048，说明它真正读完了整段文本，找到了那根「针」。</p>
-      <p>更有趣的变体：把针放在文章<strong>开头</strong>、<strong>正中间</strong>、<strong>结尾</strong>分别测试。你会发现，大多数模型对开头和结尾的记忆最好，对中间的记忆最差。这就是我们下一节要讨论的「中间迷失」（Lost in the Middle）现象的直观体现。</p>
-      <p>（此时可以现场演示，邀请同学一起操作观察结果。）</p>
+      <p>「大海捞针」测试由 Greg Kamradt 在 2023 年提出，现已成为评测长上下文的标准 benchmark 之一，完整版测试会在不同文档位置和不同文档长度下系统评测召回率，生成一张热力图。</p>
+      <p>我们的简化版有同样的直觉价值。右侧表格给出了预期结果：强模型（Claude 3.5、GPT-4o）在所有位置表现良好；较弱的模型在中间位置会出现明显的遗忘现象。这验证了 Liu et al. (2023) 的 Lost-in-the-Middle 发现。</p>
+      <p>Prompt 里加了一句「不要说文章没有提到」，这是为了阻止模型在找不到答案时撒谎地回答「未找到相关信息」——这种提示工程技巧在实际评测时很常见。现在大家来实际操作一下。（等待同学操作约 1-2 分钟）</p>
     </aside>
   </section>
 
@@ -651,8 +739,7 @@
       <p class="sec-en">Critical Hypotheses</p>
     </div>
     <aside class="notes">
-      <p>最后一个部分，我想换一个视角，提出三个我认为目前研究界尚未给出清晰答案的问题。</p>
-      <p>这些不是有标准答案的习题，而是我希望和大家一起思考的开放性假说。对每个假说，我会先介绍目前已有的证据，再说明为什么它仍然是一个值得深究的问题。</p>
+      <p>最后一部分，我提出三个目前研究界尚未给出清晰答案的假说。每个假说我会说明现有证据，以及为什么它仍然值得追问。</p>
     </aside>
   </section>
 
@@ -670,16 +757,19 @@
         <div class="hyp-card">
           <div class="hyp-tag">假说 01</div>
           <h3>专家真的「专业化」了吗？</h3>
-          <p>MoE 中的专家是否学到了不同的语言/语义技能？还是负载均衡掩盖了随机性？研究表明部分专家偏向特定语言或句法结构，但机制尚不明朗。</p>
-          <div class="hyp-open">如果专业化是假象，MoE 的可解释性优势是否不存在？</div>
+          <p>探针实验（Zoph et al. 2022；Lepikhin et al. GShard）发现部分专家对特定语言或句法结构有<strong>统计偏好</strong>，如代码/数学专家。但这是真正的语义分工，还是负载均衡的副产物？</p>
+          <ul style="list-style:none;font-size:0.92rem;color:var(--sub);line-height:1.6;margin-top:0.3rem;">
+            <li>· 路由决策对输入的微小扰动高度敏感</li>
+            <li>· 随机权重初始化的不同 seed 会产生不同的专家分配模式</li>
+          </ul>
+          <div class="hyp-open">若专业化是假象，MoE 的「可解释性」优势是否不存在？</div>
         </div>
         <div class="hyp-card">
           <div class="hyp-tag">假说 02</div>
           <h3>长上下文真的被用到了吗？</h3>
-          <p>Liu et al. (2023) 发现：模型对<strong>开头和结尾</strong>的信息利用率最高，中间段容易被遗忘。即使上下文窗口达 1M，有效利用率可能远低于预期。</p>
+          <p>Liu et al. (2023) TACL 论文：模型在多文档 QA 任务中，对<strong>开头和结尾</strong>的信息利用率最高，中间段信息利用率显著下降（U 形曲线）。</p>
           <div class="litm-wrap" style="margin-top:0.3rem">
             <div class="litm">
-              <!-- U-shape: hi lo lo lo lo hi -->
               <div class="lb hi"  style="height:92%"></div>
               <div class="lb mid" style="height:70%"></div>
               <div class="lb lo"  style="height:42%"></div>
@@ -690,29 +780,28 @@
               <div class="lb mid" style="height:65%"></div>
               <div class="lb hi"  style="height:90%"></div>
             </div>
-            <div class="litm-label"><span>开头</span><span>← 位置 →</span><span>结尾</span></div>
+            <div class="litm-label"><span>开头</span><span>←召回率→</span><span>结尾</span></div>
           </div>
-          <div class="hyp-open">「长上下文」≠「有效利用长上下文」</div>
+          <p style="font-size:0.88rem;margin-top:0.3rem;">即使 Gemini 1.5 扩展到 1M，中间段利用率改善有限；RAG 可能比「更长上下文」更实用。</p>
+          <div class="hyp-open">「长上下文」 ≠「有效利用长上下文」</div>
         </div>
         <div class="hyp-card">
           <div class="hyp-tag">假说 03</div>
           <h3>MoE + 长上下文是否相互增强？</h3>
-          <p>MoE 扩大了参数容量，长上下文扩大了信息容量，两者是否真正协同？还是各自独立地解决不同问题，叠加只带来了更高的系统复杂度？</p>
-          <div class="hyp-open">未来架构是否存在更优雅的统一方案？</div>
+          <p>两者动机独立：MoE 解决<strong>参数效率</strong>，长上下文解决<strong>信息容量</strong>。Gemini 1.5 将二者结合并在 1M 上下文 NIAH 测试中表现优异，但：</p>
+          <ul style="list-style:none;font-size:0.92rem;color:var(--sub);line-height:1.6;margin-top:0.3rem;">
+            <li>· 消融实验中「MoE 专为长上下文训练」的增益尚不明确</li>
+            <li>· 系统复杂度（KV cache + all-to-all）随两者叠加倍增</li>
+            <li>· 新范式（Mamba/SSM）可能以线性复杂度统一解决二者</li>
+          </ul>
+          <div class="hyp-open">是协同涌现，还是两个独立方案的工程叠加？</div>
         </div>
       </div>
     </div>
     <aside class="notes">
-      <p><strong>假说一：MoE 的专家真的「专业化」了吗？</strong></p>
-      <p>这个问题的出发点是：MoE 最直观的叙事是不同专家学到了不同的「技能」，比如一个处理语法，一个处理数学，一个处理代码。这个叙事很有吸引力，也是 MoE「可解释性更好」这一说法的来源。</p>
-      <p>现有的一些探针实验确实发现了部分专家的语言偏好——比如某些专家在处理特定语言（英文、中文、代码）时激活率明显更高。但这究竟是真正的语义专业化，还是仅仅是训练数据分布和负载均衡共同作用的统计产物？目前还没有强力的因果证据。</p>
-      <p>如果专业化在很大程度上是假象，那 MoE 带来的好处主要还是「参数数量增加」，而不是「每组参数更专注」，两者的优化含义是截然不同的。</p>
-      <p><strong>假说二：长上下文窗口真的被有效利用了吗？</strong></p>
-      <p>Liu et al. 2023 年的论文「Lost in the Middle」用大量实验表明，语言模型对上下文的利用并不均匀：开头和结尾的内容更容易被记住，中间段容易被「遗忘」，召回率呈现典型的 U 形曲线。</p>
-      <p>你刚才在演示里可能已经感受到了这一点。问题是：即使上下文窗口达到 1M token，如果模型只能有效利用其中前 5% 和后 5%，那这个 1M 的工程代价是否值得？还是说我们需要更多的结构性引导，比如检索增强生成（RAG），才能真正激活长上下文的价值？</p>
-      <p><strong>假说三：MoE 与长上下文是否真正协同？</strong></p>
-      <p>这个问题更抽象。MoE 和长上下文在动机上各自独立：MoE 解决「训练推理成本」的问题，长上下文解决「单次信息容量」的问题。它们组合在一起（如 Gemini 1.5），从工程指标上看确实很强，但这种增强是真正的「协同涌现」，还是「两个独立能力的简单叠加」？</p>
-      <p>更进一步：有没有可能存在一种更统一的架构，而不是在 Transformer 上逐渐打补丁？比如状态空间模型（SSM，如 Mamba）试图用线性复杂度替代注意力，也许未来会有新的范式把这些问题一并解决。这是一个值得长期关注的方向。</p>
+      <p>假说一的核心争议在于因果性。相关性实验（某专家被特定类型 token 激活的频率更高）不等于专家真正学到了独立的语义能力。如果随机种子改变后，哪个专家负责哪类 token 就整个打乱了，那「专业化」更可能是一种统计涌现而非设计结果。这对 MoE 的可解释性主张是个挑战。</p>
+      <p>假说二的关键数据点是 Liu et al. 2023 的实验：在 20 个文档中找到含答案的文档，当该文档在上下文中部时，模型准确率下降 10-20 个百分点，即使模型的上下文窗口远大于文档总长度。这说明问题不在于上下文是否够长，而在于注意力机制的归纳偏置导致中间位置的权重被系统性稀释。</p>
+      <p>假说三是最开放的一个。目前没有强力的消融实验证明 MoE 和长上下文的组合比「等参数量的 Dense 长上下文模型 + 等参数量的 Dense 短上下文 MoE 模型」更好。也许未来架构（如 SSM 或新型 linear attention）会提供一个更统一的解决方案，而不是在 Transformer 上打各种补丁。这是一个值得研究生朋友们长期关注的方向。</p>
     </aside>
   </section>
 
@@ -756,23 +845,23 @@
           <div class="ref-meta">Su et al. &nbsp;·&nbsp; <span class="ref-venue">Neurocomputing 2024</span></div>
         </div>
         <div class="ref">
-          <div class="ref-title">FlashAttention: Fast and Memory-Efficient Exact Attention</div>
-          <div class="ref-meta">Dao et al. &nbsp;·&nbsp; <span class="ref-venue">NeurIPS 2022</span></div>
+          <div class="ref-title">FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</div>
+          <div class="ref-meta">Dao &nbsp;·&nbsp; <span class="ref-venue">ICLR 2024</span></div>
         </div>
         <div class="ref">
           <div class="ref-title">Lost in the Middle: How Language Models Use Long Contexts</div>
           <div class="ref-meta">Liu et al. &nbsp;·&nbsp; <span class="ref-venue">TACL 2023</span></div>
         </div>
+        <div class="ref">
+          <div class="ref-title">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</div>
+          <div class="ref-meta">Ainslie et al. &nbsp;·&nbsp; <span class="ref-venue">EMNLP 2023</span></div>
+        </div>
       </div>
     </div>
     <aside class="notes">
-      <p>最后是参考文献页，这里列出了今天报告涉及到的核心论文。</p>
-      <p>如果大家想深入了解某一块，我推荐的阅读顺序是：先读 Shazeer 2017（MoE 的奠基之作）和 Kaplan 2020（规模定律原论文），建立基础认知；再读 Switch Transformer 和 Mixtral 论文了解工程演进；Dao 的 FlashAttention 和 Su 的 RoPE 论文是长上下文技术的两个支柱；最后 DeepSeek-V2 和 Lost in the Middle 是两者结合与批判性反思的最新代表。</p>
-      <p>感谢大家的聆听！我们有一些时间可以做问答。如果大家对 MoE 路由机制、KV 压缩的实现细节，或者演示部分有任何问题，欢迎提出来一起讨论。</p>
+      <p>参考文献页新增了 GQA 的原论文（Ainslie et al. 2023），以及 FlashAttention 更新为 v2 版本。推荐阅读顺序：Kaplan/Chinchilla（背景）→ Shazeer/Switch（MoE 基础）→ Mixtral/DeepSeek-V2（现代实现）→ RoPE/FlashAttention/GQA（长上下文技术）→ Liu et al.（批判性视角）。感谢大家，欢迎提问！</p>
     </aside>
   </section>
-
-  <!-- ═══ [end] ══════════════════════════════════════════════════════ -->
 
 </div><!-- .deck -->
 
