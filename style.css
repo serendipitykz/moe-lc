@@ -471,10 +471,91 @@ ul.bl strong { font-weight: 700; }
 .lb.lo  { background: #e5e7eb; }
 .litm-axis { height: 1px; background: var(--border); margin: 0; }
 
-/* ── Reference grid ──────────────────────────────────── */
+/* ── Speaker Notes ───────────────────────────────────── */
+.notes {
+  display: none;
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  max-height: 42%;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.94);
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  padding: 0.7rem 3.5rem 1.2rem calc(var(--rail-w) + 2.2rem);
+  border-top: 2px solid var(--acc);
+  z-index: 50;
+}
+.notes::before {
+  content: '▍ 演讲稿';
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--acc);
+  margin-bottom: 0.5rem;
+}
+.notes p { margin-bottom: 0.5rem; }
+.notes p:last-child { margin-bottom: 0; }
+.notes strong { color: #f1f5f9; }
+.slide.section .notes { padding-left: 3rem; }
+body.notes-on .slide.on .notes { display: block; }
+
+#notes-btn {
+  font-size: 0.72rem;
+  padding: 0 0.7rem;
+  font-family: 'Noto Sans SC', sans-serif;
+  width: auto !important;
+  color: var(--sub);
+}
+body.notes-on #notes-btn {
+  background: var(--hi);
+  border-color: var(--acc);
+  color: var(--acc);
+}
+
 .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.1rem 2.5rem; flex: 1; align-content: start; }
 .ref { padding: 0.55rem 0; border-bottom: 1px solid var(--border); }
 .ref-title  { font-size: 0.98rem; font-weight: 600; color: var(--text); line-height: 1.35; }
 .ref-meta   { font-size: 0.85rem; color: var(--sub); margin-top: 0.15rem; }
 .ref-venue  { font-style: italic; color: var(--muted); }
+
+/* ── Compact bullets — no flex:1, tighter spacing ───────── */
+ul.bl-sm {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+ul.bl-sm li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-size: 1.15rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+ul.bl-sm li::before {
+  content: '▸';
+  color: var(--acc);
+  font-size: 0.85rem;
+  margin-top: 0.26rem;
+  flex-shrink: 0;
+}
+ul.bl-sm em     { color: var(--acc); font-style: normal; font-weight: 600; }
+ul.bl-sm strong { font-weight: 700; }
+
+/* ── Subdued sub-list — secondary info inside cards ──────── */
+ul.il { list-style: none; display: flex; flex-direction: column; gap: 0.28rem; }
+ul.il li {
+  font-size: 0.92rem;
+  color: var(--sub);
+  line-height: 1.55;
+  padding-left: 0.9rem;
+  position: relative;
+}
+ul.il li::before { content: '·'; position: absolute; left: 0; color: var(--muted); }
+
+/* Prevent formula from floating to card bottom via margin:auto */
+.card .formula { margin-top: 0.6rem; }
 

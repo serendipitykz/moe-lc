@@ -84,7 +84,7 @@
       <div class="rule"></div>
       <div style="display:flex;gap:2rem;flex:1;align-items:flex-start;">
         <div style="flex:1.3;display:flex;flex-direction:column;gap:0.9rem;">
-          <ul class="bl" style="flex:0">
+          <ul class="bl-sm">
             <li>Kaplan (2020)：$L \approx \bigl(N_c/N\bigr)^{0.076}$，性能随 $N$、$D$、$C$ 呈<strong>幂律增长</strong>，暂无明显上限</li>
             <li>Chinchilla (2022)：计算最优时 $N_{\text{opt}} \propto C^{0.5}$，$D_{\text{opt}} \propto C^{0.5}$——<strong>token 数应约等于 20×参数量</strong></li>
             <li>GPT-3 仅用 300B token 训练 175B 模型 → <em>数据严重不足</em>；Llama 3 修正为 15T token + 405B 参数</li>
@@ -131,7 +131,7 @@
       <div class="two" style="flex:1">
         <div class="card">
           <h3>Dense（稠密）</h3>
-          <ul class="bl">
+          <ul class="bl-sm">
             <li>每个 token 激活<strong>全部</strong>参数</li>
             <li>推理 FLOPs ∝ 总参数量 $N$</li>
             <li>KV cache 随序列长度线性增长，与 $N$ 无直接关联</li>
@@ -142,7 +142,7 @@
         </div>
         <div class="card hi">
           <h3>Sparse <span class="tag">MoE</span></h3>
-          <ul class="bl">
+          <ul class="bl-sm">
             <li>每个 token 仅激活<strong> $k$ 个专家</strong>（通常 $k \ll E$）</li>
             <li>推理 FLOPs ∝ 激活参数量 $N_{\text{act}}$，$N_{\text{act}} \ll N$</li>
             <li>代价：所有专家须<strong>全驻显存</strong>；分布式部署需额外通信</li>
@@ -187,7 +187,7 @@
         <div class="rope-box acc" style="padding:0.5rem 1rem;text-align:center;font-size:1rem;">加权求和 $y$<br><span style="font-size:0.8rem;color:var(--sub)">$\sum G_i \cdot E_i(x)$</span></div>
       </div>
       <div style="display:flex;gap:1.4rem;flex:1;align-items:flex-start;">
-        <ul class="bl" style="flex:1.3;flex-shrink:0;">
+        <ul class="bl-sm" style="flex:1.3;flex-shrink:0;">
           <li>Transformer 每层的 <strong>FFN</strong> 替换为 $E$ 个并行专家；Attention 层不变，各层共享</li>
           <li>门控得分 $G_i(x) = \mathrm{Softmax}(\mathrm{TopK}(xW_g))_i$，仅被选中的 $k$ 个非零</li>
           <li>每个 token 独立路由，同一 batch 中不同 token 可激活<strong>完全不同的专家组合</strong></li>
@@ -223,7 +223,7 @@
       <div class="rule"></div>
       <div style="display:flex;gap:2rem;flex:1;align-items:flex-start;">
         <div style="flex:1.4;display:flex;flex-direction:column;gap:0.9rem;">
-          <ul class="bl" style="flex:0">
+          <ul class="bl-sm">
             <li>若不加约束，路由器初期随机偏差 → 某几个专家被<strong>正反馈循环</strong>强化 → <strong>专家崩塌（Expert Collapse）</strong></li>
             <li>崩塌后：头部 1-2 个专家承接几乎所有 token，其余专家几乎从不更新，大量参数浪费</li>
             <li>解决①：辅助均衡损失 $\mathcal{L}_{\mathrm{aux}}$，惩罚负载集中；建议 $\alpha \approx 10^{-2}$</li>
@@ -271,7 +271,7 @@
         <div style="flex:1;display:flex;flex-direction:column;gap:0.8rem;">
           <div class="card" style="flex:0">
             <h3>架构参数</h3>
-            <ul class="bl">
+            <ul class="bl-sm">
               <li>32 层，每层 FFN → 8 专家，路由 top-2</li>
               <li>隐藏维度：4096；FFN 中间维度：14336（每专家）</li>
               <li>Attention：32 heads，GQA 8 groups（KV heads=8）</li>
@@ -327,7 +327,7 @@
       <div class="rule"></div>
       <div style="display:flex;gap:2rem;flex:1;align-items:flex-start;">
         <div style="flex:1.3;display:flex;flex-direction:column;gap:0.9rem;">
-          <ul class="bl" style="flex:0">
+          <ul class="bl-sm">
             <li>标准自注意力的时间与显存复杂度均为 $O(n^2)$，$n$ 为序列长度</li>
             <li>核心步骤 $QK^\top \in \mathbb{R}^{n\times n}$ 需要完整落盘，无法逐行流式处理</li>
             <li>因果掩码只使下三角非零，但计算仍需完整矩阵（PyTorch 标准实现）</li>
@@ -372,7 +372,7 @@
     <div class="body">
       <div class="hd"><h2>旋转位置编码（RoPE）</h2><div class="en">Rotary Position Embedding</div></div>
       <div class="rule"></div>
-      <ul class="bl" style="flex:0;gap:0.8rem;margin-bottom:1rem;">
+      <ul class="bl-sm" style="margin-bottom:1rem;">
         <li>Transformer 排列不变，必须额外编码<strong>顺序信息</strong>；原始正弦编码（Vaswani 2017）在训练外长度泛化性差</li>
         <li>RoPE（Su et al., 2021）：给 $Q$/$K$ 的每对维度 $(d_{2i}, d_{2i+1})$ 施加旋转角 $m\theta_i$，$\theta_i = 10000^{-2i/d}$</li>
         <li>关键性质：$q_m^\top k_n$ 只依赖<strong>相对位置 $n-m$</strong>，绝对位置互相抵消</li>
@@ -601,7 +601,7 @@
       <div class="rule"></div>
       <div style="display:flex;gap:1.6rem;flex:1;">
         <div style="flex:1.2;display:flex;flex-direction:column;gap:0.9rem;">
-          <ul class="bl" style="flex:0">
+          <ul class="bl-sm">
             <li>总参数 <strong>236B</strong>，激活 <strong>21B</strong>（2 共享 + 6 路由 top-6/160），上下文 <strong>128K</strong></li>
             <li><strong>细粒度 MoE</strong>：将每个专家拆分更小（$d_{\text{ffn}}$ 减半），专家数翻倍 → 路由粒度更细，分配更灵活</li>
             <li><strong>MLA（Multi-head Latent Attention）</strong>：将所有 KV 头压缩到一个低秩向量 $c_{KV} \in \mathbb{R}^{d_c}$ 缓存，解码时上采样还原 K/V</li>
@@ -758,9 +758,9 @@
           <div class="hyp-tag">假说 01</div>
           <h3>专家真的「专业化」了吗？</h3>
           <p>探针实验（Zoph et al. 2022；Lepikhin et al. GShard）发现部分专家对特定语言或句法结构有<strong>统计偏好</strong>，如代码/数学专家。但这是真正的语义分工，还是负载均衡的副产物？</p>
-          <ul style="list-style:none;font-size:0.92rem;color:var(--sub);line-height:1.6;margin-top:0.3rem;">
-            <li>· 路由决策对输入的微小扰动高度敏感</li>
-            <li>· 随机权重初始化的不同 seed 会产生不同的专家分配模式</li>
+          <ul class="il" style="margin-top:0.3rem;">
+            <li>路由决策对输入的微小扰动高度敏感</li>
+            <li>随机权重初始化的不同 seed 会产生不同的专家分配模式</li>
           </ul>
           <div class="hyp-open">若专业化是假象，MoE 的「可解释性」优势是否不存在？</div>
         </div>
@@ -789,10 +789,10 @@
           <div class="hyp-tag">假说 03</div>
           <h3>MoE + 长上下文是否相互增强？</h3>
           <p>两者动机独立：MoE 解决<strong>参数效率</strong>，长上下文解决<strong>信息容量</strong>。Gemini 1.5 将二者结合并在 1M 上下文 NIAH 测试中表现优异，但：</p>
-          <ul style="list-style:none;font-size:0.92rem;color:var(--sub);line-height:1.6;margin-top:0.3rem;">
-            <li>· 消融实验中「MoE 专为长上下文训练」的增益尚不明确</li>
-            <li>· 系统复杂度（KV cache + all-to-all）随两者叠加倍增</li>
-            <li>· 新范式（Mamba/SSM）可能以线性复杂度统一解决二者</li>
+          <ul class="il" style="margin-top:0.3rem;">
+            <li>消融实验中「MoE 专为长上下文训练」的增益尚不明确</li>
+            <li>系统复杂度（KV cache + all-to-all）随两者叠加倍增</li>
+            <li>新范式（Mamba/SSM）可能以线性复杂度统一解决二者</li>
           </ul>
           <div class="hyp-open">是协同涌现，还是两个独立方案的工程叠加？</div>
         </div>
