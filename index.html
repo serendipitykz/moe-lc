@@ -85,8 +85,12 @@
       <div style="display:flex;gap:2rem;flex:1;align-items:flex-start;">
         <div style="flex:1.3;display:flex;flex-direction:column;gap:0.9rem;">
           <ul class="bl-sm">
-            <li>Kaplan (2020)：$L \approx \bigl(N_c/N\bigr)^{0.076}$，性能随 $N$、$D$、$C$ 呈<strong>幂律增长</strong>，暂无明显上限</li>
-            <li>Chinchilla (2022)：计算最优时 $N_{\text{opt}} \propto C^{0.5}$，$D_{\text{opt}} \propto C^{0.5}$——<strong>token 数应约等于 20×参数量</strong></li>
+            <li><div>Kaplan (2020)：性能随 $N$、$D$、$C$ 呈<strong>幂律增长</strong>，暂无明显上限
+              <div class="formula" style="margin-top:0.4rem">$L \approx \bigl(N_c/N\bigr)^{0.076}$</div>
+            </div></li>
+            <li><div>Chinchilla (2022)：计算最优时 $N$ 与 $D$ 应<strong>同比例扩大</strong>，token 数约为 <strong>20×参数量</strong>
+              <div class="formula" style="margin-top:0.4rem">$N_{\text{opt}} \propto C^{0.5},\quad D_{\text{opt}} \propto C^{0.5}$</div>
+            </div></li>
             <li>GPT-3 仅用 300B token 训练 175B 模型 → <em>数据严重不足</em>；Llama 3 修正为 15T token + 405B 参数</li>
           </ul>
           <div class="box warn">核心矛盾：参数量 $10\times$ ⇒ 推理成本 $10\times$。模型训练一次，但推理<strong>每次请求都要重做</strong>。</div>
