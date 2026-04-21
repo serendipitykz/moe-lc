@@ -60,7 +60,7 @@
       <ul class="agenda">
         <li><span class="n">01</span> 背景：规模定律的代价 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">Scaling Laws · Dense 模型瓶颈</span></li>
         <li><span class="n">02</span> 混合专家模型（MoE）&nbsp;<span style="font-size:0.9rem;color:var(--muted)">路由机制 · 负载均衡 · Mixtral 8×7B</span></li>
-        <li><span class="n">03</span> 长上下文技术 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">$O(n^2)$ 瓶颈 · RoPE · FlashAttention · GQA</span></li>
+        <li><span class="n">03</span> 长上下文技术 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">$O(n^2)$ 瓶颈 · RoPE · FlashAttention · GQA · 稀疏注意力</span></li>
         <li><span class="n">04</span> MoE 与长上下文的结合 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">三重挑战 · DeepSeek-V2 MLA</span></li>
         <li><span class="n">05</span> 动手演示 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">Needle-in-a-Haystack 测试</span></li>
         <li><span class="n">06</span> 关键假说 &nbsp;<span style="font-size:0.9rem;color:var(--muted)">专业化？有效利用？协同增强？</span></li>
@@ -247,6 +247,9 @@
           <li>门控得分 $G_i(x) = \mathrm{Softmax}(\mathrm{TopK}(xW_g))_i$，仅被选中的 $k$ 个非零</li>
           <li>每个 token 独立路由，同一 batch 中不同 token 可激活<strong>完全不同的专家组合</strong></li>
           <li>前向计算量 ≈ 原 FFN 的 $k/E$；反向传播梯度仅流向被激活的专家</li>
+          <li>可学习噪声门控（<strong>Noisy Top-K</strong>，Shazeer 2017）：对路由得分加入标准正态噪声 × 可学习幅度，训练初期鼓励路由多样性，防止专家崩塌
+            <div class="formula" style="margin-top:0.25rem;font-size:0.88em">$H(x)_i = (xW_g)_i + \varepsilon\cdot\mathrm{Softplus}((xW_\mathrm{noise})_i),\quad \varepsilon\sim\mathcal{N}(0,1)$</div>
+          </li>
         </ul>
         <div style="flex:1;display:flex;flex-direction:column;gap:0.8rem;">
           <div class="formula">$$y = \sum_{i \,\in\, \mathrm{TopK}(x)} G_i(x) \cdot \mathrm{Expert}_i(x)$$</div>
@@ -282,7 +285,12 @@
             <li>若不加约束，路由器初期随机偏差 → 某几个专家被<strong>正反馈循环</strong>强化 → <strong>专家崩塌（Expert Collapse）</strong></li>
             <li>崩塌后：头部 1-2 个专家承接几乎所有 token，其余专家几乎从不更新，大量参数浪费</li>
             <li>解决①：辅助均衡损失 $\mathcal{L}_{\mathrm{aux}}$，惩罚负载集中；建议 $\alpha \approx 10^{-2}$</li>
-            <li>解决②：<strong>Token Capacity</strong> 硬上限——每专家每 batch 最多处理 $\lfloor T/E \cdot C \rfloor$ 个 token，超额 token 跳过（$C$ 为容量因子，通常 1.0–1.25）</li>
+            <li>解决②：<strong>Token Capacity</strong> 硬上限（Switch Transformers）——超额 token 溢出跳过，保证静态 shape 可编译
+              <div class="formula" style="margin-top:0.25rem;font-size:0.88em">$\text{Expert Capacity} = \lfloor T/E \rfloor \times C,\quad C \in [1.0,\,1.25]$</div>
+            </li>
+            <li>解决③：<strong>Router z-loss</strong>（ST-MoE, Zoph 2022）——惩罚门控输入 logits 绝对值过大，减少 exp 运算的数值误差，显著提升训练稳定性
+              <div class="formula" style="margin-top:0.25rem;font-size:0.88em">$\mathcal{L}_z = \tfrac{\alpha_z}{B}\sum_i\!\left(\log\textstyle\sum_j e^{x_{ij}}\right)^{\!2}$</div>
+            </li>
           </ul>
           <div class="formula">
             $$\mathcal{L}_{\mathrm{aux}} = \alpha \sum_{i=1}^{E} \underbrace{f_i}_{\text{实际比例}} \cdot \underbrace{P_i}_{\text{路由概率均值}}$$
@@ -387,6 +395,7 @@
             <li>核心步骤 $QK^\top \in \mathbb{R}^{n\times n}$ 需要完整落盘，无法逐行流式处理</li>
             <li>因果掩码只使下三角非零，但计算仍需完整矩阵（PyTorch 标准实现）</li>
             <li>上下文需求：GPT-4 128K → Claude 3 200K → Gemini 1.5 <strong>1M</strong></li>
+            <li><strong>Attention Distractions</strong>：长文本中注意力矩阵高度稀疏（大量权重接近零），但 softmax 归一化使这些近零元素在矩阵乘中不断积累——关键信号被无关内容「分心」稀释，生成质量下降</li>
           </ul>
           <div class="formula">
             $$\mathrm{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
@@ -493,6 +502,7 @@
             <tr><td>滑动窗口（SWA）</td><td class="ok">$O(nw)$</td><td class="ok">$O(nw)$</td><td class="warn">近似</td><td>每 token 只看窗口内 $w$ 个邻居</td></tr>
             <tr><td>MQA（多查询）</td><td class="warn">$O(n^2)$</td><td class="ok">$O(n^2/H)$</td><td class="ok">✓</td><td>所有 Q 头共享 1 对 KV 头</td></tr>
             <tr><td><strong>GQA（分组查询）</strong></td><td class="warn">$O(n^2)$</td><td class="ok">$O(n^2/g)$</td><td class="ok">✓</td><td>每 $g$ 个 Q 头共享 1 对 KV 头</td></tr>
+            <tr><td><strong>Linear Attention</strong></td><td class="ok">$O(nd)$</td><td class="ok">$O(d^2)$</td><td class="warn">近似</td><td>特征映射替代 softmax；历史状态压缩为 $d\!\times\!d$ 矩阵，无需存 KV cache</td></tr>
           </tbody>
         </table>
         <div style="flex:1; display:flex; flex-direction:column; gap:0.8rem;">
@@ -530,10 +540,64 @@
     </aside>
   </section>
 
-  <!-- ═══ 12. Context Window Timeline ══════════════════════════════ -->
+  <!-- ═══ 12. Sparse Attention Techniques ══════════════════════════ -->
   <section class="slide">
     <div class="rail">
       <span class="num">12</span>
+      <div class="vbar"><div class="vfill"></div></div>
+      <span class="of"></span>
+    </div>
+    <div class="body">
+      <div class="hd"><h2>稀疏注意力前沿</h2><div class="en">Sparse Attention — MoE Idea Meets Attention</div></div>
+      <div class="rule"></div>
+      <div style="display:flex;gap:1.8rem;flex:1;align-items:flex-start;">
+        <div style="flex:1.4;display:flex;flex-direction:column;gap:0.8rem;">
+          <ul class="bl-sm">
+            <li><strong>MoBA（Mixture of Block Attention）</strong>：将序列按上下文维度分块，每个 Query 通过门控得分选 top-$k$ 最相关块来计算注意力，跳过无关块
+              <div class="formula" style="margin-top:0.25rem;font-size:0.88em">$s_i = \mathbf{q}^\top \cdot \mathrm{mean\_pool}(\mathbf{K}_{I_i})$；序列 8K→1M 计算时间次线性增长，精度保持 <strong>95.31%</strong></div>
+            </li>
+            <li><strong>NSA（Native Sparse Attention）</strong>：三路并行稀疏策略，门控单元可学习
+              <ul class="il" style="margin-top:0.3rem;">
+                <li>Token Compression：用 MLP 将整块 KV 压缩为单一 KV</li>
+                <li>Token Selection：选择全局最重要的 top-$n$ token</li>
+                <li>Sliding Window：保留局部窗口以捕获近邻信息</li>
+              </ul>
+            </li>
+            <li><strong>MInference</strong>：推理时仅对每个 Attention Head 取 Top-4K 列计算，128K 上下文下召回 <strong>&gt;96%</strong> 全局注意力得分，无需修改模型权重</li>
+          </ul>
+          <div class="box">MoBA 的核心思路与 MoE 一脉相承：<strong>每个计算单元只处理最相关的子集</strong>——从参数空间的稀疏激活，迁移到了注意力空间的稀疏计算</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.7rem;">
+          <div style="font-size:0.85rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">稀疏注意力方法对比</div>
+          <table class="tbl">
+            <thead><tr><th>方法</th><th>稀疏粒度</th><th>门控可学</th><th>精度召回</th></tr></thead>
+            <tbody>
+              <tr><td><strong>MoBA</strong></td><td>Block</td><td class="ok">✓</td><td class="ok">95.31%</td></tr>
+              <tr><td><strong>NSA</strong></td><td>Block + Token + Window</td><td class="ok">✓</td><td class="ok">接近全量</td></tr>
+              <tr><td><strong>MInference</strong></td><td>Column（Top-4K）</td><td class="warn">统计</td><td class="ok">&gt;96%</td></tr>
+              <tr><td>SWA</td><td>Window</td><td class="warn">✗</td><td class="warn">近似</td></tr>
+            </tbody>
+          </table>
+          <div class="box" style="font-size:0.92rem;">
+            <strong>Linear Attention</strong>（MiniMax-01 等）：用特征映射替代 softmax，将历史状态累积为 $d\!\times\!d$ 矩阵；与 Softmax Attention 混合（如 7:1）可在 NIAH 等任务上媲美纯 Softmax 效果
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>这张幻灯片介绍的三种技术代表 2024–2025 年稀疏注意力的最新进展，均受 MoE 稀疏激活思想启发。</p>
+      <p>MoBA（ByteDance）把序列在上下文维度上分块，为每个 Query 计算与各块平均 Key 的相似度作为「路由得分」，选出 top-k 相关块后只计算那些块内的注意力。实验显示在序列 8K→1M 时计算时间呈次线性增长，精度保持 95.31%。</p>
+      <p>NSA（DeepSeek）更系统化，同时维护三条路径：压缩路径用 MLP 把整块 KV 压缩成一个 KV；选择路径挑全局最重要 token；滑动窗口保留局部信息。三路通过可学习门控权重融合。</p>
+      <p>MInference 则最轻量——不修改模型，推理时为每个注意力头识别最重要的 4K 个 Key 列，128K 上下文下可恢复超 96% 注意力得分，可直接部署到现有模型。</p>
+      <p>右下角补充了 Linear Attention（MiniMax-01 的 Lightning Attention-2）：用核函数近似替代 softmax，将复杂度降到 $O(nd)$，但精度略低，所以实践中与少量 Softmax 层混合使用。</p>
+    </aside>
+  </section>
+
+  <!-- ═══ 13. Context Window Timeline ══════════════════════════════ -->
+
+  <section class="slide">
+    <div class="rail">
+      <span class="num">13</span>
       <div class="vbar"><div class="vfill"></div></div>
       <span class="of"></span>
     </div>
@@ -600,10 +664,10 @@
     </aside>
   </section>
 
-  <!-- ═══ 14. MoE × Long Context Challenges ═══════════════════════ -->
+  <!-- ═══ 15. MoE × Long Context Challenges ═══════════════════════ -->
   <section class="slide">
     <div class="rail">
-      <span class="num">14</span>
+      <span class="num">15</span>
       <div class="vbar"><div class="vfill"></div></div>
       <span class="of"></span>
     </div>
@@ -644,10 +708,10 @@
     </aside>
   </section>
 
-  <!-- ═══ 15. DeepSeek-V2 Case Study ══════════════════════════════ -->
+  <!-- ═══ 16. DeepSeek-V2 Case Study ══════════════════════════════ -->
   <section class="slide">
     <div class="rail">
-      <span class="num">15</span>
+      <span class="num">16</span>
       <div class="vbar"><div class="vfill"></div></div>
       <span class="of"></span>
     </div>
@@ -714,10 +778,10 @@
     </aside>
   </section>
 
-  <!-- ═══ 17. Demo — Needle in a Haystack ════════════════════════ -->
+  <!-- ═══ 18. Demo — Needle in a Haystack ════════════════════════ -->
   <section class="slide">
     <div class="rail">
-      <span class="num">17</span>
+      <span class="num">18</span>
       <div class="vbar"><div class="vfill"></div></div>
       <span class="of"></span>
     </div>
@@ -798,10 +862,10 @@
     </aside>
   </section>
 
-  <!-- ═══ 19. Critical Hypotheses ════════════════════════════════ -->
+  <!-- ═══ 20. Critical Hypotheses ════════════════════════════════ -->
   <section class="slide">
     <div class="rail">
-      <span class="num">19</span>
+      <span class="num">20</span>
       <div class="vbar"><div class="vfill"></div></div>
       <span class="of"></span>
     </div>
@@ -860,10 +924,10 @@
     </aside>
   </section>
 
-  <!-- ═══ 20. References ════════════════════════════════════════════ -->
+  <!-- ═══ 21. References ════════════════════════════════════════════ -->
   <section class="slide">
     <div class="rail">
-      <span class="num">20</span>
+      <span class="num">21</span>
       <div class="vbar"><div class="vfill"></div></div>
       <span class="of"></span>
     </div>
@@ -911,10 +975,22 @@
           <div class="ref-title">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</div>
           <div class="ref-meta">Ainslie et al. &nbsp;·&nbsp; <span class="ref-venue">EMNLP 2023</span></div>
         </div>
+        <div class="ref">
+          <div class="ref-title">Designing Effective Sparse Expert Models (ST-MoE)</div>
+          <div class="ref-meta">Zoph et al. &nbsp;·&nbsp; <span class="ref-venue">arXiv 2022</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">MoBA: Mixture of Block Attention for Long-Context LLMs</div>
+          <div class="ref-meta">Luo et al. &nbsp;·&nbsp; <span class="ref-venue">arXiv 2025</span></div>
+        </div>
+        <div class="ref">
+          <div class="ref-title">Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention</div>
+          <div class="ref-meta">DeepSeek-AI &nbsp;·&nbsp; <span class="ref-venue">arXiv 2025</span></div>
+        </div>
       </div>
     </div>
     <aside class="notes">
-      <p>参考文献页新增了 GQA 的原论文（Ainslie et al. 2023），以及 FlashAttention 更新为 v2 版本。推荐阅读顺序：Kaplan/Chinchilla（背景）→ Shazeer/Switch（MoE 基础）→ Mixtral/DeepSeek-V2（现代实现）→ RoPE/FlashAttention/GQA（长上下文技术）→ Liu et al.（批判性视角）。感谢大家，欢迎提问！</p>
+      <p>参考文献新增了 ST-MoE（Router z-loss 来源）、MoBA 和 NSA（稀疏注意力前沿）。推荐阅读顺序：Kaplan/Chinchilla（背景）→ Shazeer/Switch/ST-MoE（MoE 基础与训练）→ Mixtral/DeepSeek-V2（现代实现）→ RoPE/FlashAttention/GQA（长上下文技术）→ MoBA/NSA（稀疏注意力前沿）→ Liu et al.（批判性视角）。感谢大家，欢迎提问！</p>
     </aside>
   </section>
 
