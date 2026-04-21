@@ -136,6 +136,7 @@ ul.bl strong { font-weight: 700; }
   text-align: center;
   font-size: 1.1rem;
   color: #334155;
+  display: block;
 }
 
 /* ── KaTeX overrides ────────────────────────────────── */
@@ -523,16 +524,16 @@ body.notes-on #notes-btn {
 /* ── Compact bullets — no flex:1, tighter spacing ───────── */
 ul.bl-sm {
   list-style: none;
-  display: flex;
+  display: block;
   flex-direction: column;
   gap: 0.55rem;
 }
 ul.bl-sm li {
-  display: flex;
+  display: block;
   align-items: flex-start;
   gap: 0.7rem;
   font-size: 1.15rem;
-  line-height: 1.55;
+  line-height: 2.15;
   color: var(--text);
 }
 ul.bl-sm li::before {
@@ -543,7 +544,7 @@ ul.bl-sm li::before {
   flex-shrink: 0;
 }
 ul.bl-sm em     { color: var(--acc); font-style: normal; font-weight: 600; }
-ul.bl-sm strong { font-weight: 700; }
+ul.bl-sm strong { font-weight: 700; display: inline; }
 
 /* ── Subdued sub-list — secondary info inside cards ──────── */
 ul.il { list-style: none; display: flex; flex-direction: column; gap: 0.28rem; }
