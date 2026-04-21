@@ -18,3 +18,6 @@
 ## Content style
 - Hand-made graphs encouraged: timelines (for evolution/history), HTML tables (for comparisons), attention pattern grids, diagrams with CSS boxes and arrows
 - Concrete examples or mini-annotations recommended alongside bullet descriptions (e.g. a side panel or inline callout with a specific number / model name)
+
+## Git workflow notes
+- `git push` to GitHub occasionally fails with `GnuTLS recv error (-110): The TLS connection was non-properly terminated.` — simply retry the push immediately; it succeeds on the next attempt.

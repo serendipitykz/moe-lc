@@ -17,10 +17,11 @@ The production process (full AI interaction history including prompts) is part o
 ## Git Workflow
 
 - **Never develop on `main`**. If on `main`, ask the user to confirm a branch name before checking out.
-- Commit and push after each meaningful change with a descriptive message.
+- Commit and push after each meaningful change with a descriptive message. You shall have the collaborator access to the remote repository.
 - Do **not** merge branches or open PRs.
 
 ## Interaction Guidelines
 
 - Generate only a few slides at a time, then pause for user review before continuing.
 - If a required tool or skill is missing, surface it to the user and let them decide whether to install it.
+- Do not put too much content on a single slide page.
