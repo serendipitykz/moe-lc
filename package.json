@@ -1,0 +1,33 @@
+{
+  "name": "moe-lc",
+  "version": "1.0.0",
+  "description": "Presentation materials for ACM Class 2026 Course: Large Language Model (CS2916-01).",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "slidev",
+    "build": "slidev build",
+    "export": "slidev export"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SerendipityKz/MoE-LC.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SerendipityKz/MoE-LC/issues"
+  },
+  "homepage": "https://github.com/SerendipityKz/MoE-LC#readme",
+  "dependencies": {
+    "@slidev/cli": "^52.14.2",
+    "@slidev/theme-default": "^0.25.0",
+    "@slidev/theme-seriph": "^0.25.0",
+    "slidev-theme-mint": "^0.1.0",
+    "slidev-theme-penguin": "^2.3.1"
+  }
+}

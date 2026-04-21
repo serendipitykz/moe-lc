@@ -1,3 +1,6 @@
 .codex/
 .cursor/
 .sii/
+node_modules/
+scripts/
+plan_draft.md
