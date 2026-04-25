@@ -2,3 +2,5 @@
 .cursor/
 .sii/
 .claude/
+venv/
+tmp/
