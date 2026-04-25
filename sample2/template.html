@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoE &amp; Long Context — ACM Class 2026</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+  <style>
+    /* Ensure each slide occupies the full viewport */
+    .slide { min-height: 100vh; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+
+  <!-- Slide container -->
+  <div id="slide-container">
+<!-- SLIDES_PLACEHOLDER -->
+  </div>
+
+  <!-- Navigation bar -->
+  <nav id="nav-bar"
+       class="fixed bottom-0 left-0 right-0 flex items-center justify-center gap-6 py-3 bg-gray-950 bg-opacity-80 text-sm text-gray-400 z-50">
+    <button id="btn-prev"
+            class="px-4 py-1 rounded border border-gray-600 hover:bg-gray-700 transition-colors disabled:opacity-30"
+            onclick="navigate(-1)">← Prev</button>
+    <span id="slide-counter" class="font-mono text-gray-300"></span>
+    <button id="btn-next"
+            class="px-4 py-1 rounded border border-gray-600 hover:bg-gray-700 transition-colors disabled:opacity-30"
+            onclick="navigate(1)">Next →</button>
+  </nav>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    let current = 0;
+
+    function showSlide(index) {
+      slides.forEach((s, i) => s.classList.toggle('hidden', i !== index));
+      document.getElementById('slide-counter').textContent =
+        'Slide ' + (index + 1) + ' / ' + slides.length;
+      document.getElementById('btn-prev').disabled = index === 0;
+      document.getElementById('btn-next').disabled = index === slides.length - 1;
+      // Re-typeset MathJax for the newly visible slide
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([slides[index]]).catch(console.error);
+      }
+      current = index;
+    }
+
+    function navigate(delta) {
+      const next = current + delta;
+      if (next >= 0 && next < slides.length) showSlide(next);
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+    });
+
+    // Initialise on load
+    showSlide(0);
+  </script>
+</body>
+</html>

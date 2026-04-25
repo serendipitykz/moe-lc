@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoE &amp; Long Context — ACM Class 2026</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+  <style>
+    /* Ensure each slide occupies the full viewport */
+    .slide { min-height: 100vh; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+
+  <!-- Slide container -->
+  <div id="slide-container">
+<div class="slide hidden flex flex-col items-center justify-center h-screen bg-gray-900 text-white p-16">
+  <!-- Decorative top accent bar -->
+  <div class="w-24 h-1 bg-indigo-500 mb-10 rounded-full"></div>
+
+  <!-- Main title -->
+  <h1 class="text-5xl font-extrabold tracking-tight text-center leading-tight mb-6 text-white">
+    Mixture of Experts &amp; Long Context:<br/>
+    <span class="text-indigo-400">Scaling Efficiency to 1M Tokens</span>
+  </h1>
+
+  <!-- Subtitle / course -->
+  <p class="text-xl text-gray-400 mb-2">ACM Class 2026 · CS2916-01 Large Language Models</p>
+
+  <!-- Divider -->
+  <div class="w-16 h-px bg-gray-600 my-6"></div>
+
+  <!-- Authors -->
+  <p class="text-lg text-gray-300">Your Name</p>
+
+  <!-- Slide counter -->
+  <span class="absolute bottom-16 right-10 text-sm text-gray-500 font-mono">1 / 3</span>
+</div>
+
+<div class="slide hidden flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
+
+  <!-- Heading -->
+  <h2 class="text-4xl font-bold mb-10 text-indigo-300">Why MoE + Long Context?</h2>
+
+  <!-- Two-column body -->
+  <div class="grid grid-cols-2 gap-10 flex-1">
+
+    <!-- Left: MoE -->
+    <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
+      <h3 class="text-2xl font-semibold text-indigo-400 mb-2">Mixture of Experts (MoE)</h3>
+      <p class="text-gray-200 leading-relaxed">
+        Activates only \(k\) of \(N_{\text{exp}}\) experts per token, slashing
+        <span class="text-indigo-300 font-medium">active FLOPs</span> while keeping
+        total model capacity high.
+      </p>
+      <p class="text-gray-400 text-sm leading-relaxed">
+        Example: <span class="text-white font-semibold">Mixtral-8×7B</span> activates
+        <strong>2 of 8</strong> experts per token — same inference cost as a ~13B dense model,
+        but 47B total parameters of knowledge.
+      </p>
+      <div class="mt-auto text-center text-gray-300 text-base font-mono bg-gray-900 rounded-xl px-4 py-3">
+        \[ \text{Active FLOPs} \approx \frac{k}{N_{\text{exp}}} \times \text{Dense FLOPs} \]
+      </div>
+    </div>
+
+    <!-- Right: Long Context -->
+    <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
+      <h3 class="text-2xl font-semibold text-emerald-400 mb-2">Long Context</h3>
+      <p class="text-gray-200 leading-relaxed">
+        Extends sequence length \(L\) to
+        <span class="text-emerald-300 font-medium">128K – 1M tokens</span>,
+        enabling document-level and repository-scale reasoning in a single forward pass.
+      </p>
+      <p class="text-gray-400 text-sm leading-relaxed">
+        Key challenge: standard attention is \(\mathcal{O}(L^2)\) in memory.
+        Techniques like FlashAttention, RoPE extrapolation, and chunk-wise recurrence
+        tame this cost.
+      </p>
+      <div class="mt-auto text-center text-gray-300 text-base font-mono bg-gray-900 rounded-xl px-4 py-3">
+        \[ L \in [128\text{K},\; 1\text{M}] \text{ tokens} \]
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer callout -->
+  <p class="mt-8 text-center text-gray-400 italic text-base">
+    Together: capable models that stay <span class="text-white font-semibold">compute-efficient</span> at scale.
+  </p>
+
+  <!-- Slide counter -->
+  <span class="absolute bottom-16 right-10 text-sm text-gray-500 font-mono">2 / 3</span>
+</div>
+
+<div class="slide hidden flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
+
+  <!-- Heading -->
+  <h2 class="text-4xl font-bold mb-12 text-indigo-300">Talk Structure</h2>
+
+  <!-- SVG pipeline diagram -->
+  <div class="flex justify-center items-center flex-1">
+    <svg viewBox="0 0 920 120" xmlns="http://www.w3.org/2000/svg"
+         class="w-full max-w-5xl" style="max-height:140px">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8"
+                refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+        </marker>
+      </defs>
+
+      <!-- Box colours: indigo shades cycling -->
+      <!-- Box 1: Background -->
+      <rect x="5"   y="25" width="130" height="60" rx="10" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="70"  y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Background</text>
+      <text x="70"  y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">8 min</text>
+
+      <!-- Arrow 1→2 -->
+      <line x1="135" y1="55" x2="160" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Box 2: MoE Arch -->
+      <rect x="160" y="25" width="130" height="60" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
+      <text x="225" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">MoE Arch</text>
+      <text x="225" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">12 min</text>
+
+      <!-- Arrow 2→3 -->
+      <line x1="290" y1="55" x2="315" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Box 3: Routing -->
+      <rect x="315" y="25" width="130" height="60" rx="10" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="380" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Routing</text>
+      <text x="380" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">12 min</text>
+
+      <!-- Arrow 3→4 -->
+      <line x1="445" y1="55" x2="470" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Box 4: Long Context -->
+      <rect x="470" y="25" width="130" height="60" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
+      <text x="535" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Long Context</text>
+      <text x="535" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">12 min</text>
+
+      <!-- Arrow 4→5 -->
+      <line x1="600" y1="55" x2="625" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Box 5: Integration -->
+      <rect x="625" y="25" width="130" height="60" rx="10" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="690" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Integration</text>
+      <text x="690" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">15 min</text>
+
+      <!-- Arrow 5→6 -->
+      <line x1="755" y1="55" x2="780" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Box 6: Open Problems -->
+      <rect x="780" y="25" width="135" height="60" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
+      <text x="847" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Open Problems</text>
+      <text x="847" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">11 min</text>
+    </svg>
+  </div>
+
+  <!-- Total time note -->
+  <p class="text-center text-gray-500 text-sm mt-4">
+    Total: 8 + 12 + 12 + 12 + 15 + 11 = <span class="text-gray-300 font-semibold">70 minutes</span>
+  </p>
+
+  <!-- Slide counter -->
+  <span class="absolute bottom-16 right-10 text-sm text-gray-500 font-mono">3 / 3</span>
+</div>
+  </div>
+
+  <!-- Navigation bar -->
+  <nav id="nav-bar"
+       class="fixed bottom-0 left-0 right-0 flex items-center justify-center gap-6 py-3 bg-gray-950 bg-opacity-80 text-sm text-gray-400 z-50">
+    <button id="btn-prev"
+            class="px-4 py-1 rounded border border-gray-600 hover:bg-gray-700 transition-colors disabled:opacity-30"
+            onclick="navigate(-1)">← Prev</button>
+    <span id="slide-counter" class="font-mono text-gray-300"></span>
+    <button id="btn-next"
+            class="px-4 py-1 rounded border border-gray-600 hover:bg-gray-700 transition-colors disabled:opacity-30"
+            onclick="navigate(1)">Next →</button>
+  </nav>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    let current = 0;
+
+    function showSlide(index) {
+      slides.forEach((s, i) => s.classList.toggle('hidden', i !== index));
+      document.getElementById('slide-counter').textContent =
+        'Slide ' + (index + 1) + ' / ' + slides.length;
+      document.getElementById('btn-prev').disabled = index === 0;
+      document.getElementById('btn-next').disabled = index === slides.length - 1;
+      // Re-typeset MathJax for the newly visible slide
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([slides[index]]).catch(console.error);
+      }
+      current = index;
+    }
+
+    function navigate(delta) {
+      const next = current + delta;
+      if (next >= 0 && next < slides.length) showSlide(next);
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+    });
+
+    // Initialise on load
+    showSlide(0);
+  </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<div class="slide hidden flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
+
+  <!-- Heading -->
+  <h2 class="text-4xl font-bold mb-10 text-indigo-300">Why MoE + Long Context?</h2>
+
+  <!-- Two-column body -->
+  <div class="grid grid-cols-2 gap-10 flex-1">
+
+    <!-- Left: MoE -->
+    <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
+      <h3 class="text-2xl font-semibold text-indigo-400 mb-2">Mixture of Experts (MoE)</h3>
+      <p class="text-gray-200 leading-relaxed">
+        Activates only \(k\) of \(N_{\text{exp}}\) experts per token, slashing
+        <span class="text-indigo-300 font-medium">active FLOPs</span> while keeping
+        total model capacity high.
+      </p>
+      <p class="text-gray-400 text-sm leading-relaxed">
+        Example: <span class="text-white font-semibold">Mixtral-8×7B</span> activates
+        <strong>2 of 8</strong> experts per token — same inference cost as a ~13B dense model,
+        but 47B total parameters of knowledge.
+      </p>
+      <div class="mt-auto text-center text-gray-300 text-base font-mono bg-gray-900 rounded-xl px-4 py-3">
+        \[ \text{Active FLOPs} \approx \frac{k}{N_{\text{exp}}} \times \text{Dense FLOPs} \]
+      </div>
+    </div>
+
+    <!-- Right: Long Context -->
+    <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
+      <h3 class="text-2xl font-semibold text-emerald-400 mb-2">Long Context</h3>
+      <p class="text-gray-200 leading-relaxed">
+        Extends sequence length \(L\) to
+        <span class="text-emerald-300 font-medium">128K – 1M tokens</span>,
+        enabling document-level and repository-scale reasoning in a single forward pass.
+      </p>
+      <p class="text-gray-400 text-sm leading-relaxed">
+        Key challenge: standard attention is \(\mathcal{O}(L^2)\) in memory.
+        Techniques like FlashAttention, RoPE extrapolation, and chunk-wise recurrence
+        tame this cost.
+      </p>
+      <div class="mt-auto text-center text-gray-300 text-base font-mono bg-gray-900 rounded-xl px-4 py-3">
+        \[ L \in [128\text{K},\; 1\text{M}] \text{ tokens} \]
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer callout -->
+  <p class="mt-8 text-center text-gray-400 italic text-base">
+    Together: capable models that stay <span class="text-white font-semibold">compute-efficient</span> at scale.
+  </p>
+
+  <!-- Slide counter -->
+  <span class="absolute bottom-16 right-10 text-sm text-gray-500 font-mono">2 / 3</span>
+</div>
