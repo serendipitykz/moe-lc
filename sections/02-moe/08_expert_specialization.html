@@ -1,0 +1,191 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<aside class="notes">这是令人惊喜的涌现现象——没人显式训练专业化，但它自发出现了。热力图可以停留片刻让听众自行解读。</aside>
+  <h2 class="text-5xl font-bold mb-8 text-indigo-300">专家专业化现象</h2>
+
+  <div class="flex gap-8 flex-1">
+
+    <!-- Left card: explanation -->
+    <div class="flex-1 flex flex-col gap-5">
+      <div class="bg-gray-800 rounded-2xl p-8 border border-indigo-700 flex-1 flex flex-col gap-5">
+        <h3 class="text-2xl font-semibold text-indigo-300">专家会自发分工吗？</h3>
+
+        <div>
+          <p class="text-xl leading-relaxed text-gray-200">
+            研究发现 <cite class="text-gray-500 text-base not-italic ml-1">[Jiang et al., 2024]</cite> MoE 模型中不同专家倾向于处理特定类型的 token：
+          </p>
+          <ul class="mt-4 space-y-3">
+            <li class="flex items-start gap-3 text-xl leading-relaxed text-gray-200">
+              <span class="text-indigo-400 mt-1 flex-shrink-0">▸</span>
+              <span><strong class="text-indigo-300">语法专家</strong>：标点、连接词、介词</span>
+            </li>
+            <li class="flex items-start gap-3 text-xl leading-relaxed text-gray-200">
+              <span class="text-indigo-400 mt-1 flex-shrink-0">▸</span>
+              <span><strong class="text-indigo-300">语义专家</strong>：实体名词、动词</span>
+            </li>
+            <li class="flex items-start gap-3 text-xl leading-relaxed text-gray-200">
+              <span class="text-indigo-400 mt-1 flex-shrink-0">▸</span>
+              <span><strong class="text-indigo-300">领域专家</strong>：代码、数学符号、外语</span>
+            </li>
+          </ul>
+        </div>
+
+        <p class="text-lg text-gray-400 leading-relaxed">
+          这种分工<strong class="text-white">并非显式训练目标</strong>，而是由路由动态自发涌现（emergent behavior）。
+        </p>
+
+        <!-- Indigo callout quote -->
+        <div class="bg-indigo-900/40 border border-indigo-600/60 rounded-xl p-5">
+          <p class="text-xl text-indigo-200 leading-relaxed">
+            "专业化程度越高，模型在对应领域的性能越强"
+          </p>
+        </div>
+
+        <!-- Note -->
+        <p class="text-lg text-gray-400 leading-relaxed mt-auto">
+          ⚠ 过度专业化（坍缩）则有害 → 这也是辅助损失存在的重要原因
+        </p>
+      </div>
+    </div>
+
+    <!-- Right card: heatmap SVG -->
+    <div class="flex-1 flex flex-col">
+      <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex-1 min-h-0 flex flex-col justify-center items-center">
+        <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-3 text-center">专家激活热力图（示意）</p>
+        <svg viewBox="0 0 380 300" width="100%" height="380" xmlns="http://www.w3.org/2000/svg">
+          <rect width="380" height="300" fill="#111827" rx="10"/>
+
+          <!-- Heatmap grid: 8 experts (rows) x 8 token categories (cols) -->
+          <!-- Cell size: ~36x28, start x=60, y=24 -->
+          <!-- High activation = #4f46e5, mid = #1e1b4b / #312e81, low = #1f2937 -->
+
+          <!--
+            Token categories (X): 代码, 数学, 英语, 中文, 标点, 动词, 名词, 介词
+            Expert specialization (diagonal-like):
+            E1: 代码 high, rest low
+            E2: 数学 high, rest low
+            E3: 英语 high, rest medium
+            E4: 中文 high, rest low
+            E5: 标点 high, rest low
+            E6: 动词 high, 名词 medium
+            E7: 名词 high, 动词 medium
+            E8: 介词 high, 中文 medium
+          -->
+
+          <!-- X labels (rotated 45) -->
+          <text transform="translate(80,22) rotate(-45)"  font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">代码</text>
+          <text transform="translate(117,22) rotate(-45)" font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">数学</text>
+          <text transform="translate(154,22) rotate(-45)" font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">英语</text>
+          <text transform="translate(191,22) rotate(-45)" font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">中文</text>
+          <text transform="translate(228,22) rotate(-45)" font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">标点</text>
+          <text transform="translate(265,22) rotate(-45)" font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">动词</text>
+          <text transform="translate(302,22) rotate(-45)" font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">名词</text>
+          <text transform="translate(339,22) rotate(-45)" font-size="12" fill="#9ca3af" font-family="sans-serif" text-anchor="end">介词</text>
+
+          <!-- Y labels (expert IDs) -->
+          <text x="55" y="54"  font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E1</text>
+          <text x="55" y="84"  font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E2</text>
+          <text x="55" y="114" font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E3</text>
+          <text x="55" y="144" font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E4</text>
+          <text x="55" y="174" font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E5</text>
+          <text x="55" y="204" font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E6</text>
+          <text x="55" y="234" font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E7</text>
+          <text x="55" y="264" font-size="12" fill="#9ca3af" text-anchor="end" font-family="monospace">E8</text>
+
+          <!-- Row 1 (E1): high=col0(代码), rest low -->
+          <rect x="60" y="40" width="34" height="24" fill="#4f46e5" rx="2"/>
+          <rect x="97" y="40" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="134" y="40" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="171" y="40" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="208" y="40" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="245" y="40" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="282" y="40" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="319" y="40" width="34" height="24" fill="#1f2937" rx="2"/>
+
+          <!-- Row 2 (E2): high=col1(数学) -->
+          <rect x="60" y="70" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="97" y="70" width="34" height="24" fill="#4f46e5" rx="2"/>
+          <rect x="134" y="70" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="171" y="70" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="208" y="70" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="245" y="70" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="282" y="70" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="319" y="70" width="34" height="24" fill="#1f2937" rx="2"/>
+
+          <!-- Row 3 (E3): high=col2(英语), medium adjacent -->
+          <rect x="60" y="100" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="97" y="100" width="34" height="24" fill="#312e81" rx="2"/>
+          <rect x="134" y="100" width="34" height="24" fill="#4f46e5" rx="2"/>
+          <rect x="171" y="100" width="34" height="24" fill="#312e81" rx="2"/>
+          <rect x="208" y="100" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="245" y="100" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="282" y="100" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="319" y="100" width="34" height="24" fill="#1f2937" rx="2"/>
+
+          <!-- Row 4 (E4): high=col3(中文) -->
+          <rect x="60" y="130" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="97" y="130" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="134" y="130" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="171" y="130" width="34" height="24" fill="#4f46e5" rx="2"/>
+          <rect x="208" y="130" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="245" y="130" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="282" y="130" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="319" y="130" width="34" height="24" fill="#312e81" rx="2"/>
+
+          <!-- Row 5 (E5): high=col4(标点) -->
+          <rect x="60" y="160" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="97" y="160" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="134" y="160" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="171" y="160" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="208" y="160" width="34" height="24" fill="#4f46e5" rx="2"/>
+          <rect x="245" y="160" width="34" height="24" fill="#312e81" rx="2"/>
+          <rect x="282" y="160" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="319" y="160" width="34" height="24" fill="#312e81" rx="2"/>
+
+          <!-- Row 6 (E6): high=col5(动词), medium=col6(名词) -->
+          <rect x="60" y="190" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="97" y="190" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="134" y="190" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="171" y="190" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="208" y="190" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="245" y="190" width="34" height="24" fill="#4f46e5" rx="2"/>
+          <rect x="282" y="190" width="34" height="24" fill="#312e81" rx="2"/>
+          <rect x="319" y="190" width="34" height="24" fill="#1f2937" rx="2"/>
+
+          <!-- Row 7 (E7): high=col6(名词), medium=col5(动词) -->
+          <rect x="60" y="220" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="97" y="220" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="134" y="220" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="171" y="220" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="208" y="220" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="245" y="220" width="34" height="24" fill="#312e81" rx="2"/>
+          <rect x="282" y="220" width="34" height="24" fill="#4f46e5" rx="2"/>
+          <rect x="319" y="220" width="34" height="24" fill="#1f2937" rx="2"/>
+
+          <!-- Row 8 (E8): high=col7(介词), medium=col3(中文) -->
+          <rect x="60" y="250" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="97" y="250" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="134" y="250" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="171" y="250" width="34" height="24" fill="#312e81" rx="2"/>
+          <rect x="208" y="250" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="245" y="250" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="282" y="250" width="34" height="24" fill="#1f2937" rx="2"/>
+          <rect x="319" y="250" width="34" height="24" fill="#4f46e5" rx="2"/>
+
+          <!-- Legend bar -->
+          <defs>
+            <linearGradient id="hmGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1f2937"/>
+              <stop offset="50%" stop-color="#312e81"/>
+              <stop offset="100%" stop-color="#4f46e5"/>
+            </linearGradient>
+          </defs>
+          <rect x="60" y="282" width="180" height="10" rx="3" fill="url(#hmGrad)"/>
+          <text x="55" y="291" font-size="11" fill="#6b7280" text-anchor="end" font-family="sans-serif">低</text>
+          <text x="246" y="291" font-size="11" fill="#a5b4fc" text-anchor="start" font-family="sans-serif">高激活</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">11 / 26</span>
+</div>

@@ -1,0 +1,75 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">RLHF/SFT 对 MoE 模型的挑战经常被忽略。MoE 在预训练阶段优势明显，但微调时"专家遗忘"和"路由漂移"是已知痛点。提醒听众：部署一个 MoE 不只是训一个 Base 模型。</aside>
+
+  <h2 class="text-5xl font-bold mb-4 text-purple-300">对齐微调：MoE 的特殊挑战</h2>
+  <p class="text-xl text-gray-400 mb-6">SFT / RLHF 阶段与稠密模型的关键差异</p>
+
+  <div class="grid grid-cols-2 gap-8 flex-1 min-h-0">
+
+    <!-- Left: challenges -->
+    <div class="flex flex-col gap-5">
+      <div class="bg-red-950 border border-red-800 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-red-300 mb-3">路由漂移（Routing Drift）</h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          SFT/RLHF 数据分布与预训练差异大时，路由器可能在微调过程中
+          <strong class="text-red-300">重新学习激活模式</strong>，破坏预训练中形成的专家专业化，
+          导致部分专家灾难性遗忘。
+        </p>
+      </div>
+
+      <div class="bg-amber-950 border border-amber-700 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-amber-300 mb-3">微调数据稀疏问题</h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          SFT 数据集通常远小于预训练语料（百万 vs 万亿 tokens）。
+          专家参数多，每个专家在微调中仅收到<strong class="text-amber-300">极少梯度更新</strong>，
+          容易出现过拟合或未收敛。
+        </p>
+      </div>
+
+      <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-gray-300 mb-3">显存与通信开销放大</h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          RLHF 需要同时运行 Actor、Reference Model 和 Reward Model，
+          MoE 的大总参数量使显存压力比稠密模型<strong class="text-red-300">更加严峻</strong>，
+          需要更精细的显存管理策略（LoRA、expert offloading）。
+        </p>
+      </div>
+    </div>
+
+    <!-- Right: solutions + current practice -->
+    <div class="flex flex-col gap-5">
+      <div class="bg-emerald-950 border border-emerald-700 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-emerald-300 mb-3">应对策略</h3>
+        <ul class="space-y-3 text-lg text-gray-200">
+          <li class="flex items-start gap-3">
+            <span class="text-emerald-400 mt-0.5">▸</span>
+            <span><strong class="text-emerald-300">冻结路由器权重</strong>：SFT 时仅更新 FFN 专家参数，保持路由稳定</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-emerald-400 mt-0.5">▸</span>
+            <span><strong class="text-emerald-300">Expert-wise LoRA</strong>：每个专家独立的低秩适配矩阵，减少参数量又保留专业化</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-emerald-400 mt-0.5">▸</span>
+            <span><strong class="text-emerald-300">更小学习率</strong>：MoE 微调推荐学习率比稠密模型低 2–5×</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-emerald-400 mt-0.5">▸</span>
+            <span><strong class="text-emerald-300">Expert Averaging</strong>：将 MoE checkpoint 权重合并为稠密模型再 SFT，部署更简单</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-800 border border-purple-700 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-purple-300 mb-2">长上下文对齐的额外挑战</h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          长文档 SFT 数据稀缺。序列越长，RLHF reward signal 越稀疏，
+          策略梯度方差越大。当前实践倾向于先用短上下文完成对齐，
+          再通过<strong class="text-emerald-300">继续预训练</strong>扩展上下文窗口。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">0 / 0</span>
+</div>

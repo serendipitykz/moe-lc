@@ -1,0 +1,117 @@
+<!-- Slide 20: 案例分析：DeepSeek-V2 -->
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">DeepSeek-V2 是目前 MoE+长上下文协同最成功的开源案例。重点介绍 MLA：用低秩矩阵压缩 KV，是一个优雅的线性代数技巧。</aside>
+
+  <h2 class="text-5xl font-bold mb-8 text-purple-300">案例分析：DeepSeek-V2</h2>
+
+  <div class="flex gap-8 flex-1 min-h-0">
+
+    <!-- Left card: architecture innovations -->
+    <div class="flex-1 bg-gray-800 rounded-2xl p-8 border border-gray-700 overflow-auto">
+      <h3 class="text-3xl font-bold text-purple-300 mb-7">两大核心创新</h3>
+
+      <!-- Innovation 1: MLA -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="bg-indigo-700 text-indigo-200 text-sm font-bold px-3 py-1 rounded-full font-mono">01</span>
+          <h4 class="text-2xl font-bold text-indigo-300">MLA — Multi-head Latent Attention</h4>
+        </div>
+        <ul class="space-y-3 ml-4">
+          <li class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200 font-semibold">动机：</span>标准 MHA 的 KV Cache 随序列长度线性增长，推理成本极高
+          </li>
+          <li class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200 font-semibold">方法：</span>低秩投影将 KV 压缩为潜在向量
+            \( c_{KV} \in \mathbb{R}^{d_c} \)，\( d_c \ll H \times d_{\text{head}} \)
+          </li>
+          <li class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-emerald-300 font-semibold">效果：</span>KV Cache 减少 <span class="text-emerald-300 font-bold">5–13×</span><cite class="text-gray-500 text-base not-italic ml-1">[DeepSeek-AI, 2024]</cite>
+          </li>
+        </ul>
+        <div class="mt-4 bg-gray-900 rounded-xl px-5 py-4 border border-indigo-900">
+          <p class="text-gray-400 text-sm font-mono mb-2">KV 低秩分解</p>
+          \[ c_{KV} = W^{DKV} h_t, \quad [k_t^C;\, v_t^C] = W^{UKV} c_{KV} \]
+        </div>
+      </div>
+
+      <!-- Innovation 2: DeepSeekMoE -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="bg-purple-700 text-purple-200 text-sm font-bold px-3 py-1 rounded-full font-mono">02</span>
+          <h4 class="text-2xl font-bold text-purple-300">DeepSeekMoE — 细粒度专家</h4>
+        </div>
+        <ul class="space-y-3 ml-4">
+          <li class="text-lg text-gray-400 leading-relaxed">
+            将标准 MoE 的少量大专家拆分为多个小专家
+            （\(N_{\text{exp}}=160\)，\(k=6\)）
+          </li>
+          <li class="text-lg text-gray-400 leading-relaxed">
+            设置 <span class="text-purple-300 font-semibold">2 个共享专家</span>（每个 token 必选）
+            + <span class="text-purple-300 font-semibold">158 个路由专家</span>（选 \(k-2=4\)）
+          </li>
+          <li class="text-lg text-gray-400 leading-relaxed">
+            更细粒度 → 更高专业化 → <span class="text-purple-300 font-semibold">更高参数效率</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right card: specs table -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700" style="width:42%">
+      <h3 class="text-2xl font-bold text-purple-300 mb-6">DeepSeek-V2 规格表</h3>
+      <table class="w-full text-lg border-collapse">
+        <thead>
+          <tr class="bg-purple-900 border-b border-purple-700">
+            <th class="text-left py-3 px-4 text-purple-200 font-bold">属性</th>
+            <th class="text-right py-3 px-4 text-purple-200 font-bold">数值</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-700 hover:bg-gray-750">
+            <td class="py-3 px-4 text-gray-300">总参数</td>
+            <td class="py-3 px-4 text-right font-mono text-emerald-300 font-bold">236B</td>
+          </tr>
+          <tr class="border-b border-gray-700 hover:bg-gray-750">
+            <td class="py-3 px-4 text-gray-300">激活参数</td>
+            <td class="py-3 px-4 text-right font-mono text-emerald-300 font-bold">21B</td>
+          </tr>
+          <tr class="border-b border-gray-700 hover:bg-gray-750">
+            <td class="py-3 px-4 text-gray-300">专家数 \(N_{\text{exp}}\)</td>
+            <td class="py-3 px-4 text-right font-mono text-indigo-300">160</td>
+          </tr>
+          <tr class="border-b border-gray-700 hover:bg-gray-750">
+            <td class="py-3 px-4 text-gray-300 text-sm">（2 共享 + 158 路由）</td>
+            <td class="py-3 px-4 text-right font-mono text-gray-500 text-sm">shared + routed</td>
+          </tr>
+          <tr class="border-b border-gray-700 hover:bg-gray-750">
+            <td class="py-3 px-4 text-gray-300">每 token 选 \(k\)</td>
+            <td class="py-3 px-4 text-right font-mono text-indigo-300">6（2 共享 + 4 路由）</td>
+          </tr>
+          <tr class="border-b border-gray-700 hover:bg-gray-750">
+            <td class="py-3 px-4 text-gray-300">上下文长度</td>
+            <td class="py-3 px-4 text-right font-mono text-emerald-300 font-bold">128K tokens</td>
+          </tr>
+          <tr class="hover:bg-gray-750">
+            <td class="py-3 px-4 text-gray-300">注意力机制</td>
+            <td class="py-3 px-4 text-right text-purple-300 font-semibold">MLA（低秩 KV）</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="mt-6 bg-gray-900 rounded-xl px-5 py-4 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono mb-2">参数效率</p>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          激活参数仅为总参数的
+          <span class="text-emerald-300 font-bold text-xl font-mono">~8.9%</span>，
+          同等推理成本下可承载
+          <span class="text-indigo-300 font-bold">11× 更多参数</span>
+        </p>
+      </div>
+
+      <p class="text-sm text-gray-600 mt-4 text-right font-mono"><cite class="text-gray-500 text-base not-italic">[DeepSeek-AI, 2024]</cite></p>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">20 / 26</span>
+</div>

@@ -1,0 +1,82 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<aside class="notes">强调 MoE 并非新概念（1991年就有），但直到 2021 年才被工业界真正驯服。2023 年开源化是让普通研究者能用上 MoE 的转折点。</aside>
+  <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 的演进历史</h2>
+
+  <!-- Timeline SVG -->
+  <div class="w-full overflow-x-auto mb-8">
+    <svg viewBox="0 0 900 120" width="100%" height="200" xmlns="http://www.w3.org/2000/svg" style="min-width:700px">
+      <rect width="900" height="120" fill="#111827"/>
+
+      <!-- Defs: arrow marker -->
+      <defs>
+        <marker id="arrowH" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+        </marker>
+      </defs>
+
+      <!-- Main timeline line -->
+      <line x1="40" y1="60" x2="890" y2="60" stroke="#6366f1" stroke-width="3" marker-end="url(#arrowH)"/>
+
+      <!-- Milestone 1: 1991, x=60, above -->
+      <circle cx="60" cy="60" r="10" fill="#4f46e5" stroke="#818cf8" stroke-width="2"/>
+      <text x="60" y="44" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">1991</text>
+      <text x="60" y="30" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Jacobs et al.</text>
+      <text x="60" y="16" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">原始 MoE</text>
+
+      <!-- Milestone 2: 2017, x=240, below -->
+      <circle cx="240" cy="60" r="10" fill="#4f46e5" stroke="#818cf8" stroke-width="2"/>
+      <text x="240" y="82" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">2017</text>
+      <text x="240" y="96" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Shazeer et al.</text>
+      <text x="240" y="110" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">稀疏门控 MoE</text>
+
+      <!-- Milestone 3: 2021, x=420, above -->
+      <circle cx="420" cy="60" r="10" fill="#4f46e5" stroke="#818cf8" stroke-width="2"/>
+      <text x="420" y="44" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">2021</text>
+      <text x="420" y="30" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Switch Transformer</text>
+      <text x="420" y="16" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">(Google)</text>
+
+      <!-- Milestone 4: 2022, x=580, below -->
+      <circle cx="580" cy="60" r="10" fill="#4f46e5" stroke="#818cf8" stroke-width="2"/>
+      <text x="580" y="82" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">2022</text>
+      <text x="580" y="96" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">GLaM</text>
+      <text x="580" y="110" font-size="12" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">1.2T 参数</text>
+      <!-- Milestone 5: 2023, x=720, above (larger circle) -->
+      <circle cx="720" cy="60" r="13" fill="#4f46e5" stroke="#818cf8" stroke-width="2.5"/>
+      <text x="720" y="42" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">2023</text>
+      <text x="720" y="28" font-size="12" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">Mixtral 8×7B</text>
+      <text x="720" y="14" font-size="12" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">(Mistral AI)</text>
+
+      <!-- Milestone 6: 2024, x=860, below (larger circle) -->
+      <circle cx="860" cy="60" r="13" fill="#4f46e5" stroke="#818cf8" stroke-width="2.5"/>
+      <text x="860" y="84" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">2024</text>
+      <text x="860" y="98" font-size="12" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">DeepSeek-V2</text>
+      <text x="860" y="112" font-size="12" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">/ Qwen-MoE</text>
+    </svg>
+  </div>
+
+  <!-- Three key cards below timeline -->
+  <div class="grid grid-cols-3 gap-6 flex-1">
+    <!-- Card 1: 理论奠基 -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-indigo-700">
+      <p class="text-base text-indigo-300 font-mono uppercase tracking-widest mb-3">理论奠基 1991–2017</p>
+      <p class="text-xl leading-relaxed text-gray-200">早期稀疏混合专家网络，应用于 NLP 序列任务</p>
+      <p class="text-lg text-gray-400 leading-relaxed mt-3">Jacobs, Jordan &amp; Hinton 奠定条件计算理论基础；Shazeer 首次将稀疏 MoE 引入 LSTM 规模化训练。</p>
+    </div>
+
+    <!-- Card 2: 工业化突破 -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-purple-700">
+      <p class="text-base text-purple-300 font-mono uppercase tracking-widest mb-3">工业化突破 2021–2022</p>
+      <p class="text-xl leading-relaxed text-gray-200">Google 将 MoE 扩展至万亿参数级别，验证了稀疏激活的可行性</p>
+      <p class="text-lg text-gray-400 leading-relaxed mt-3">Switch Transformer（k=1）简化路由<cite class="text-gray-500 text-base not-italic ml-1">[Fedus et al., 2022]</cite>；GLaM 以 96.6B 激活参数匹敌 GPT-3<cite class="text-gray-500 text-base not-italic ml-1">[Du et al., 2022]</cite>。</p>
+    </div>
+
+    <!-- Card 3: 开源普及 -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-blue-700">
+      <p class="text-base text-blue-300 font-mono uppercase tracking-widest mb-3">开源普及 2023–2024</p>
+      <p class="text-xl leading-relaxed text-gray-200">高质量开源 MoE 模型，推动社区研究与工程实践</p>
+      <p class="text-lg text-gray-400 leading-relaxed mt-3">Mixtral 8×7B 以 12.9B 激活参数超越 LLaMA 2 70B<cite class="text-gray-500 text-base not-italic ml-1">[Jiang et al., 2024]</cite>；DeepSeek-V2 引入细粒度专家设计<cite class="text-gray-500 text-base not-italic ml-1">[DeepSeek-AI, 2024]</cite>。</p>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">5 / 26</span>
+</div>

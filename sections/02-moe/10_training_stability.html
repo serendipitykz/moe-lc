@@ -1,0 +1,71 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">强调没有辅助损失时路由会"塌陷"到少数专家，导致大多数专家永远不被激活。展示公式推导辅助损失如何把 f_i 拉向均匀分布。Z-loss 是 ST-MoE 引入的额外稳定项。</aside>
+
+  <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 训练稳定性</h2>
+  <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-6">负载均衡损失 · 专家崩塌 · Z-loss</p>
+
+  <div class="grid grid-cols-2 gap-8 flex-1 min-h-0">
+
+    <!-- Left: Problem + aux loss -->
+    <div class="flex flex-col gap-5">
+      <div class="bg-red-950 border border-red-800 rounded-2xl p-6">
+        <h3 class="text-2xl font-bold text-red-300 mb-3">专家崩塌（Expert Collapse）</h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          若不加约束，路由器倾向于将绝大多数 token 发送到少数"热门"专家，
+          剩余专家参数几乎从不更新，等效于浪费了大量模型容量。
+        </p>
+        <p class="text-lg text-amber-300 mt-3 font-semibold">结果：计算浪费 + 梯度消失 + 训练不稳定</p>
+      </div>
+
+      <div class="bg-gray-800 border border-indigo-700 rounded-2xl p-6 flex-1">
+        <h3 class="text-2xl font-bold text-indigo-300 mb-3">辅助负载均衡损失</h3>
+        <p class="text-lg text-gray-300 mb-3">
+          让每个专家接收到的 token 比例 \(f_i\) 尽量均匀：
+        </p>
+        <div class="bg-gray-900 rounded-xl px-4 py-3 text-center text-gray-200 text-lg font-mono mb-3">
+          \[ \mathcal{L}_{\text{aux}} = \alpha \cdot N_{\text{exp}} \cdot \sum_{i=1}^{N_{\text{exp}}} f_i \cdot \bar{p}_i \]
+        </div>
+        <ul class="text-base text-gray-400 space-y-1 list-disc list-inside">
+          <li>\(f_i\)：批次中路由到专家 \(i\) 的 token 占比</li>
+          <li>\(\bar{p}_i\)：路由器对专家 \(i\) 输出的平均概率</li>
+          <li>\(\alpha \in [0.01,\,0.1]\) — 平衡系数，过大影响主任务</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: Z-loss + stability tricks -->
+    <div class="flex flex-col gap-5">
+      <div class="bg-gray-800 border border-purple-700 rounded-2xl p-6">
+        <h3 class="text-2xl font-bold text-purple-300 mb-3">Router Z-Loss <cite class="text-gray-500 text-base not-italic font-normal">[Zoph et al., 2022]</cite></h3>
+        <p class="text-lg text-gray-300 mb-3">
+          惩罚路由器 logit 幅值过大，防止数值溢出并稳定 softmax：
+        </p>
+        <div class="bg-gray-900 rounded-xl px-4 py-3 text-center text-gray-200 text-lg font-mono mb-3">
+          \[ \mathcal{L}_z = \frac{\beta}{B} \sum_{b=1}^{B} \left(\log \sum_{i=1}^{N_{\text{exp}}} e^{x_i^{(b)}}\right)^2 \]
+        </div>
+        <p class="text-base text-gray-400">\(\beta = 10^{-2}\)（ST-MoE 默认），\(B\) = 批次 token 数</p>
+      </div>
+
+      <div class="bg-gray-800 border border-gray-600 rounded-2xl p-6 flex-1">
+        <h3 class="text-2xl font-bold text-gray-300 mb-4">其他稳定性技巧</h3>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="text-indigo-400 text-xl mt-0.5">▸</span>
+            <p class="text-lg text-gray-300"><span class="text-indigo-300 font-semibold">Expert Buffer（容量因子）</span>：训练时 capacity_factor = 1.0–1.25，推理时 = 2.0，防止溢出丢弃 token</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-indigo-400 text-xl mt-0.5">▸</span>
+            <p class="text-lg text-gray-300"><span class="text-indigo-300 font-semibold">专家初始化扰动</span>：各专家 FFN 权重加微小随机噪声以打破对称性</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-indigo-400 text-xl mt-0.5">▸</span>
+            <p class="text-lg text-gray-300"><span class="text-indigo-300 font-semibold">梯度裁剪</span>：global norm clip = 1.0，防止路由器梯度爆炸</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">0 / 0</span>
+</div>

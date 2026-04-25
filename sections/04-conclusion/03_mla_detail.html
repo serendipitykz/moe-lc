@@ -1,0 +1,189 @@
+<!-- Slide 21: MLA 架构详解 -->
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">这是偏深入的细节幻灯片，可根据时间决定深度。核心信息：c_KV 的维度远小于 KV 本身，但效果等价。</aside>
+
+  <h2 class="text-5xl font-bold mb-4 text-purple-300">MLA 架构详解</h2>
+  <p class="text-xl text-gray-400 mb-6">上一张幻灯片介绍了 MLA（Multi-head Latent Attention）的作用；本页深入其低秩 KV 压缩的具体实现。</p>
+
+  <div class="flex gap-8 flex-1 min-h-0">
+
+    <!-- Left explanation card (40%) -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 overflow-auto" style="width:38%">
+      <h3 class="text-2xl font-bold text-purple-300 mb-6">核心思路</h3>
+
+      <div class="space-y-5">
+        <div>
+          <p class="text-sm font-mono text-gray-500 uppercase mb-1">问题</p>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            标准 MHA 每层每 token 需缓存
+            \(2 \times H \times d_{\text{head}}\) 维向量，
+            L=128K 时显存开销极大
+          </p>
+        </div>
+
+        <div>
+          <p class="text-sm font-mono text-gray-500 uppercase mb-1">方法</p>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            将 KV 投影到<span class="text-emerald-300 font-semibold">低维潜在空间</span>，
+            推理时从潜在向量恢复完整 KV
+          </p>
+        </div>
+
+        <div class="bg-gray-900 rounded-xl px-5 py-4 border border-purple-900">
+          <p class="text-sm font-mono text-gray-500 mb-2">关键等式</p>
+          \[ \mathbf{c}_{KV} = W^{DKV}\mathbf{h}_t \in \mathbb{R}^{d_c} \]
+          \[ d_c \ll H \cdot d_{\text{head}} \]
+          <p class="text-sm text-gray-500 mt-2">
+            只需缓存 \(c_{KV}\)（\(d_c\) 维），而非完整 KV（\(H \times d_{\text{head}}\) 维）
+          </p>
+        </div>
+
+        <div>
+          <p class="text-sm font-mono text-gray-500 uppercase mb-1">Q 端压缩</p>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            同样对 Q 进行低秩压缩，使用
+            <span class="text-indigo-300 font-semibold">Decoupled RoPE</span>
+            处理位置编码，避免位置信息与内容混叠
+          </p>
+        </div>
+
+        <div class="bg-emerald-900 bg-opacity-30 rounded-xl px-5 py-4 border border-emerald-800">
+          <p class="text-sm font-mono text-emerald-400 uppercase mb-2">DeepSeek-V2 实测<cite class="text-gray-500 text-base not-italic ml-1">[DeepSeek-AI, 2024]</cite></p>
+          <div class="flex items-center justify-between">
+            <div class="text-center">
+              <p class="text-sm text-gray-400">标准 MHA</p>
+              <p class="text-xl font-mono font-bold text-red-400">~2.25 MB</p>
+              <p class="text-xs text-gray-500">/ token / layer</p>
+            </div>
+            <div class="text-3xl text-emerald-400 font-bold">→</div>
+            <div class="text-center">
+              <p class="text-sm text-gray-400">MLA</p>
+              <p class="text-xl font-mono font-bold text-emerald-400">~0.18 MB</p>
+              <p class="text-xs text-gray-500">/ token / layer</p>
+            </div>
+          </div>
+          <p class="text-center text-emerald-300 font-bold mt-3">KV Cache 减少 5–13×</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right SVG diagram (60%) -->
+    <div class="flex-1 bg-gray-800 rounded-2xl p-6 border border-gray-700 flex items-center justify-center">
+      <svg viewBox="0 0 500 360" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" style="max-height:500px; min-height:360px">
+
+        <!-- ===== Standard MHA (left half) ===== -->
+        <text x="110" y="22" text-anchor="middle" fill="#9ca3af" font-size="15" font-weight="bold">标准 MHA</text>
+
+        <!-- h_t input -->
+        <rect x="60" y="35" width="100" height="32" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+        <text x="110" y="56" text-anchor="middle" fill="#e5e7eb" font-size="13" font-weight="bold">h_t</text>
+
+        <!-- Arrow down to W_Q, W_K, W_V -->
+        <line x1="110" y1="67" x2="110" y2="85" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+
+        <!-- Three projections W_Q, W_K, W_V side by side -->
+        <rect x="30" y="85" width="52" height="28" rx="5" fill="#1f2937" stroke="#6b7280" stroke-width="1.2"/>
+        <text x="56" y="104" text-anchor="middle" fill="#d1d5db" font-size="12">W_Q</text>
+
+        <rect x="84" y="85" width="52" height="28" rx="5" fill="#1f2937" stroke="#6b7280" stroke-width="1.2"/>
+        <text x="110" y="104" text-anchor="middle" fill="#d1d5db" font-size="12">W_K</text>
+
+        <rect x="138" y="85" width="52" height="28" rx="5" fill="#1f2937" stroke="#6b7280" stroke-width="1.2"/>
+        <text x="164" y="104" text-anchor="middle" fill="#d1d5db" font-size="12">W_V</text>
+
+        <!-- Q, K, V boxes -->
+        <line x1="56" y1="113" x2="56" y2="133" stroke="#6b7280" stroke-width="1.2"/>
+        <rect x="26" y="133" width="60" height="28" rx="5" fill="#374151" stroke="#6b7280" stroke-width="1.2"/>
+        <text x="56" y="152" text-anchor="middle" fill="#e5e7eb" font-size="13">Q</text>
+
+        <line x1="110" y1="113" x2="110" y2="133" stroke="#6b7280" stroke-width="1.2"/>
+        <rect x="80" y="133" width="60" height="28" rx="5" fill="#374151" stroke="#ef4444" stroke-width="2"/>
+        <text x="110" y="152" text-anchor="middle" fill="#fca5a5" font-size="13">K (full)</text>
+
+        <line x1="164" y1="113" x2="164" y2="133" stroke="#6b7280" stroke-width="1.2"/>
+        <rect x="134" y="133" width="60" height="28" rx="5" fill="#374151" stroke="#ef4444" stroke-width="2"/>
+        <text x="164" y="152" text-anchor="middle" fill="#fca5a5" font-size="13">V (full)</text>
+
+        <!-- Attention box -->
+        <line x1="110" y1="161" x2="110" y2="185" stroke="#6b7280" stroke-width="1.2"/>
+        <rect x="50" y="185" width="120" height="30" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+        <text x="110" y="205" text-anchor="middle" fill="#e5e7eb" font-size="13">Attention</text>
+
+        <!-- Output -->
+        <line x1="110" y1="215" x2="110" y2="240" stroke="#6b7280" stroke-width="1.2"/>
+        <rect x="70" y="240" width="80" height="28" rx="5" fill="#374151" stroke="#6b7280" stroke-width="1.2"/>
+        <text x="110" y="259" text-anchor="middle" fill="#d1d5db" font-size="13">Output</text>
+
+        <!-- KV Cache large block (red = large) -->
+        <rect x="40" y="285" width="140" height="52" rx="8" fill="#7f1d1d" fill-opacity="0.5" stroke="#ef4444" stroke-width="2"/>
+        <text x="110" y="307" text-anchor="middle" fill="#fca5a5" font-size="14" font-weight="bold">KV Cache</text>
+        <text x="110" y="327" text-anchor="middle" fill="#f87171" font-size="13">H × d_head × L</text>
+
+        <!-- ===== MLA (right half) ===== -->
+        <text x="370" y="22" text-anchor="middle" fill="#a78bfa" font-size="15" font-weight="bold">MLA</text>
+
+        <!-- h_t input -->
+        <rect x="320" y="35" width="100" height="32" rx="6" fill="#374151" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="370" y="56" text-anchor="middle" fill="#e5e7eb" font-size="13" font-weight="bold">h_t</text>
+
+        <!-- Arrow down -->
+        <line x1="370" y1="67" x2="370" y2="85" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+
+        <!-- W_DKV projection -->
+        <rect x="320" y="85" width="100" height="28" rx="5" fill="#4c1d95" fill-opacity="0.5" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="370" y="104" text-anchor="middle" fill="#c4b5fd" font-size="13">W^{DKV}</text>
+
+        <!-- c_KV compressed (emerald) -->
+        <line x1="370" y1="113" x2="370" y2="133" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+        <rect x="320" y="133" width="100" height="32" rx="6" fill="#064e3b" fill-opacity="0.6" stroke="#34d399" stroke-width="2"/>
+        <text x="370" y="152" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">c_KV ∈ ℝ^{d_c}</text>
+
+        <!-- KV Cache small block (emerald = small!) -->
+        <rect x="310" y="175" width="120" height="44" rx="8" fill="#064e3b" fill-opacity="0.4" stroke="#34d399" stroke-width="2"/>
+        <text x="370" y="194" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="bold">KV Cache</text>
+        <text x="370" y="212" text-anchor="middle" fill="#34d399" font-size="13">只存 c_KV (d_c 维)</text>
+
+        <!-- Arrow down: c_KV -> W_UKV -->
+        <line x1="370" y1="165" x2="370" y2="175" stroke="#34d399" stroke-width="1.5"/>
+
+        <!-- W_UKV projection -->
+        <line x1="370" y1="219" x2="370" y2="239" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+        <rect x="320" y="239" width="100" height="28" rx="5" fill="#4c1d95" fill-opacity="0.5" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="370" y="258" text-anchor="middle" fill="#c4b5fd" font-size="13">W^{UKV}</text>
+
+        <!-- K, V recovered -->
+        <line x1="350" y1="267" x2="340" y2="287" stroke="#7c3aed" stroke-width="1.2"/>
+        <line x1="390" y1="267" x2="400" y2="287" stroke="#7c3aed" stroke-width="1.2"/>
+        <rect x="310" y="287" width="52" height="26" rx="5" fill="#374151" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="336" y="305" text-anchor="middle" fill="#ddd6fe" font-size="13">K</text>
+        <rect x="378" y="287" width="52" height="26" rx="5" fill="#374151" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="404" y="305" text-anchor="middle" fill="#ddd6fe" font-size="13">V</text>
+
+        <!-- Attention -->
+        <line x1="370" y1="313" x2="370" y2="330" stroke="#7c3aed" stroke-width="1.2"/>
+        <rect x="320" y="330" width="100" height="26" rx="5" fill="#374151" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="370" y="348" text-anchor="middle" fill="#c4b5fd" font-size="13">Attention</text>
+
+        <!-- Center divider -->
+        <line x1="250" y1="10" x2="250" y2="360" stroke="#374151" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+        <!-- KV Cache reduction annotation -->
+        <text x="250" y="307" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="bold">KV Cache</text>
+        <text x="250" y="323" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="bold">减少 5–13×</text>
+
+        <!-- Arrow markers -->
+        <defs>
+          <marker id="arrow-gray" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#6b7280"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#7c3aed"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">21 / 26</span>
+</div>

@@ -1,0 +1,149 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<aside class="notes">Token dropping 是 MoE 训练中被低估的实际问题。用"餐厅桌位有限，超出容量的顾客被跳过"来类比。</aside>
+  <h2 class="text-5xl font-bold mb-6 text-indigo-300">专家容量与 Token 丢弃</h2>
+
+  <!-- Top formula card -->
+  <div class="bg-gray-800 rounded-2xl px-8 py-5 border border-indigo-700 mb-6">
+    <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-2">Expert Capacity</p>
+    <div class="text-xl text-gray-200">
+      \[ C = \left\lceil \frac{\text{tokens per batch}}{N_{\text{exp}}} \right\rceil \times \text{capacity factor} \]
+    </div>
+    <p class="text-lg text-gray-400 leading-relaxed mt-1">
+      capacity factor ≈ 1.0–1.25（训练），≈ 2.0（推理）
+      <span class="ml-6 text-base font-mono text-gray-500">[Fedus et al., 2022]</span>
+    </p>
+  </div>
+
+  <!-- Central SVG -->
+  <div class="flex justify-center flex-1 min-h-0 mb-4">
+    <svg viewBox="0 0 800 280" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="max-width:900px;min-height:400px">
+      <defs>
+        <marker id="arrowC" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+        </marker>
+        <marker id="arrowCr" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#ef4444"/>
+        </marker>
+      </defs>
+      <rect width="800" height="280" fill="#111827" rx="12"/>
+
+      <!-- Title: token batch at top -->
+      <text x="400" y="22" font-size="14" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Token Batch（16 tokens）</text>
+
+      <!-- 16 token squares in a row -->
+      <!-- tokens 1-4 will go to Expert 1 (one overflows) -->
+      <rect x="20"  y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="34"  y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t1</text>
+      <rect x="52"  y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="66"  y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t2</text>
+      <rect x="84"  y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="98"  y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t3</text>
+      <!-- t4 is the overflow one — red dashed -->
+      <rect x="116" y="32" width="28" height="28" rx="4" fill="#450a0a" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 2"/>
+      <text x="130" y="50" font-size="11" fill="#fca5a5" text-anchor="middle" font-family="monospace">t4</text>
+
+      <!-- tokens 5-7 go to Expert 2 -->
+      <rect x="180" y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="194" y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t5</text>
+      <rect x="212" y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="226" y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t6</text>
+      <rect x="244" y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="258" y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t7</text>
+
+      <!-- tokens 8-9 go to Expert 3 -->
+      <rect x="310" y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="324" y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t8</text>
+      <rect x="342" y="32" width="28" height="28" rx="4" fill="#4b5563" stroke="#6b7280" stroke-width="1"/>
+      <text x="356" y="50" font-size="11" fill="#d1d5db" text-anchor="middle" font-family="monospace">t9</text>
+
+      <!-- tokens 10-16 distributed to remaining (shown compactly) -->
+      <rect x="420" y="32" width="28" height="28" rx="4" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+      <text x="434" y="50" font-size="10" fill="#9ca3af" text-anchor="middle" font-family="monospace">t10</text>
+      <rect x="452" y="32" width="28" height="28" rx="4" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+      <text x="466" y="50" font-size="10" fill="#9ca3af" text-anchor="middle" font-family="monospace">t11</text>
+      <rect x="484" y="32" width="28" height="28" rx="4" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+      <text x="498" y="50" font-size="10" fill="#9ca3af" text-anchor="middle" font-family="monospace">t12</text>
+      <rect x="516" y="32" width="28" height="28" rx="4" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+      <text x="530" y="50" font-size="10" fill="#9ca3af" text-anchor="middle" font-family="monospace">t13</text>
+      <rect x="548" y="32" width="28" height="28" rx="4" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+      <text x="562" y="50" font-size="10" fill="#9ca3af" text-anchor="middle" font-family="monospace">t14</text>
+      <rect x="580" y="32" width="28" height="28" rx="4" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+      <text x="594" y="50" font-size="10" fill="#9ca3af" text-anchor="middle" font-family="monospace">t15</text>
+      <rect x="612" y="32" width="28" height="28" rx="4" fill="#374151" stroke="#4b5563" stroke-width="1"/>
+      <text x="626" y="50" font-size="10" fill="#9ca3af" text-anchor="middle" font-family="monospace">t16</text>
+
+      <!-- Router label -->
+      <text x="400" y="88" font-size="13" fill="#818cf8" text-anchor="middle" font-family="sans-serif">Router 分配</text>
+      <line x1="400" y1="64" x2="400" y2="82" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="3 2"/>
+
+      <!-- Expert 1 (overloaded, capacity=3, 4 tokens assigned) -->
+      <rect x="20" y="108" width="118" height="110" rx="8" fill="#1e1b4b" stroke="#ef4444" stroke-width="2"/>
+      <text x="79" y="126" font-size="13" fill="#fca5a5" text-anchor="middle" font-family="sans-serif">Expert 1</text>
+      <text x="79" y="141" font-size="11" fill="#9ca3af" text-anchor="middle" font-family="monospace">capacity=3</text>
+      <!-- Capacity bar -->
+      <rect x="30" y="148" width="98" height="16" rx="3" fill="#374151"/>
+      <rect x="30" y="148" width="98" height="16" rx="3" fill="#6366f1"/>
+      <text x="79" y="161" font-size="11" fill="#e0e7ff" text-anchor="middle" font-family="monospace">3/3 满</text>
+      <!-- Tokens inside -->
+      <rect x="32"  y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="44"  y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t1</text>
+      <rect x="62"  y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="74"  y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t2</text>
+      <rect x="92"  y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="104" y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t3</text>
+      <!-- Overflow indicator -->
+      <rect x="20" y="196" width="118" height="20" rx="4" fill="#450a0a" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <text x="79" y="210" font-size="11" fill="#fca5a5" text-anchor="middle" font-family="sans-serif">t4 丢弃 ✕</text>
+
+      <!-- Expert 2 (normal) -->
+      <rect x="180" y="108" width="110" height="110" rx="8" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="235" y="126" font-size="13" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">Expert 2</text>
+      <text x="235" y="141" font-size="11" fill="#9ca3af" text-anchor="middle" font-family="monospace">capacity=3</text>
+      <rect x="190" y="148" width="90" height="16" rx="3" fill="#374151"/>
+      <rect x="190" y="148" width="67" height="16" rx="3" fill="#6366f1" opacity="0.8"/>
+      <text x="235" y="161" font-size="11" fill="#c7d2fe" text-anchor="middle" font-family="monospace">3/3 满</text>
+      <rect x="192" y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="204" y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t5</text>
+      <rect x="220" y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="232" y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t6</text>
+      <rect x="248" y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="260" y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t7</text>
+
+      <!-- Expert 3 (partially filled) -->
+      <rect x="332" y="108" width="110" height="110" rx="8" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="387" y="126" font-size="13" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">Expert 3</text>
+      <text x="387" y="141" font-size="11" fill="#9ca3af" text-anchor="middle" font-family="monospace">capacity=3</text>
+      <rect x="342" y="148" width="90" height="16" rx="3" fill="#374151"/>
+      <rect x="342" y="148" width="45" height="16" rx="3" fill="#6366f1" opacity="0.6"/>
+      <text x="387" y="161" font-size="11" fill="#c7d2fe" text-anchor="middle" font-family="monospace">2/3</text>
+      <rect x="352" y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="364" y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t8</text>
+      <rect x="380" y="172" width="24" height="18" rx="3" fill="#4338ca"/>
+      <text x="392" y="184" font-size="10" fill="#e0e7ff" text-anchor="middle" font-family="monospace">t9</text>
+
+      <!-- Expert N (compact) -->
+      <rect x="484" y="108" width="100" height="110" rx="8" fill="#1f2937" stroke="#374151" stroke-width="1" opacity="0.7"/>
+      <text x="534" y="140" font-size="13" fill="#6b7280" text-anchor="middle" font-family="sans-serif">Expert 4…N</text>
+      <text x="534" y="160" font-size="11" fill="#4b5563" text-anchor="middle" font-family="sans-serif">t10–t16</text>
+
+      <!-- Dropped token path: red arrow bypassing -->
+      <line x1="130" y1="206" x2="700" y2="206" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 3"/>
+      <text x="700" y="200" font-size="12" fill="#fca5a5" text-anchor="start" font-family="sans-serif">直通下一层（无专家处理）</text>
+      <line x1="700" y1="206" x2="770" y2="206" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowCr)"/>
+    </svg>
+  </div>
+
+  <!-- Bottom two-column info -->
+  <div class="grid grid-cols-2 gap-4">
+    <div class="bg-gray-800 rounded-xl px-5 py-3 border border-red-900/60">
+      <p class="text-sm text-red-400 font-mono uppercase tracking-widest mb-1">影响</p>
+      <p class="text-base text-gray-400 leading-relaxed">Token dropping 导致信息损失，长序列时尤为严重</p>
+    </div>
+    <div class="bg-gray-800 rounded-xl px-5 py-3 border border-indigo-700">
+      <p class="text-sm text-indigo-400 font-mono uppercase tracking-widest mb-1">缓解方案</p>
+      <p class="text-base text-gray-400 leading-relaxed">增大 capacity factor（增加 padding 开销）/ Expert Choice 路由（专家主动选 token）</p>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">10 / 26</span>
+</div>

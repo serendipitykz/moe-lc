@@ -1,0 +1,106 @@
+{
+  "_note": "Source of truth for all quantitative claims. All slides MUST use these values.",
+  "notation": {
+    "d_model": "hidden/model dimension",
+    "N_exp":   "total number of experts in one MoE layer",
+    "k":       "number of active experts per token (top-k routing)",
+    "L":       "sequence length (context length in tokens)",
+    "H":       "number of attention heads",
+    "d_ff":    "FFN intermediate dimension (= 4 × d_model for standard Transformer)"
+  },
+  "models": {
+    "gpt3": {
+      "total_params_B": 175,
+      "vram_fp16_GB": 350,
+      "training_cost_USD": 4600000,
+      "context_length": 2048,
+      "reference": "Brown et al., 2020"
+    },
+    "switch_transformer_base": {
+      "N_exp": 128,
+      "k": 1,
+      "total_params_B": 7.4,
+      "context_length": 512,
+      "note": "Switch-Base/128; Switch-XXL has 395B params with 64 experts",
+      "reference": "Fedus et al., 2022"
+    },
+    "glam_largest": {
+      "N_exp": 64,
+      "k": 2,
+      "total_params_B": 1200,
+      "active_params_B": 96.6,
+      "reference": "Du et al., 2022"
+    },
+    "mixtral_8x7b": {
+      "N_exp": 8,
+      "k": 2,
+      "d_model": 4096,
+      "n_layers": 32,
+      "H": 32,
+      "d_ff": 14336,
+      "total_params_B": 46.7,
+      "active_params_B": 12.9,
+      "context_length": 32768,
+      "reference": "Jiang et al., 2024"
+    },
+    "mixtral_8x22b": {
+      "N_exp": 8,
+      "k": 2,
+      "total_params_B": 141,
+      "active_params_B": 39,
+      "context_length": 65536,
+      "reference": "Mistral AI, 2024"
+    },
+    "deepseek_v2": {
+      "N_exp": 160,
+      "k": 6,
+      "d_model": 5120,
+      "n_layers": 60,
+      "total_params_B": 236,
+      "active_params_B": 21,
+      "context_length": 128000,
+      "kv_cache_reduction_ratio": "5-13x vs MHA (via MLA)",
+      "reference": "DeepSeek-AI, 2024"
+    },
+    "qwen1_5_moe_a2_7b": {
+      "N_exp": 60,
+      "k": 4,
+      "total_params_B": 14.3,
+      "active_params_B": 2.7,
+      "context_length": 32768,
+      "reference": "Qwen Team, 2024"
+    },
+    "llama3_70b": {
+      "d_model": 8192,
+      "n_layers": 80,
+      "H": 64,
+      "total_params_B": 70,
+      "context_length": 131072,
+      "reference": "Meta AI, 2024"
+    },
+    "gemini_1_5_pro": {
+      "context_length": 1000000,
+      "note": "Architecture not fully disclosed",
+      "reference": "Google DeepMind, 2024"
+    }
+  },
+  "complexity": {
+    "full_attention_time":  "O(L² · d_model)",
+    "full_attention_space": "O(L²)",
+    "flashattention_space": "O(L)  [IO-recompute, exact attention]",
+    "linear_attention_time": "O(L · d_model)",
+    "moe_active_flop_ratio": "k / N_exp  (vs equivalent dense model)",
+    "kv_cache_size_per_layer": "2 · L · H · d_head  (key + value)"
+  },
+  "training": {
+    "auxiliary_loss_alpha_range": "[0.01, 0.1]",
+    "expert_capacity_formula": "C = ceil(tokens_per_batch / N_exp) × capacity_factor",
+    "capacity_factor_typical": "1.0 – 1.25 for training, 2.0 for inference",
+    "router_z_loss_coefficient": "1e-2 (ST-MoE default)"
+  },
+  "positional_encoding": {
+    "rope_base": 10000,
+    "yarn_scale_factor_128k": 8,
+    "alibi_note": "no learned position, linear bias on attention logits"
+  }
+}

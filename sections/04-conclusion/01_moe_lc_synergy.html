@@ -1,0 +1,105 @@
+<!-- Slide 19: MoE × 长上下文：协同与挑战 -->
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">这张是全讲的"融合点"。强调协同是双向的：MoE 帮助长上下文降低计算成本，长上下文也给 MoE 更多训练信号。</aside>
+
+  <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE × 长上下文：协同与挑战</h2>
+
+  <div class="flex gap-8 flex-1 min-h-0">
+
+    <!-- Left column: MoE helps LC -->
+    <div class="flex-1 flex flex-col gap-6">
+      <div class="bg-gray-800 rounded-2xl p-8 border border-indigo-700 flex-1">
+        <h3 class="text-2xl font-bold text-indigo-300 mb-5">MoE 如何助力长上下文</h3>
+        <ul class="space-y-4">
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
+            <p class="text-xl leading-relaxed text-gray-200">
+              稀疏激活使每 token 的 FLOPs 降低至
+              \(\frac{k}{N_{\text{exp}}}\)，为更长序列提供额外的<span class="text-indigo-300 font-semibold">计算预算空间</span><cite class="text-gray-500 text-base not-italic ml-1">[Jiang et al., 2024]</cite>
+            </p>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
+            <p class="text-xl leading-relaxed text-gray-200">
+              专家可<span class="text-indigo-300 font-semibold">自然分工</span>：部分专家专注于局部语义，部分专注于远程依赖
+            </p>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
+            <p class="text-xl leading-relaxed text-gray-200">
+              MoE 的参数效率使同等算力下模型容量更大，更能<span class="text-indigo-300 font-semibold">记住长文档知识</span><cite class="text-gray-500 text-base not-italic ml-1">[DeepSeek-AI, 2024]</cite>
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-800 rounded-2xl p-8 border border-emerald-700 flex-1">
+        <h3 class="text-2xl font-bold text-emerald-300 mb-5">长上下文如何强化 MoE</h3>
+        <ul class="space-y-4">
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+            <p class="text-xl leading-relaxed text-gray-200">
+              更长上下文让路由有更多 token 可分配，理论上每个专家都能获得<span class="text-emerald-300 font-semibold">充足训练信号</span>
+            </p>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+            <p class="text-xl leading-relaxed text-gray-200">
+              长文档推理任务天然适合<span class="text-emerald-300 font-semibold">领域专家专业化</span>（不同段落激活不同专家）
+            </p>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right column: SVG Venn + challenges -->
+    <div class="flex flex-col gap-6" style="width:42%">
+
+      <!-- Venn Diagram -->
+      <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex items-center justify-center">
+        <svg viewBox="0 0 340 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="max-height:420px">
+          <!-- MoE circle (indigo) -->
+          <circle cx="120" cy="100" r="80" fill="#4338ca" fill-opacity="0.30" stroke="#6366f1" stroke-width="2"/>
+          <!-- Long Context circle (emerald) -->
+          <circle cx="220" cy="100" r="80" fill="#059669" fill-opacity="0.30" stroke="#34d399" stroke-width="2"/>
+          <!-- Labels outside circles -->
+          <text x="68" y="55" text-anchor="middle" fill="#a5b4fc" font-size="14" font-weight="bold">MoE</text>
+          <text x="68" y="73" text-anchor="middle" fill="#a5b4fc" font-size="13">（稀疏激活）</text>
+          <text x="273" y="55" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="bold">长上下文</text>
+          <!-- Intersection label -->
+          <text x="170" y="90" text-anchor="middle" fill="#e9d5ff" font-size="14" font-weight="bold">协同效应</text>
+          <text x="170" y="112" text-anchor="middle" fill="#d8b4fe" font-size="12">参数效率</text>
+          <text x="170" y="130" text-anchor="middle" fill="#d8b4fe" font-size="12">专家专业化</text>
+          <text x="170" y="148" text-anchor="middle" fill="#d8b4fe" font-size="12">训练信号丰富</text>
+        </svg>
+      </div>
+
+      <!-- Core challenges -->
+      <div class="bg-gray-800 rounded-2xl p-7 border border-purple-700 flex-1">
+        <h3 class="text-xl font-bold text-purple-300 mb-4">核心挑战</h3>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+            <p class="text-lg text-gray-400 leading-relaxed">
+              <span class="text-purple-300 font-semibold">KV Cache</span> 与专家 Cache 的协同调度
+            </p>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+            <p class="text-lg text-gray-400 leading-relaxed">
+              Expert Parallelism 的 <span class="text-purple-300 font-semibold">all-to-all 通信延迟</span>与长序列内存管理的冲突
+            </p>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-1 w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+            <p class="text-lg text-gray-400 leading-relaxed">
+              负载均衡在超长序列下的<span class="text-purple-300 font-semibold">局部 vs. 全局</span>视角分歧
+            </p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">19 / 26</span>
+</div>

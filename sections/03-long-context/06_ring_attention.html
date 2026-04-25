@@ -1,0 +1,100 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">Ring Attention 是长上下文的"分布式解法"。类比：一个大圆桌上 P 个人互相传菜单（K/V），每个人同时对自己面前的菜单做计算。通信和计算完全重叠，所以没有延迟代价。</aside>
+
+  <h2 class="text-5xl font-bold mb-4 text-emerald-300">Ring Attention 与序列并行</h2>
+  <p class="text-xl text-gray-400 mb-6">将超长序列分布到多个 GPU，打破单卡显存上限</p>
+
+  <div class="flex gap-8 flex-1 min-h-0">
+
+    <!-- Left: explanation -->
+    <div class="flex flex-col gap-5 flex-1">
+      <div class="bg-gray-800 border border-red-800 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-red-300 mb-2">问题：单 GPU 无法容纳超长序列</h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          FlashAttention 将 KV Cache 空间降至 \(\mathcal{O}(L)\)，但当 \(L = 1\text{M}\) 时
+          KV Cache 仍需 <strong class="text-red-300">数百 GB</strong>，远超单卡显存。
+        </p>
+      </div>
+
+      <div class="bg-emerald-950 border border-emerald-700 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-emerald-300 mb-2">Ring Attention 核心思想 <cite class="text-gray-500 text-sm not-italic font-normal">[Liu et al., 2023]</cite></h3>
+        <ul class="text-lg text-gray-200 space-y-2 leading-relaxed">
+          <li>将序列切分为 \(P\) 块，每块分配一张 GPU：\(L/P\) tokens/GPU</li>
+          <li>每张 GPU 持有本块的 Q、K、V 分片</li>
+          <li>按"环形"顺序逐步传递 K/V 块，每步在本地执行 FlashAttention</li>
+          <li>经 \(P\) 步后，每个 GPU 累积到完整的注意力输出</li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-gray-300 mb-2">关键优势：通信-计算重叠</h3>
+        <p class="text-lg text-gray-300">
+          GPU 在执行本地 FlashAttention 的<strong class="text-emerald-300">同时</strong>将下一块 K/V 发送给邻居，
+          通信几乎被掩盖，端到端吞吐接近线性扩展。
+        </p>
+        <div class="mt-3 grid grid-cols-2 gap-3 text-base text-gray-400">
+          <div class="bg-gray-900 rounded-lg px-3 py-2">显存：\(\mathcal{O}(L/P)\) per GPU</div>
+          <div class="bg-gray-900 rounded-lg px-3 py-2">计算：\(\mathcal{O}(L^2 / P)\) per GPU</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: SVG ring diagram -->
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 flex items-center justify-center p-4 flex-1">
+      <svg viewBox="0 0 360 360" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="min-height:380px;max-width:440px">
+        <defs>
+          <marker id="ring-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 Z" fill="#10b981"/>
+          </marker>
+        </defs>
+
+        <!-- Center label -->
+        <text x="180" y="175" text-anchor="middle" font-size="14" fill="#6b7280">Ring</text>
+        <text x="180" y="193" text-anchor="middle" font-size="14" fill="#6b7280">K/V 传递</text>
+
+        <!-- GPU boxes at N/E/S/W positions -->
+        <!-- GPU 0 (top) -->
+        <rect x="130" y="20" width="100" height="50" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+        <text x="180" y="42" text-anchor="middle" font-size="13" fill="#6ee7b7" font-weight="bold">GPU 0</text>
+        <text x="180" y="58" text-anchor="middle" font-size="11" fill="#a7f3d0">tokens 0…L/P</text>
+
+        <!-- GPU 1 (right) -->
+        <rect x="270" y="150" width="80" height="50" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+        <text x="310" y="172" text-anchor="middle" font-size="13" fill="#6ee7b7" font-weight="bold">GPU 1</text>
+        <text x="310" y="188" text-anchor="middle" font-size="11" fill="#a7f3d0">L/P…2L/P</text>
+
+        <!-- GPU 2 (bottom) -->
+        <rect x="130" y="285" width="100" height="50" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+        <text x="180" y="307" text-anchor="middle" font-size="13" fill="#6ee7b7" font-weight="bold">GPU 2</text>
+        <text x="180" y="323" text-anchor="middle" font-size="11" fill="#a7f3d0">2L/P…3L/P</text>
+
+        <!-- GPU 3 (left) -->
+        <rect x="10" y="150" width="80" height="50" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+        <text x="50" y="172" text-anchor="middle" font-size="13" fill="#6ee7b7" font-weight="bold">GPU 3</text>
+        <text x="50" y="188" text-anchor="middle" font-size="11" fill="#a7f3d0">3L/P…L</text>
+
+        <!-- Arrows: 0→1 (top-right arc) -->
+        <path d="M230,55 Q290,80 270,160" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#ring-arrow)"/>
+        <!-- 1→2 (right-bottom arc) -->
+        <path d="M295,200 Q320,270 250,295" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#ring-arrow)"/>
+        <!-- 2→3 (bottom-left arc) -->
+        <path d="M130,310 Q70,330 85,210" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#ring-arrow)"/>
+        <!-- 3→0 (left-top arc) -->
+        <path d="M60,150 Q40,60 130,55" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#ring-arrow)"/>
+
+        <!-- "KV" label on arrows -->
+        <text x="268" y="110" font-size="12" fill="#34d399">KV</text>
+        <text x="318" y="255" font-size="12" fill="#34d399">KV</text>
+        <text x="70" y="340" font-size="12" fill="#34d399">KV</text>
+        <text x="22" y="110" font-size="12" fill="#34d399">KV</text>
+
+        <!-- Compute label in center -->
+        <circle cx="180" cy="183" r="48" fill="none" stroke="#374151" stroke-width="1" stroke-dasharray="6 3"/>
+        <text x="180" y="228" text-anchor="middle" font-size="11" fill="#4b5563">↻ 逐步累积</text>
+      </svg>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">0 / 0</span>
+</div>

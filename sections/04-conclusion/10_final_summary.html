@@ -1,0 +1,90 @@
+<!-- Slide 26: 全文总结 -->
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">总结时回到三个关键 insight。最后的 call to action 停留 5-10 秒，让听众思考"协同设计"的意义后再进入问答。</aside>
+
+  <h2 class="text-5xl font-bold mb-10 text-purple-300">总结</h2>
+
+  <!-- Row 1: Three topic chips -->
+  <div class="mb-10">
+    <p class="text-lg text-gray-400 mb-5">本次讲座涵盖的核心主题</p>
+    <div class="flex items-center justify-center gap-8">
+      <div class="rounded-full px-8 py-4 bg-indigo-800 border border-indigo-500 text-2xl font-bold text-indigo-200">
+        MoE 稀疏激活
+      </div>
+      <!-- Arrow connector -->
+      <svg viewBox="0 0 50 20" class="w-12 h-5">
+        <line x1="0" y1="10" x2="44" y2="10" stroke="#6b7280" stroke-width="2"/>
+        <polygon points="44,5 50,10 44,15" fill="#6b7280"/>
+      </svg>
+      <div class="rounded-full px-8 py-4 bg-emerald-800 border border-emerald-500 text-2xl font-bold text-emerald-200">
+        长上下文扩展
+      </div>
+      <svg viewBox="0 0 50 20" class="w-12 h-5">
+        <line x1="0" y1="10" x2="44" y2="10" stroke="#6b7280" stroke-width="2"/>
+        <polygon points="44,5 50,10 44,15" fill="#6b7280"/>
+      </svg>
+      <div class="rounded-full px-8 py-4 bg-purple-800 border border-purple-500 text-2xl font-bold text-purple-200">
+        协同与展望
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Three insight cards -->
+  <div class="grid grid-cols-3 gap-7 mb-10">
+
+    <div class="bg-gray-800 rounded-2xl p-7 border border-indigo-700">
+      <p class="text-xl font-bold text-indigo-300 mb-3">效率 ≠ 牺牲能力</p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        \(\frac{k}{N_{\text{exp}}}\) 的稀疏激活实现近稠密模型的质量，
+        却只有 fraction 的推理成本——稀疏性是可扩展性的关键
+      </p>
+    </div>
+
+    <div class="bg-gray-800 rounded-2xl p-7 border border-emerald-700">
+      <p class="text-xl font-bold text-emerald-300 mb-3">IO 是真正瓶颈</p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        FlashAttention 证明：FLOPs 不变，仅优化内存访问模式，
+        速度即大幅提升——算法设计必须以硬件为中心
+      </p>
+    </div>
+
+    <div class="bg-gray-800 rounded-2xl p-7 border border-purple-700">
+      <p class="text-xl font-bold text-purple-300 mb-3">协同优于叠加</p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        MoE + 长上下文不是简单组合；
+        DeepSeek-V2 的 MLA 证明了
+        <span class="text-purple-300 font-semibold">联合优化</span>的价值远超各自为政
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Row 3: Call to action -->
+  <div class="flex flex-col items-center gap-6 mt-auto">
+    <p class="text-2xl text-gray-300 text-center max-w-4xl leading-relaxed">
+      MoE 与长上下文的协同设计，将是下一代高效大语言模型的
+      <span class="text-purple-300 font-bold">核心范式</span>
+    </p>
+
+    <!-- Simple SVG: rocket/arrow pointing up-right, indigo→emerald gradient -->
+    <svg viewBox="0 0 160 60" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:60px">
+      <defs>
+        <linearGradient id="rocket-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#6366f1"/>
+          <stop offset="100%" stop-color="#34d399"/>
+        </linearGradient>
+      </defs>
+      <!-- Arrow shaft -->
+      <line x1="20" y1="50" x2="130" y2="14" stroke="url(#rocket-grad)" stroke-width="4" stroke-linecap="round"/>
+      <!-- Arrow head -->
+      <polygon points="130,14 110,16 125,28" fill="url(#rocket-grad)"/>
+      <!-- Small circles along the path (exhaust trail) -->
+      <circle cx="35" cy="45" r="3" fill="#6366f1" fill-opacity="0.7"/>
+      <circle cx="60" cy="37" r="2.5" fill="#7c3aed" fill-opacity="0.6"/>
+      <circle cx="85" cy="28" r="2" fill="#059669" fill-opacity="0.6"/>
+      <circle cx="108" cy="20" r="2" fill="#34d399" fill-opacity="0.7"/>
+    </svg>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">26 / 26</span>
+</div>

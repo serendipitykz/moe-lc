@@ -1,0 +1,52 @@
+<div class="slide flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">用 Mixtral 的例子直观说明"只用 2/8 专家就能跑"的神奇之处。右侧长上下文用"把整本书放进模型"来类比。</aside>
+
+  <!-- Heading -->
+  <h2 class="text-5xl font-bold mb-10 text-indigo-300">为什么需要 MoE + 长上下文？</h2>
+
+  <!-- Two-column body -->
+  <div class="grid grid-cols-2 gap-10 flex-1">
+
+    <!-- Left: MoE -->
+    <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
+      <h3 class="text-3xl font-semibold text-indigo-400 mb-2">混合专家 (MoE)</h3>
+      <p class="text-xl text-gray-200 leading-relaxed">
+        每个 token 仅激活 \(k\) / \(N_{\text{exp}}\) 个专家，在保持模型总容量的同时，
+        大幅削减<span class="text-indigo-300 font-medium">实际激活的 FLOPs</span>。
+      </p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        示例：<span class="text-white font-semibold">Mixtral-8×7B</span> 每个 token 激活
+        <strong>8 个专家中的 2 个</strong>——推理成本约等于 13B 稠密模型，
+        但拥有 47B 参数量的知识容量。<cite class="text-gray-500 text-base not-italic ml-1">[Jiang et al., 2024]</cite>
+      </p>
+      <div class="mt-auto text-center text-gray-300 text-xl font-mono bg-gray-900 rounded-xl px-4 py-3">
+        \[ \text{激活 FLOPs} \approx \frac{k}{N_{\text{exp}}} \times \text{稠密模型 FLOPs} \]
+      </div>
+    </div>
+
+    <!-- Right: Long Context -->
+    <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
+      <h3 class="text-3xl font-semibold text-emerald-400 mb-2">长上下文</h3>
+      <p class="text-xl text-gray-200 leading-relaxed">
+        将序列长度 \(L\) 扩展至
+        <span class="text-emerald-300 font-medium">128K – 1M token</span>，
+        使模型能在单次前向传播中完成文档级、仓库级推理。
+      </p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        核心挑战：标准注意力的显存复杂度为 \(\mathcal{O}(L^2)\)。
+        FlashAttention、RoPE 外推、分块循环等技术正在攻克这一瓶颈。
+      </p>
+      <div class="mt-auto text-center text-gray-300 text-xl font-mono bg-gray-900 rounded-xl px-4 py-3">
+        \[ L \in [128\text{K},\; 1\text{M}] \text{ tokens} \]
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer callout -->
+  <p class="mt-8 text-center text-xl text-gray-400 italic">
+    两者结合：在保持<span class="text-white font-semibold">计算高效</span>的同时实现大规模语言能力。
+  </p>
+
+  <!-- Slide counter -->
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">2 / 26</span>
+</div>

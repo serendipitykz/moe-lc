@@ -1,0 +1,136 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<aside class="notes">核心机制。用"考试选题"类比：每道题（token）从题库（专家）中选最相关的 k 道来解答。强调门控网络 W_g 本身很小。</aside>
+  <h2 class="text-5xl font-bold mb-8 text-indigo-300">Top-K 路由机制</h2>
+
+  <!-- 40/60 split -->
+  <div class="flex gap-8 flex-1">
+
+    <!-- Left card: equations (40%) -->
+    <div class="w-2/5 flex flex-col gap-6">
+      <div class="bg-gray-800 rounded-2xl p-8 border border-indigo-700 flex-1 flex flex-col gap-6">
+
+        <!-- Gating function -->
+        <div>
+          <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-3">Gating Function</p>
+          <div class="text-xl text-gray-200">
+            \[ \mathbf{g}(x) = \text{TopK}\!\left(\text{Softmax}(W_g \cdot x),\; k\right) \]
+          </div>
+        </div>
+
+        <!-- Layer output -->
+        <div>
+          <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-3">Layer Output</p>
+          <div class="text-xl text-gray-200">
+            \[ y = \sum_{i \in \mathcal{T}_k} g_i(x) \cdot \text{FFN}_i(x) \]
+          </div>
+          <p class="text-lg text-gray-400 leading-relaxed mt-2">
+            其中 \(\mathcal{T}_k\) 为 top-k 选中的专家下标集合
+          </p>
+        </div>
+
+        <!-- Chinese explanation -->
+        <p class="text-lg text-gray-300 leading-relaxed">
+          每个 token 独立计算门控分数，仅激活得分最高的 k 个专家，其余专家参数不参与当前 token 的前向计算。<cite class="text-gray-500 text-base not-italic ml-1">[Shazeer et al., 2017]</cite>
+        </p>
+
+        <!-- Amber warning -->
+        <div class="bg-amber-900/40 border border-amber-600/60 rounded-xl p-4 mt-auto">
+          <p class="text-base text-amber-200 leading-relaxed">
+            ⚠ <strong>非激活专家的梯度</strong>：在反向传播中也不更新，可能导致专家分化不均
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right card: SVG flow (60%) -->
+    <div class="w-3/5 flex flex-col flex-1 min-h-0">
+      <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex-1 flex flex-col justify-center">
+        <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-4 text-center">路由流程示意</p>
+        <svg viewBox="0 0 820 270" width="100%" height="330" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrowR" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+            </marker>
+            <marker id="arrowG" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#4b5563"/>
+            </marker>
+          </defs>
+          <rect width="820" height="270" fill="#111827" rx="10"/>
+
+          <!-- 输入 token -->
+          <rect x="10" y="110" width="90" height="36" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="55" y="132" font-size="14" fill="#e5e7eb" text-anchor="middle" font-family="sans-serif">输入 token</text>
+
+          <!-- Arrow to gating -->
+          <line x1="100" y1="128" x2="118" y2="128" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+
+          <!-- 门控网络 W_g -->
+          <rect x="120" y="102" width="100" height="52" rx="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+          <text x="170" y="125" font-size="14" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">门控网络</text>
+          <text x="170" y="143" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">W_g</text>
+
+          <!-- Arrow to Softmax -->
+          <line x1="220" y1="128" x2="240" y2="128" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+
+          <!-- Softmax -->
+          <rect x="242" y="108" width="86" height="40" rx="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="285" y="132" font-size="14" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">Softmax</text>
+
+          <!-- Arrow to TopK -->
+          <line x1="328" y1="128" x2="348" y2="128" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+
+          <!-- TopK -->
+          <rect x="350" y="106" width="82" height="44" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="2"/>
+          <text x="391" y="126" font-size="14" fill="#c7d2fe" text-anchor="middle" font-family="sans-serif">TopK</text>
+          <text x="391" y="143" font-size="12" fill="#818cf8" text-anchor="middle" font-family="monospace">k=2</text>
+
+          <!-- Lines to experts -->
+          <!-- Active: Expert 1 (top) -->
+          <line x1="432" y1="118" x2="462" y2="62" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+          <!-- Active: Expert 2 -->
+          <line x1="432" y1="128" x2="462" y2="130" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+          <!-- Inactive: Expert 3 -->
+          <line x1="432" y1="138" x2="462" y2="196" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrowG)"/>
+          <!-- Inactive: Expert 4+ (just dashed) -->
+
+          <!-- Expert 1 (active) -->
+          <rect x="464" y="44" width="96" height="36" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="2"/>
+          <text x="512" y="66" font-size="14" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">Expert 1 ✓</text>
+
+          <!-- Expert 2 (active) -->
+          <rect x="464" y="112" width="96" height="36" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="2"/>
+          <text x="512" y="134" font-size="14" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">Expert 2 ✓</text>
+
+          <!-- Expert 3 (inactive) -->
+          <rect x="464" y="178" width="96" height="36" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1.5" opacity="0.45"/>
+          <text x="512" y="200" font-size="14" fill="#6b7280" text-anchor="middle" font-family="sans-serif" opacity="0.45">Expert 3</text>
+
+          <!-- Expert N label (inactive) -->
+          <rect x="464" y="226" width="96" height="30" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1" opacity="0.3"/>
+          <text x="512" y="245" font-size="13" fill="#6b7280" text-anchor="middle" font-family="sans-serif" opacity="0.3">Expert N ···</text>
+
+          <!-- Lines to weighted sum (active only) -->
+          <line x1="560" y1="62" x2="680" y2="120" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+          <line x1="560" y1="130" x2="680" y2="128" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+
+          <!-- 加权求和 -->
+          <rect x="682" y="104" width="100" height="44" rx="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+          <text x="732" y="124" font-size="13" fill="#c7d2fe" text-anchor="middle" font-family="sans-serif">加权求和</text>
+          <text x="732" y="141" font-size="12" fill="#818cf8" text-anchor="middle" font-family="monospace">Σ g_i·FFN_i</text>
+
+          <!-- Arrow to output -->
+          <line x1="782" y1="126" x2="800" y2="126" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
+          <text x="808" y="122" font-size="13" fill="#a5b4fc" text-anchor="start" font-family="sans-serif">输出</text>
+
+          <!-- Legend -->
+          <line x1="16" y1="238" x2="46" y2="238" stroke="#6366f1" stroke-width="2"/>
+          <text x="52" y="242" font-size="12" fill="#a5b4fc" font-family="sans-serif">激活专家</text>
+          <line x1="130" y1="238" x2="160" y2="238" stroke="#4b5563" stroke-width="2" stroke-dasharray="5 3"/>
+          <text x="166" y="242" font-size="12" fill="#6b7280" font-family="sans-serif">未激活专家</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">8 / 26</span>
+</div>

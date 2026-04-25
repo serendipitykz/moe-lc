@@ -1,0 +1,154 @@
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">强调 FlashAttention 是工程优化而非算法创新——精确度不变，仅减少 IO。SRAM vs HBM 的类比：SRAM 是口袋，HBM 是仓库，尽量别去仓库取货。</aside>
+
+  <h2 class="text-5xl font-bold mb-6 text-emerald-300">FlashAttention：IO 感知的精确注意力</h2>
+
+  <div class="flex gap-8 flex-1 min-h-0">
+
+    <!-- Left card: Concept + Key insight + table -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 flex flex-col gap-5 flex-1">
+
+      <h3 class="text-2xl font-bold text-emerald-300">为什么瓶颈不在 FLOPs？</h3>
+
+      <p class="text-xl leading-relaxed text-gray-200">
+        GPU HBM（显存）带宽远低于 SRAM（片上缓存）的读写速度。
+        标准注意力需将 \(N \times N\) 注意力矩阵写入 HBM，产生大量 IO 开销——而不是计算本身。
+      </p>
+
+      <div class="space-y-2">
+        <p class="text-xl font-semibold text-emerald-300">FlashAttention 方案</p>
+        <ul class="text-xl leading-relaxed text-gray-200 space-y-2 list-disc list-inside">
+          <li><span class="text-emerald-300 font-semibold">分块（Tiling）</span>：将 Q, K, V 分成小块，逐块计算注意力，结果直接累加，避免写出大矩阵</li>
+          <li><span class="text-emerald-300 font-semibold">重计算（Recomputation）</span>：反向传播时重新计算 attention weights，而非存储整个矩阵</li>
+          <li>结果：显存从 \(\mathcal{O}(L^2)\) 降至 \(\mathcal{O}(L)\)，端到端速度提升 2–4×</li>
+        </ul>
+      </div>
+
+      <!-- Version comparison table -->
+      <table class="w-full border-collapse text-lg mt-2">
+        <thead>
+          <tr class="bg-gray-700">
+            <th class="px-4 py-2 text-left text-emerald-300 font-semibold border border-gray-600">版本</th>
+            <th class="px-4 py-2 text-left text-emerald-300 font-semibold border border-gray-600">提速</th>
+            <th class="px-4 py-2 text-left text-emerald-300 font-semibold border border-gray-600">备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border border-gray-600">
+            <td class="px-4 py-2 border border-gray-600 text-gray-200">FlashAttention-1</td>
+            <td class="px-4 py-2 border border-gray-600 text-emerald-400 font-mono">2–4×</td>
+            <td class="px-4 py-2 border border-gray-600 text-gray-400">Tiling + recompute<cite class="text-gray-500 text-base not-italic ml-1">[Dao et al., 2022]</cite></td>
+          </tr>
+          <tr class="border border-gray-600">
+            <td class="px-4 py-2 border border-gray-600 text-gray-200">FlashAttention-2</td>
+            <td class="px-4 py-2 border border-gray-600 text-emerald-400 font-mono">~2× FA-1</td>
+            <td class="px-4 py-2 border border-gray-600 text-gray-400">更优 work partition<cite class="text-gray-500 text-base not-italic ml-1">[Dao, 2023]</cite></td>
+          </tr>
+          <tr class="border border-gray-600">
+            <td class="px-4 py-2 border border-gray-600 text-gray-200">FlashAttention-3</td>
+            <td class="px-4 py-2 border border-gray-600 text-emerald-400 font-mono">+50% FA-2</td>
+            <td class="px-4 py-2 border border-gray-600 text-gray-400">Hopper GPU 专用</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+
+    <!-- Right card: SVG tiling diagram -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col items-center justify-center flex-1 min-h-0" style="min-width:460px;">
+      <svg viewBox="0 0 420 320" width="100%" height="420" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+        <defs>
+          <marker id="fa-arrow-04" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#10b981"/>
+          </marker>
+          <marker id="fa-arrow-red-04" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#ef4444"/>
+          </marker>
+          <marker id="fa-arrow-gray-04" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#6b7280"/>
+          </marker>
+        </defs>
+
+        <!-- ===== LEFT SIDE: Standard Attention ===== -->
+        <text x="88" y="20" text-anchor="middle" font-size="14" fill="#9ca3af" font-weight="bold">标准注意力</text>
+
+        <!-- Q block -->
+        <rect x="14" y="30" width="44" height="44" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="36" y="57" text-anchor="middle" font-size="14" fill="#93c5fd">Q</text>
+
+        <!-- K block -->
+        <rect x="66" y="30" width="44" height="44" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="88" y="57" text-anchor="middle" font-size="14" fill="#93c5fd">K</text>
+
+        <!-- Arrow Q,K → Attention matrix -->
+        <line x1="60" y1="52" x2="14" y2="110" stroke="#6b7280" stroke-width="1" marker-end="url(#fa-arrow-gray-04)" stroke-dasharray="3 2"/>
+        <line x1="88" y1="74" x2="88" y2="100" stroke="#6b7280" stroke-width="1" marker-end="url(#fa-arrow-gray-04)"/>
+
+        <!-- Attention matrix: large red box (N x N) written to HBM -->
+        <rect x="14" y="100" width="148" height="80" rx="4" fill="#450a0a" stroke="#ef4444" stroke-width="2"/>
+        <text x="88" y="138" text-anchor="middle" font-size="14" fill="#fca5a5" font-weight="bold">N×N Attention</text>
+        <text x="88" y="157" text-anchor="middle" font-size="13" fill="#ef4444">HBM 写入！</text>
+
+        <!-- Arrow to V -->
+        <line x1="88" y1="180" x2="88" y2="205" stroke="#6b7280" stroke-width="1" marker-end="url(#fa-arrow-gray-04)"/>
+
+        <!-- V block -->
+        <rect x="66" y="205" width="44" height="36" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="88" y="229" text-anchor="middle" font-size="14" fill="#93c5fd">V</text>
+
+        <!-- Arrow to Output -->
+        <line x1="88" y1="241" x2="88" y2="268" stroke="#6b7280" stroke-width="1" marker-end="url(#fa-arrow-gray-04)"/>
+
+        <!-- Output -->
+        <rect x="52" y="268" width="72" height="30" rx="3" fill="#1f2937" stroke="#6b7280" stroke-width="1.5"/>
+        <text x="88" y="289" text-anchor="middle" font-size="14" fill="#9ca3af">Output</text>
+
+        <!-- ===== Divider ===== -->
+        <line x1="210" y1="10" x2="210" y2="310" stroke="#374151" stroke-width="1.5" stroke-dasharray="6 3"/>
+
+        <!-- ===== RIGHT SIDE: FlashAttention ===== -->
+        <text x="318" y="20" text-anchor="middle" font-size="14" fill="#6ee7b7" font-weight="bold">FlashAttention</text>
+
+        <!-- HBM storage (large gray) -->
+        <rect x="224" y="28" width="180" height="52" rx="4" fill="#1f2937" stroke="#6b7280" stroke-width="1.5"/>
+        <text x="314" y="50" text-anchor="middle" font-size="14" fill="#9ca3af">HBM: Q / K / V</text>
+        <text x="314" y="68" text-anchor="middle" font-size="12" fill="#6b7280">（大块显存）</text>
+
+        <!-- Tiles being loaded into SRAM -->
+        <line x1="270" y1="80" x2="260" y2="108" stroke="#10b981" stroke-width="1.5" marker-end="url(#fa-arrow-04)"/>
+        <line x1="314" y1="80" x2="314" y2="108" stroke="#10b981" stroke-width="1.5" marker-end="url(#fa-arrow-04)"/>
+        <line x1="358" y1="80" x2="368" y2="108" stroke="#10b981" stroke-width="1.5" marker-end="url(#fa-arrow-04)"/>
+
+        <!-- SRAM tile boxes -->
+        <rect x="228" y="108" width="46" height="36" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+        <text x="251" y="131" text-anchor="middle" font-size="13" fill="#6ee7b7">tile</text>
+
+        <rect x="291" y="108" width="46" height="36" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+        <text x="314" y="131" text-anchor="middle" font-size="13" fill="#6ee7b7">tile</text>
+
+        <rect x="354" y="108" width="46" height="36" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+        <text x="377" y="131" text-anchor="middle" font-size="13" fill="#6ee7b7">tile</text>
+
+        <!-- SRAM label -->
+        <text x="314" y="162" text-anchor="middle" font-size="13" fill="#10b981">SRAM（片上快速缓存）</text>
+
+        <!-- Annotation: no N×N written -->
+        <rect x="228" y="174" width="176" height="36" rx="4" fill="#022c22" stroke="#10b981" stroke-width="1.5"/>
+        <text x="316" y="196" text-anchor="middle" font-size="14" fill="#6ee7b7" font-weight="bold">不写入 N×N 矩阵！</text>
+
+        <!-- Accumulate arrow to output -->
+        <line x1="314" y1="210" x2="314" y2="240" stroke="#10b981" stroke-width="1.5" marker-end="url(#fa-arrow-04)"/>
+
+        <!-- Output (emerald) -->
+        <rect x="276" y="240" width="76" height="36" rx="3" fill="#022c22" stroke="#10b981" stroke-width="2"/>
+        <text x="314" y="263" text-anchor="middle" font-size="14" fill="#6ee7b7" font-weight="bold">Output</text>
+
+        <!-- Accumulate label -->
+        <text x="314" y="294" text-anchor="middle" font-size="13" fill="#10b981">逐块累加，精确等价</text>
+      </svg>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">17 / 26</span>
+</div>

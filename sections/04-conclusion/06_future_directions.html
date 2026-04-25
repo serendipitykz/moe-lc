@@ -1,0 +1,147 @@
+<!-- Slide 24: 未来研究方向 -->
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">Mixture of Depths 是最有潜力的方向之一，简短介绍即可。重点是让听众感受到这个领域还在快速发展。</aside>
+
+  <h2 class="text-5xl font-bold mb-8 text-purple-300">未来方向展望</h2>
+
+  <div class="grid grid-cols-2 gap-7 flex-1 min-h-0">
+
+    <!-- Card 1: Mixture of Depths (MoD) -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-indigo-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="bg-indigo-700 text-indigo-200 text-xs font-bold px-3 py-1 rounded-full font-mono uppercase">新范式</span>
+        <h3 class="text-xl font-bold text-indigo-300">Mixture of Depths (MoD)</h3>
+      </div>
+      <div class="flex gap-5 flex-1">
+        <div class="flex-1 space-y-3">
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-indigo-300 font-semibold">概念：</span>不仅对"宽度"（哪些专家）稀疏化，
+            也对<span class="text-indigo-300 font-semibold">"深度"（哪些层）稀疏化</span>
+          </p>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            动态跳过 token 不需要的层 → 每个 token
+            <span class="text-indigo-300 font-semibold">自适应选择计算深度</span>
+          </p>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <cite class="text-gray-500 text-base not-italic">[Raposo et al., 2024]</cite> 在固定 FLOPs 预算下超越 isoFLOP 基线
+          </p>
+        </div>
+        <!-- Mini SVG: token paths through layers -->
+        <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:200px;height:270px">
+          <!-- Layer boxes -->
+          <rect x="40" y="5" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="60" y="19" text-anchor="middle" fill="#c7d2fe" font-size="11">L1</text>
+          <rect x="40" y="40" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="60" y="54" text-anchor="middle" fill="#c7d2fe" font-size="11">L2</text>
+          <rect x="40" y="75" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="60" y="89" text-anchor="middle" fill="#c7d2fe" font-size="11">L3</text>
+          <rect x="40" y="110" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="60" y="124" text-anchor="middle" fill="#c7d2fe" font-size="11">L4</text>
+
+          <!-- Token A: goes through all layers -->
+          <line x1="18" y1="0" x2="18" y2="5" stroke="#a5b4fc" stroke-width="2"/>
+          <line x1="18" y1="25" x2="18" y2="40" stroke="#a5b4fc" stroke-width="2"/>
+          <line x1="18" y1="60" x2="18" y2="75" stroke="#a5b4fc" stroke-width="2"/>
+          <line x1="18" y1="95" x2="18" y2="110" stroke="#a5b4fc" stroke-width="2"/>
+          <line x1="18" y1="130" x2="18" y2="145" stroke="#a5b4fc" stroke-width="2"/>
+          <circle cx="18" cy="15" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
+          <circle cx="18" cy="50" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
+          <circle cx="18" cy="85" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
+          <circle cx="18" cy="120" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
+          <text x="6" y="150" text-anchor="middle" fill="#a5b4fc" font-size="10">tok A</text>
+
+          <!-- Token B: skips L2, L3 -->
+          <line x1="102" y1="0" x2="102" y2="5" stroke="#34d399" stroke-width="2"/>
+          <line x1="102" y1="25" x2="102" y2="110" stroke="#34d399" stroke-width="2" stroke-dasharray="3,3"/>
+          <line x1="102" y1="130" x2="102" y2="145" stroke="#34d399" stroke-width="2"/>
+          <circle cx="102" cy="15" r="5" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
+          <circle cx="102" cy="120" r="5" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
+          <text x="110" y="63" text-anchor="end" fill="#6ee7b7" font-size="10">skip</text>
+          <text x="114" y="150" text-anchor="middle" fill="#6ee7b7" font-size="10">tok B</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Card 2: Soft MoE -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-emerald-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="bg-emerald-700 text-emerald-200 text-xs font-bold px-3 py-1 rounded-full font-mono uppercase">可微路由</span>
+        <h3 class="text-xl font-bold text-emerald-300">软路由（Soft MoE）</h3>
+      </div>
+      <div class="space-y-4 flex-1">
+        <p class="text-lg text-gray-400 leading-relaxed">
+          <span class="text-emerald-300 font-semibold">问题：</span>TopK 路由不可微 →
+          梯度估计有噪声，训练不稳定
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          <span class="text-emerald-300 font-semibold">Soft MoE：</span>每个"slot"由
+          <span class="text-emerald-300">所有 token 的加权混合</span>形成，
+          完全可微，梯度流动顺畅
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          <cite class="text-gray-500 text-base not-italic">[Puigcerver et al., 2023]</cite> 在 ViT 上验证，训练稳定性显著提升
+        </p>
+        <div class="bg-gray-900 rounded-xl px-5 py-3 border border-emerald-900 mt-2">
+          <p class="text-sm text-gray-500 font-mono mb-1">Trade-off</p>
+          <p class="text-lg text-gray-300">
+            无法 exactly 将单个 token 路由到单个专家，
+            token 边界模糊 → 不适合需要 token-level 追踪的任务
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Multimodal MoE -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-purple-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="bg-purple-700 text-purple-200 text-xs font-bold px-3 py-1 rounded-full font-mono uppercase">多模态</span>
+        <h3 class="text-xl font-bold text-purple-300">多模态 MoE</h3>
+      </div>
+      <div class="space-y-4 flex-1">
+        <p class="text-lg text-gray-400 leading-relaxed">
+          <span class="text-purple-300 font-semibold">自然延伸：</span>
+          视觉、语言、代码各有"领域"→
+          <span class="text-purple-300">模态感知路由</span>成为可能
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          图像 patch 和文本 token 可路由到<span class="text-purple-300 font-semibold">不同专家</span>，
+          实现模态间的自然隔离与协作
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          <span class="text-gray-200">前景：</span>MoE 可能是
+          <span class="text-purple-300 font-semibold">统一多模态模型</span>
+          的自然架构选择
+        </p>
+      </div>
+    </div>
+
+    <!-- Card 4: Hardware Co-design -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-amber-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="bg-amber-700 text-amber-200 text-xs font-bold px-3 py-1 rounded-full font-mono uppercase">系统</span>
+        <h3 class="text-xl font-bold text-amber-300">硬件协同设计</h3>
+      </div>
+      <div class="space-y-4 flex-1">
+        <p class="text-lg text-gray-400 leading-relaxed">
+          MoE 的 all-to-all 通信和专家 offloading 是当前<span class="text-amber-300 font-semibold">核心瓶颈</span>
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          下一代 <span class="text-amber-300 font-semibold">NVLink / CXL</span>
+          高带宽互联将使更大 \(N_{\text{exp}}\) 成为可能
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          专为 MoE 设计的
+          <span class="text-amber-300 font-semibold">HBM 分层管理</span>
+          （专家 cache 层次结构）
+        </p>
+        <p class="text-lg text-gray-400 leading-relaxed">
+          芯片内集成<span class="text-amber-300 font-semibold">路由逻辑</span>，
+          减少 dispatch 延迟，使稀疏激活真正"零开销"
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">24 / 26</span>
+</div>
