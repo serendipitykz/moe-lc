@@ -1,0 +1,88 @@
+<div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<!-- 演讲备注: 能声称"支持 128K"不等于"真的用好了 128K"。NIAH 测试直观：把一句关键信息藏在海量文本中间，模型能找到吗？"中段丢失"效应提醒听众：位置偏差是工程现实，不只是理论问题。 -->
+
+  <h2 class="text-5xl font-bold mb-4 text-emerald-300">长上下文评估：真的用好了吗？</h2>
+  <p class="text-xl text-gray-400 mb-6">扩展上下文窗口后，模型真正利用率如何？</p>
+
+  <div class="grid grid-cols-2 gap-8 flex-1 min-h-0">
+
+    <!-- Left: benchmarks -->
+    <div class="flex flex-col gap-4">
+      <div class="bg-gray-800 border border-emerald-700 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-emerald-300 mb-2">Needle-in-a-Haystack (NIAH)</h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          将一条关键信息（"needle"）插入大量无关文本（"haystack"）的任意位置，
+          测量模型在不同<strong class="text-emerald-300">上下文深度</strong>与<strong class="text-emerald-300">序列长度</strong>下的检索准确率。
+        </p>
+        <p class="text-base text-gray-500 mt-2">实验揭示：即使上下文窗口足够大，部分模型在 needle 位于中段时准确率骤降。</p>
+      </div>
+
+      <div class="bg-gray-800 border border-amber-700 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-amber-300 mb-2">"Lost in the Middle" 效应 <cite class="text-gray-500 text-sm not-italic font-normal">[Liu et al., 2023]</cite></h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          模型对序列<strong class="text-amber-300">头部</strong>（首因效应）和<strong class="text-amber-300">尾部</strong>（近因效应）的利用率
+          显著高于<strong class="text-red-400">中段</strong>。即使 RAG 检索召回相关文档，放置顺序也会显著影响最终结果。
+        </p>
+      </div>
+
+      <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
+        <h3 class="text-xl font-bold text-gray-300 mb-2">RULER 基准 <cite class="text-gray-500 text-sm not-italic font-normal">[Hsieh et al., 2024]</cite></h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          覆盖检索、多跳推理、聚合、问答等 13 类任务，
+          在 4K → 128K 多档长度下全面评测，比 NIAH 更难以"刷榜"。
+        </p>
+      </div>
+    </div>
+
+    <!-- Right: heatmap-style SVG + takeaway -->
+    <div class="flex flex-col gap-4">
+      <!-- NIAH heat-map sketch -->
+      <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 flex-1 flex flex-col">
+        <p class="text-base text-gray-400 mb-3 font-semibold text-center">NIAH 准确率热图示意（越绿越好）</p>
+        <svg viewBox="0 0 320 200" width="100%" height="180" xmlns="http://www.w3.org/2000/svg">
+          <!-- Axes -->
+          <text x="10" y="100" font-size="11" fill="#9ca3af" transform="rotate(-90,10,100)">上下文深度 %</text>
+          <text x="160" y="198" text-anchor="middle" font-size="11" fill="#9ca3af">序列长度 (tokens)</text>
+
+          <!-- X labels -->
+          <text x="60"  y="190" text-anchor="middle" font-size="10" fill="#6b7280">4K</text>
+          <text x="120" y="190" text-anchor="middle" font-size="10" fill="#6b7280">16K</text>
+          <text x="180" y="190" text-anchor="middle" font-size="10" fill="#6b7280">64K</text>
+          <text x="250" y="190" text-anchor="middle" font-size="10" fill="#6b7280">128K</text>
+
+          <!-- Y labels -->
+          <text x="24" y="30"  font-size="10" fill="#6b7280">100%</text>
+          <text x="24" y="95"  font-size="10" fill="#6b7280">50%</text>
+          <text x="24" y="165" font-size="10" fill="#6b7280">0%</text>
+
+          <!-- Heat cells: col=length, row=depth; green=high acc, red=low -->
+          <!-- Col 4K: all green -->
+          <rect x="44" y="18" width="28" height="28" fill="#065f46" rx="2"/><rect x="44" y="50" width="28" height="28" fill="#065f46" rx="2"/><rect x="44" y="82" width="28" height="28" fill="#065f46" rx="2"/><rect x="44" y="114" width="28" height="28" fill="#065f46" rx="2"/><rect x="44" y="146" width="28" height="28" fill="#065f46" rx="2"/>
+          <!-- Col 16K: mostly green, middle amber -->
+          <rect x="104" y="18" width="28" height="28" fill="#065f46" rx="2"/><rect x="104" y="50" width="28" height="28" fill="#064e3b" rx="2"/><rect x="104" y="82" width="28" height="28" fill="#78350f" rx="2"/><rect x="104" y="114" width="28" height="28" fill="#064e3b" rx="2"/><rect x="104" y="146" width="28" height="28" fill="#065f46" rx="2"/>
+          <!-- Col 64K: head/tail green, middle red -->
+          <rect x="164" y="18" width="28" height="28" fill="#065f46" rx="2"/><rect x="164" y="50" width="28" height="28" fill="#7f1d1d" rx="2"/><rect x="164" y="82" width="28" height="28" fill="#991b1b" rx="2"/><rect x="164" y="114" width="28" height="28" fill="#7f1d1d" rx="2"/><rect x="164" y="146" width="28" height="28" fill="#065f46" rx="2"/>
+          <!-- Col 128K: severe degradation in middle -->
+          <rect x="234" y="18" width="28" height="28" fill="#14532d" rx="2"/><rect x="234" y="50" width="28" height="28" fill="#991b1b" rx="2"/><rect x="234" y="82" width="28" height="28" fill="#7f1d1d" rx="2"/><rect x="234" y="114" width="28" height="28" fill="#991b1b" rx="2"/><rect x="234" y="146" width="28" height="28" fill="#14532d" rx="2"/>
+
+          <!-- Legend -->
+          <rect x="44" y="5" width="12" height="10" fill="#065f46" rx="1"/>
+          <text x="60" y="14" font-size="10" fill="#6ee7b7">高准确率</text>
+          <rect x="120" y="5" width="12" height="10" fill="#991b1b" rx="1"/>
+          <text x="136" y="14" font-size="10" fill="#fca5a5">低准确率</text>
+        </svg>
+      </div>
+
+      <div class="bg-amber-950 border border-amber-700 rounded-2xl p-4">
+        <p class="text-lg text-amber-200 font-semibold">核心结论</p>
+        <p class="text-lg text-gray-300 mt-1 leading-relaxed">
+          宣称支持长上下文 ≠ 均匀利用长上下文。
+          位置偏差、注意力稀疏度、训练数据分布均影响实际效果，需配合 <strong class="text-emerald-300">持续预训练</strong> 与 <strong class="text-emerald-300">指令微调</strong> 才能发挥窗口潜力。
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">0 / 0</span>
+</div>

@@ -1,0 +1,88 @@
+<div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<!-- 演讲备注: 用同等激活参数对比让 MoE 的"效率优势"一目了然。重点是 DeepSeek-V2：只用 21B 激活参数，却达到了远大于 Llama-3 70B（70B 激活）的能力区间。 -->
+
+  <h2 class="text-5xl font-bold mb-4 text-purple-300">MoE vs 稠密：综合基准对比</h2>
+  <p class="text-xl text-gray-400 mb-6">等效激活参数下，MoE 的能力与效率优势</p>
+
+  <div class="flex-1 overflow-auto">
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="bg-gray-700">
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">模型</th>
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">类型</th>
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">总参数</th>
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">激活参数</th>
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">上下文</th>
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">MMLU</th>
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">HumanEval</th>
+            <th class="px-5 py-4 text-purple-300 text-base font-semibold">推理成本</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- GPT-3 dense baseline -->
+          <tr class="bg-gray-900">
+            <td class="px-5 py-4 text-xl text-gray-300 font-semibold">GPT-3</td>
+            <td class="px-5 py-4 text-base text-gray-400">稠密</td>
+            <td class="px-5 py-4 text-lg font-mono text-gray-300">175B</td>
+            <td class="px-5 py-4 text-lg font-mono text-gray-300">175B</td>
+            <td class="px-5 py-4 text-base font-mono text-gray-400">2K</td>
+            <td class="px-5 py-4 text-lg font-mono text-gray-400">~43%</td>
+            <td class="px-5 py-4 text-lg font-mono text-gray-400">~28%</td>
+            <td class="px-5 py-4 text-base text-red-400">极高</td>
+          </tr>
+          <!-- Llama-3-70B dense -->
+          <tr class="bg-gray-800">
+            <td class="px-5 py-4 text-xl text-gray-300 font-semibold">Llama-3-70B</td>
+            <td class="px-5 py-4 text-base text-gray-400">稠密</td>
+            <td class="px-5 py-4 text-lg font-mono text-gray-300">70B</td>
+            <td class="px-5 py-4 text-lg font-mono text-gray-300">70B</td>
+            <td class="px-5 py-4 text-base font-mono text-emerald-300">128K</td>
+            <td class="px-5 py-4 text-lg font-mono text-amber-300">~82%</td>
+            <td class="px-5 py-4 text-lg font-mono text-amber-300">~72%</td>
+            <td class="px-5 py-4 text-base text-amber-400">较高</td>
+          </tr>
+          <!-- Mixtral-8x7B MoE -->
+          <tr class="bg-gray-900 border border-indigo-800">
+            <td class="px-5 py-4 text-xl text-indigo-200 font-bold">Mixtral-8×7B</td>
+            <td class="px-5 py-4 text-base text-indigo-400">MoE</td>
+            <td class="px-5 py-4 text-lg font-mono text-indigo-200">46.7B</td>
+            <td class="px-5 py-4 text-lg font-mono text-emerald-300">12.9B</td>
+            <td class="px-5 py-4 text-base font-mono text-emerald-300">32K</td>
+            <td class="px-5 py-4 text-lg font-mono text-emerald-300">~70%</td>
+            <td class="px-5 py-4 text-lg font-mono text-emerald-300">~61%</td>
+            <td class="px-5 py-4 text-base text-emerald-400">低（≈13B）</td>
+          </tr>
+          <!-- DeepSeek-V2 highlighted -->
+          <tr class="bg-purple-950 border border-purple-600">
+            <td class="px-5 py-4 text-xl text-purple-200 font-bold">DeepSeek-V2</td>
+            <td class="px-5 py-4 text-base text-purple-400">MoE</td>
+            <td class="px-5 py-4 text-lg font-mono text-purple-200">236B</td>
+            <td class="px-5 py-4 text-lg font-mono text-emerald-300">21B</td>
+            <td class="px-5 py-4 text-base font-mono text-emerald-300">128K</td>
+            <td class="px-5 py-4 text-lg font-mono text-emerald-300">~78%</td>
+            <td class="px-5 py-4 text-lg font-mono text-emerald-300">~73%</td>
+            <td class="px-5 py-4 text-base text-emerald-400">低（≈21B）</td>
+          </tr>
+          <!-- Qwen1.5-MoE -->
+          <tr class="bg-gray-800">
+            <td class="px-5 py-4 text-xl text-gray-300 font-semibold">Qwen1.5-MoE-A2.7B</td>
+            <td class="px-5 py-4 text-base text-gray-400">MoE</td>
+            <td class="px-5 py-4 text-lg font-mono text-gray-300">14.3B</td>
+            <td class="px-5 py-4 text-lg font-mono text-emerald-300">2.7B</td>
+            <td class="px-5 py-4 text-base font-mono text-emerald-300">32K</td>
+            <td class="px-5 py-4 text-lg font-mono text-amber-300">~62%</td>
+            <td class="px-5 py-4 text-lg font-mono text-amber-300">~41%</td>
+            <td class="px-5 py-4 text-base text-emerald-400">极低（≈2.7B）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="mt-5 text-center text-lg text-gray-400 italic">
+    核心洞察：<span class="text-white font-semibold">MoE 用远小于稠密模型的激活参数实现相近或更强的性能</span>——推理成本大幅降低。
+  </p>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">0 / 0</span>
+</div>
