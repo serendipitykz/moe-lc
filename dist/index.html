@@ -231,9 +231,9 @@
     </div>
 
     <!-- Right column: bar chart SVG -->
-    <div class="flex-1 flex flex-col items-center justify-center">
+    <div class="flex-1 flex flex-col items-center justify-center flex-1 min-h-0">
       <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-4">Transformer 层计算占比</p>
-      <svg viewBox="0 0 300 260" width="300" height="260" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 300 260" width="100%" height="380" xmlns="http://www.w3.org/2000/svg">
         <rect width="300" height="260" fill="#111827" rx="12"/>
 
         <!-- Y axis line -->
@@ -272,7 +272,7 @@
 
   <!-- Timeline SVG -->
   <div class="w-full overflow-x-auto mb-8">
-    <svg viewBox="0 0 900 120" width="100%" height="120" xmlns="http://www.w3.org/2000/svg" style="min-width:700px">
+    <svg viewBox="0 0 900 120" width="100%" height="200" xmlns="http://www.w3.org/2000/svg" style="min-width:700px">
       <rect width="900" height="120" fill="#111827"/>
 
       <!-- Defs: arrow marker -->
@@ -359,8 +359,8 @@
     <!-- Left: Dense model -->
     <div class="flex-1 flex flex-col items-center">
       <p class="text-2xl text-gray-400 text-center mb-4">稠密模型</p>
-      <div style="border: 2px solid #ef4444; border-radius: 12px; box-shadow: 0 0 18px 2px #ef444440; display:inline-block;">
-        <svg viewBox="0 0 300 260" width="300" height="260" xmlns="http://www.w3.org/2000/svg">
+      <div class="flex-1 min-h-0" style="border: 2px solid #ef4444; border-radius: 12px; box-shadow: 0 0 18px 2px #ef444440; display:inline-block;">
+        <svg viewBox="0 0 300 260" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
           <rect width="300" height="260" fill="#111827" rx="10"/>
 
           <!-- Token input -->
@@ -409,8 +409,8 @@
     <!-- Right: MoE model -->
     <div class="flex-1 flex flex-col items-center">
       <p class="text-2xl text-indigo-300 text-center mb-4">MoE 稀疏激活</p>
-      <div style="border: 2px solid #4f46e5; border-radius: 12px; box-shadow: 0 0 18px 2px #4f46e560; display:inline-block;">
-        <svg viewBox="0 0 300 260" width="300" height="260" xmlns="http://www.w3.org/2000/svg">
+      <div class="flex-1 min-h-0" style="border: 2px solid #4f46e5; border-radius: 12px; box-shadow: 0 0 18px 2px #4f46e560; display:inline-block;">
+        <svg viewBox="0 0 300 260" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <marker id="arrowMoE" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
               <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
@@ -498,7 +498,7 @@
 
   <!-- Central large SVG -->
   <div class="w-full flex justify-center mb-6">
-    <svg viewBox="0 0 900 380" width="100%" height="320" xmlns="http://www.w3.org/2000/svg" style="max-width:900px">
+    <svg viewBox="0 0 900 380" width="100%" height="430" xmlns="http://www.w3.org/2000/svg" style="max-width:900px">
       <defs>
         <marker id="arrowA" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
           <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
@@ -702,10 +702,10 @@
     </div>
 
     <!-- Right card: SVG flow (60%) -->
-    <div class="w-3/5 flex flex-col">
+    <div class="w-3/5 flex flex-col flex-1 min-h-0">
       <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex-1 flex flex-col justify-center">
         <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-4 text-center">路由流程示意</p>
-        <svg viewBox="0 0 820 270" width="100%" height="230" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 820 270" width="100%" height="330" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <marker id="arrowR" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
               <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
@@ -836,7 +836,7 @@
     <div class="flex-1 flex flex-col">
       <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex-1 flex flex-col justify-center items-center">
         <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-4 text-center">专家负载分布对比</p>
-        <svg viewBox="0 0 400 220" width="100%" height="200" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 400 220" width="100%" height="320" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="220" fill="#111827" rx="10"/>
 
           <!-- ===== Left half: 无噪声 (unbalanced) ===== -->
@@ -927,7 +927,7 @@
 
   <!-- Central SVG -->
   <div class="flex justify-center mb-6">
-    <svg viewBox="0 0 800 280" width="100%" height="240" xmlns="http://www.w3.org/2000/svg" style="max-width:800px">
+    <svg viewBox="0 0 800 280" width="100%" height="360" xmlns="http://www.w3.org/2000/svg" style="max-width:800px">
       <defs>
         <marker id="arrowC" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
           <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
@@ -1110,9 +1110,9 @@
 
     <!-- Right card: heatmap SVG -->
     <div class="flex-1 flex flex-col">
-      <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex-1 flex flex-col justify-center items-center">
+      <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex-1 min-h-0 flex flex-col justify-center items-center">
         <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-3 text-center">专家激活热力图（示意）</p>
-        <svg viewBox="0 0 380 300" width="100%" height="270" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 380 300" width="100%" height="380" xmlns="http://www.w3.org/2000/svg">
           <rect width="380" height="300" fill="#111827" rx="10"/>
 
           <!-- Heatmap grid: 8 experts (rows) x 8 token categories (cols) -->
@@ -1517,7 +1517,7 @@
   <!-- Bottom timeline strip -->
   <div class="mt-6">
     <p class="text-base text-gray-400 mb-2">上下文长度演进</p>
-    <svg viewBox="0 0 800 60" width="100%" height="60" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+    <svg viewBox="0 0 800 60" width="100%" height="90" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
       <defs>
         <marker id="arrow-right-01" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
           <polygon points="0 0, 8 3, 0 6" fill="#10b981"/>
@@ -1619,8 +1619,8 @@
     </div>
 
     <!-- Right: Scaling curve SVG -->
-    <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 flex flex-col items-center justify-center" style="min-width:460px;">
-      <svg viewBox="0 0 440 280" width="440" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+    <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 flex flex-col items-center justify-center flex-1 min-h-0" style="min-width:460px;">
+      <svg viewBox="0 0 440 280" width="100%" height="380" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
         <defs>
           <marker id="ax-arrow-02" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
             <polygon points="0 0, 7 2.5, 0 5" fill="#6b7280"/>
@@ -1707,7 +1707,7 @@
       <p class="text-base text-gray-400">Used in: LLaMA, Mixtral, DeepSeek</p>
 
       <!-- SVG: two vectors on unit circle -->
-      <svg viewBox="0 0 160 120" width="160" height="120" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+      <svg viewBox="0 0 160 120" width="100%" height="200" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
         <circle cx="80" cy="65" r="44" stroke="#374151" stroke-width="1" fill="none"/>
         <line x1="80" y1="65" x2="80" y2="21" stroke="#4b5563" stroke-width="1" stroke-dasharray="3 2"/>
         <!-- Vector q (position m) -->
@@ -1748,7 +1748,7 @@
       <p class="text-base text-gray-400">Used in: BLOOM, MPT</p>
 
       <!-- SVG: attention score heatmap with diagonal band -->
-      <svg viewBox="0 0 160 110" width="160" height="110" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+      <svg viewBox="0 0 160 110" width="100%" height="180" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
         <!-- 5x5 heatmap cells -->
         <rect x="10" y="10" width="24" height="18" fill="#064e3b" rx="1"/>
         <rect x="34" y="10" width="24" height="18" fill="#065f46" rx="1"/>
@@ -1804,7 +1804,7 @@
       <p class="text-base text-gray-400">Used in: Mistral 7B, extended LLaMA</p>
 
       <!-- SVG: frequency spectrum diagram -->
-      <svg viewBox="0 0 160 110" width="160" height="110" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+      <svg viewBox="0 0 160 110" width="100%" height="180" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
         <defs>
           <marker id="arr-yarn-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
             <polygon points="0 0, 7 2.5, 0 5" fill="#6b7280"/>
@@ -1895,8 +1895,8 @@
     </div>
 
     <!-- Right card: SVG tiling diagram -->
-    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col items-center justify-center" style="min-width:460px;">
-      <svg viewBox="0 0 420 320" width="420" height="320" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col items-center justify-center flex-1 min-h-0" style="min-width:460px;">
+      <svg viewBox="0 0 420 320" width="100%" height="420" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
         <defs>
           <marker id="fa-arrow-04" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
             <polygon points="0 0, 7 2.5, 0 5" fill="#10b981"/>
@@ -2041,10 +2041,10 @@
     </div>
 
     <!-- Right card: Attention Head Variants SVG -->
-    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-4 items-center" style="min-width:440px;">
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-4 items-center flex-1 min-h-0" style="min-width:440px;">
       <h3 class="text-2xl font-bold text-emerald-300 self-start">注意力头变体对比</h3>
 
-      <svg viewBox="0 0 380 280" width="380" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+      <svg viewBox="0 0 380 280" width="100%" height="360" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
 
         <!-- Column labels -->
         <text x="64"  y="22" text-anchor="middle" font-size="14" fill="#f9fafb" font-weight="bold">MHA</text>
@@ -2202,7 +2202,7 @@
 
       <!-- Venn Diagram -->
       <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex items-center justify-center">
-        <svg viewBox="0 0 340 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="max-height:200px">
+        <svg viewBox="0 0 340 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="max-height:320px">
           <!-- MoE circle (indigo) -->
           <circle cx="120" cy="100" r="80" fill="#4338ca" fill-opacity="0.30" stroke="#6366f1" stroke-width="2"/>
           <!-- Long Context circle (emerald) -->
@@ -2438,7 +2438,7 @@
 
     <!-- Right SVG diagram (60%) -->
     <div class="flex-1 bg-gray-800 rounded-2xl p-6 border border-gray-700 flex items-center justify-center">
-      <svg viewBox="0 0 500 360" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" style="max-height:400px">
+      <svg viewBox="0 0 500 360" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" style="max-height:500px; min-height:360px">
 
         <!-- ===== Standard MHA (left half) ===== -->
         <text x="110" y="22" text-anchor="middle" fill="#9ca3af" font-size="15" font-weight="bold">标准 MHA</text>
@@ -2847,7 +2847,7 @@
           </p>
         </div>
         <!-- Mini SVG: token paths through layers -->
-        <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:110px;height:150px">
+        <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:150px;height:200px">
           <!-- Layer boxes -->
           <rect x="40" y="5" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
           <text x="60" y="19" text-anchor="middle" fill="#c7d2fe" font-size="11">L1</text>
