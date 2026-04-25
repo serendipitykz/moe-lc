@@ -32,6 +32,7 @@
   <!-- Slide container -->
   <div id="slide-container">
 <div class="slide hidden flex flex-col items-center justify-center h-screen bg-gray-900 text-white p-16">
+<!-- 演讲备注: 开场介绍讲座题目，简要说明为什么 MoE 和长上下文是当前最热门的两个效率方向。点明两者协同是本次讲座的核心主题。 -->
   <!-- Decorative top accent bar -->
   <div class="w-24 h-1 bg-indigo-500 mb-10 rounded-full"></div>
 
@@ -56,6 +57,7 @@
 </div>
 
 <div class="slide hidden flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 用 Mixtral 的例子直观说明"只用 2/8 专家就能跑"的神奇之处。右侧长上下文用"把整本书放进模型"来类比。 -->
 
   <!-- Heading -->
   <h2 class="text-5xl font-bold mb-10 text-indigo-300">为什么需要 MoE + 长上下文？</h2>
@@ -108,6 +110,7 @@
 </div>
 
 <div class="slide hidden flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 快速预览六个部分，让听众建立整体框架。强调"前两部分是基础，第五部分是本讲创新点"。 -->
 
   <!-- Heading -->
   <h2 class="text-5xl font-bold mb-12 text-indigo-300">内容结构</h2>
@@ -180,7 +183,16 @@
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">3 / 6</span>
 </div>
 
+<div class="slide hidden relative flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
+  <p class="text-9xl font-black text-gray-800 leading-none select-none mb-6">02</p>
+  <h2 class="text-6xl font-extrabold text-indigo-400 text-center">混合专家模型</h2>
+  <p class="text-2xl text-gray-400 mt-4 text-center">背景 · 架构 · 路由机制</p>
+  <div class="w-32 h-1 bg-indigo-500 rounded-full mt-6"></div>
+  <span class="mt-8 px-6 py-2 rounded-full border text-xl font-mono text-gray-400 border-gray-600">32 分钟</span>
+</div>
+
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 用 GPT-3 的训练费用震撼开场，引出"参数越多越贵"的问题。FFN 占 2/3 计算是关键事实，为 MoE 的动机铺垫。 -->
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">规模化的代价</h2>
 
   <div class="flex gap-10 flex-1">
@@ -255,6 +267,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 强调 MoE 并非新概念（1991年就有），但直到 2021 年才被工业界真正驯服。2023 年开源化是让普通研究者能用上 MoE 的转折点。 -->
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 的演进历史</h2>
 
   <!-- Timeline SVG -->
@@ -338,6 +351,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 这是最直观的对比。用"超市只走你要去的货架"来类比稀疏激活。重点强调：总知识不减，推理成本降低。 -->
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">稀疏激活 vs 稠密模型</h2>
 
   <!-- Two-column SVG comparison -->
@@ -480,6 +494,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 这张是架构细节。强调 MoE 层只是把 FFN 换成"专家组"，Attention 层保持不变。N_exp 和 k 的选择是核心超参。 -->
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 层结构详解</h2>
 
   <!-- Central large SVG -->
@@ -644,6 +659,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 核心机制。用"考试选题"类比：每道题（token）从题库（专家）中选最相关的 k 道来解答。强调门控网络 W_g 本身很小。 -->
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">Top-K 路由机制</h2>
 
   <!-- 40/60 split -->
@@ -780,6 +796,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 解释为什么纯 TopK 会训练崩溃。噪声的作用类比"考试随机抽题让每个专家都被练到"。辅助损失是防止偏科的"制度设计"。 -->
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">噪声 Top-K 路由</h2>
 
   <div class="flex gap-8 flex-1">
@@ -894,6 +911,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: Token dropping 是 MoE 训练中被低估的实际问题。用"餐厅桌位有限，超出容量的顾客被跳过"来类比。 -->
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">专家容量与 Token 丢弃</h2>
 
   <!-- Top formula card -->
@@ -1043,6 +1061,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 这是令人惊喜的涌现现象——没人显式训练专业化，但它自发出现了。热力图可以停留片刻让听众自行解读。 -->
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">专家专业化现象</h2>
 
   <div class="flex gap-8 flex-1">
@@ -1234,6 +1253,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 表格可以快速扫一遍。重点对比 Switch（极简 k=1）和 DeepSeek-V2（细粒度 160 专家）两个设计哲学的差异。 -->
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">代表性 MoE 模型</h2>
   <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-6">代表性 MoE 模型一览</p>
 
@@ -1328,6 +1348,7 @@
 </div>
 
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+<!-- 演讲备注: 小结时回到核心公式。快速重申四个要点，为下一节长上下文做过渡："我们解决了宽度效率，接下来看序列长度问题"。 -->
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">MoE 核心要点回顾</h2>
 
   <!-- 2x2 grid of takeaway cards -->
@@ -1402,7 +1423,16 @@
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">13 / ?</span>
 </div>
 
+<div class="slide hidden relative flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
+  <p class="text-9xl font-black text-gray-800 leading-none select-none mb-6">03</p>
+  <h2 class="text-6xl font-extrabold text-emerald-400 text-center">长上下文技术</h2>
+  <p class="text-2xl text-gray-400 mt-4 text-center">位置编码 · FlashAttention · KV Cache</p>
+  <div class="w-32 h-1 bg-emerald-500 rounded-full mt-6"></div>
+  <span class="mt-8 px-6 py-2 rounded-full border text-xl font-mono text-gray-400 border-gray-600">12 分钟</span>
+</div>
+
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 用场景驱动：让听众想象"把整个代码库放进 context"的场景。右下角的演进时间轴展示技术进步速度之快。 -->
 
   <h2 class="text-5xl font-bold mb-8 text-emerald-300">长上下文的应用场景</h2>
 
@@ -1524,6 +1554,7 @@
 </div>
 
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: O(L²) 是本节最重要的公式。用"座位表"类比：N个人两两打招呼 = N² 次握手。FlashAttention 不减少握手次数，但让握手效率翻倍。 -->
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">注意力机制的二次方瓶颈</h2>
 
@@ -1643,6 +1674,7 @@
 </div>
 
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 三种方案对比，不需要精讲每个公式。重点是"RoPE 现在最流行，YaRN 是快速扩展的实用方案"。 -->
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">位置编码与长度外推</h2>
 
@@ -1804,6 +1836,7 @@
 </div>
 
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 强调 FlashAttention 是工程优化而非算法创新——精确度不变，仅减少 IO。SRAM vs HBM 的类比：SRAM 是口袋，HBM 是仓库，尽量别去仓库取货。 -->
 
   <h2 class="text-5xl font-bold mb-6 text-emerald-300">FlashAttention：IO 感知的精确注意力</h2>
 
@@ -1958,6 +1991,7 @@
 </div>
 
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: KV Cache 的大小计算可以让听众自己估算一下。GQA/MQA 是现代 LLM 标配，Llama3 用 GQA 已成事实标准。 -->
 
   <h2 class="text-5xl font-bold mb-6 text-emerald-300">KV Cache 与高效注意力变体</h2>
 
@@ -2098,8 +2132,17 @@
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">18 / ?</span>
 </div>
 
+<div class="slide hidden relative flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
+  <p class="text-9xl font-black text-gray-800 leading-none select-none mb-6">04</p>
+  <h2 class="text-6xl font-extrabold text-purple-400 text-center">协同、挑战与展望</h2>
+  <p class="text-2xl text-gray-400 mt-4 text-center">MoE × 长上下文 · 开放问题 · 未来方向</p>
+  <div class="w-32 h-1 bg-purple-500 rounded-full mt-6"></div>
+  <span class="mt-8 px-6 py-2 rounded-full border text-xl font-mono text-gray-400 border-gray-600">26 分钟</span>
+</div>
+
 <!-- Slide 19: MoE × 长上下文：协同与挑战 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 这张是全讲的"融合点"。强调协同是双向的：MoE 帮助长上下文降低计算成本，长上下文也给 MoE 更多训练信号。 -->
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE × 长上下文：协同与挑战</h2>
 
@@ -2205,6 +2248,7 @@
 
 <!-- Slide 20: 案例分析：DeepSeek-V2 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: DeepSeek-V2 是目前 MoE+长上下文协同最成功的开源案例。重点介绍 MLA：用低秩矩阵压缩 KV，是一个优雅的线性代数技巧。 -->
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">案例分析：DeepSeek-V2</h2>
 
@@ -2323,6 +2367,7 @@
 
 <!-- Slide 21: MLA 架构详解 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 这是偏深入的细节幻灯片，可根据时间决定深度。核心信息：c_KV 的维度远小于 KV 本身，但效果等价。 -->
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">MLA 架构详解</h2>
 
@@ -2511,6 +2556,7 @@
 
 <!-- Slide 22: MoE 推理的工程挑战 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: All-to-all 通信和 KV Cache 是部署 MoE 的两大"工程噩梦"，引发听众对实际系统复杂度的思考。 -->
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE 推理的工程挑战</h2>
   <p class="text-xl text-gray-400 mb-8 -mt-4">部署 MoE 模型的三大工程挑战</p>
@@ -2642,6 +2688,7 @@
 
 <!-- Slide 23: 核心开放问题 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 开放问题是启发研究方向的好机会。可以邀请听众思考："如果你来设计，会怎么解决路由可解释性？" -->
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">核心开放问题</h2>
   <p class="text-xl text-gray-400 mb-8 -mt-4">仍待解决的核心问题</p>
@@ -2770,6 +2817,7 @@
 
 <!-- Slide 24: 未来研究方向 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: Mixture of Depths 是最有潜力的方向之一，简短介绍即可。重点是让听众感受到这个领域还在快速发展。 -->
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">未来方向展望</h2>
 
@@ -2917,6 +2965,7 @@
 
 <!-- Slide 25: 核心公式汇总 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 公式速查表，可以直接跳过，作为参考材料留给听众。或在答疑时使用。 -->
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">核心公式速查</h2>
 
@@ -3005,6 +3054,7 @@
 
 <!-- Slide 26: 全文总结 -->
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<!-- 演讲备注: 总结时回到三个关键 insight。最后的 call to action 停留 5-10 秒，让听众思考"协同设计"的意义后再进入问答。 -->
 
   <h2 class="text-5xl font-bold mb-10 text-purple-300">总结</h2>
 
