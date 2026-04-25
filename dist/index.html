@@ -548,8 +548,8 @@
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 层结构详解</h2>
 
   <!-- Central large SVG -->
-  <div class="w-full flex justify-center mb-6">
-    <svg viewBox="0 0 900 380" width="100%" height="430" xmlns="http://www.w3.org/2000/svg" style="max-width:900px">
+  <div class="w-full flex justify-center flex-1 min-h-0 mb-3">
+    <svg viewBox="0 0 900 380" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="max-width:1000px;min-height:460px">
       <defs>
         <marker id="arrowA" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
           <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
@@ -686,21 +686,19 @@
   </div>
 
   <!-- Two info cards below -->
-  <div class="grid grid-cols-2 gap-6">
-    <div class="bg-gray-800 rounded-2xl p-5 border border-gray-700">
-      <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-2">每层参数量</p>
-      <p class="text-lg text-gray-400 leading-relaxed">
-        稠密：\(2 \times d_{\text{model}} \times d_{ff}\)
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        MoE：\(N_{\text{exp}} \times (2 \times d_{\text{model}} \times d_{ff}) + \text{gating}\)
+  <div class="grid grid-cols-2 gap-4">
+    <div class="bg-gray-800 rounded-xl px-5 py-3 border border-gray-700">
+      <p class="text-sm text-gray-500 font-mono uppercase tracking-widest mb-1">每层参数量</p>
+      <p class="text-base text-gray-400 leading-relaxed">
+        稠密：\(2 d_{\text{model}} d_{ff}\) &nbsp;|&nbsp;
+        MoE：\(N_{\text{exp}} \!\times\! 2 d_{\text{model}} d_{ff} + \text{gating}\)
       </p>
     </div>
-    <div class="bg-gray-800 rounded-2xl p-5 border border-indigo-700">
-      <p class="text-base text-indigo-400 font-mono uppercase tracking-widest mb-2">每 token 激活</p>
-      <p class="text-lg text-gray-400 leading-relaxed">
-        稠密：\(2 \times d_{\text{model}} \times d_{ff}\) FLOPs
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        MoE：\(k \times (2 \times d_{\text{model}} \times d_{ff})\) FLOPs
+    <div class="bg-gray-800 rounded-xl px-5 py-3 border border-indigo-700">
+      <p class="text-sm text-indigo-400 font-mono uppercase tracking-widest mb-1">每 token 激活</p>
+      <p class="text-base text-gray-400 leading-relaxed">
+        稠密：\(2 d_{\text{model}} d_{ff}\) FLOPs &nbsp;|&nbsp;
+        MoE：\(k \!\times\! 2 d_{\text{model}} d_{ff}\) FLOPs
       </p>
     </div>
   </div>
@@ -968,17 +966,17 @@
   <div class="bg-gray-800 rounded-2xl px-8 py-5 border border-indigo-700 mb-6">
     <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-2">Expert Capacity</p>
     <div class="text-xl text-gray-200">
-      \[ C = \left\lceil \frac{\text{tokens\_per\_batch}}{N_{\text{exp}}} \right\rceil \times \text{capacity\_factor} \]
+      \[ C = \left\lceil \frac{\text{tokens per batch}}{N_{\text{exp}}} \right\rceil \times \text{capacity factor} \]
     </div>
     <p class="text-lg text-gray-400 leading-relaxed mt-1">
-      capacity_factor ≈ 1.0–1.25（训练），≈ 2.0（推理）
+      capacity factor ≈ 1.0–1.25（训练），≈ 2.0（推理）
       <span class="ml-6 text-base font-mono text-gray-500">[Fedus et al., 2022]</span>
     </p>
   </div>
 
   <!-- Central SVG -->
-  <div class="flex justify-center mb-6">
-    <svg viewBox="0 0 800 280" width="100%" height="360" xmlns="http://www.w3.org/2000/svg" style="max-width:800px">
+  <div class="flex justify-center flex-1 min-h-0 mb-4">
+    <svg viewBox="0 0 800 280" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="max-width:900px;min-height:400px">
       <defs>
         <marker id="arrowC" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
           <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
@@ -1096,14 +1094,14 @@
   </div>
 
   <!-- Bottom two-column info -->
-  <div class="grid grid-cols-2 gap-6">
-    <div class="bg-gray-800 rounded-2xl p-5 border border-red-900/60">
-      <p class="text-base text-red-400 font-mono uppercase tracking-widest mb-2">影响</p>
-      <p class="text-lg text-gray-400 leading-relaxed">Token dropping 导致信息损失，长序列时尤为严重</p>
+  <div class="grid grid-cols-2 gap-4">
+    <div class="bg-gray-800 rounded-xl px-5 py-3 border border-red-900/60">
+      <p class="text-sm text-red-400 font-mono uppercase tracking-widest mb-1">影响</p>
+      <p class="text-base text-gray-400 leading-relaxed">Token dropping 导致信息损失，长序列时尤为严重</p>
     </div>
-    <div class="bg-gray-800 rounded-2xl p-5 border border-indigo-700">
-      <p class="text-base text-indigo-400 font-mono uppercase tracking-widest mb-2">缓解方案</p>
-      <p class="text-lg text-gray-400 leading-relaxed">增大 capacity_factor（增加 padding 开销）/ Expert Choice 路由（专家主动选 token）</p>
+    <div class="bg-gray-800 rounded-xl px-5 py-3 border border-indigo-700">
+      <p class="text-sm text-indigo-400 font-mono uppercase tracking-widest mb-1">缓解方案</p>
+      <p class="text-base text-gray-400 leading-relaxed">增大 capacity factor（增加 padding 开销）/ Expert Choice 路由（专家主动选 token）</p>
     </div>
   </div>
 
@@ -2300,8 +2298,8 @@
     </div>
 
     <!-- Right: SVG ring diagram -->
-    <div class="bg-gray-800 rounded-2xl border border-gray-700 flex items-center justify-center p-4" style="min-width:380px;">
-      <svg viewBox="0 0 360 360" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
+    <div class="bg-gray-800 rounded-2xl border border-gray-700 flex items-center justify-center p-4 flex-1">
+      <svg viewBox="0 0 360 360" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="min-height:380px;max-width:440px">
         <defs>
           <marker id="ring-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
             <path d="M0,0 L8,3 L0,6 Z" fill="#10b981"/>
@@ -2400,7 +2398,7 @@
       <!-- NIAH heat-map sketch -->
       <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 flex-1 flex flex-col">
         <p class="text-base text-gray-400 mb-3 font-semibold text-center">NIAH 准确率热图示意（越绿越好）</p>
-        <svg viewBox="0 0 320 200" width="100%" height="180" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 320 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="min-height:230px">
           <!-- Axes -->
           <text x="10" y="100" font-size="11" fill="#9ca3af" transform="rotate(-90,10,100)">上下文深度 %</text>
           <text x="160" y="198" text-anchor="middle" font-size="11" fill="#9ca3af">序列长度 (tokens)</text>
@@ -2515,7 +2513,7 @@
 
       <!-- Venn Diagram -->
       <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex items-center justify-center">
-        <svg viewBox="0 0 340 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="max-height:320px">
+        <svg viewBox="0 0 340 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="max-height:420px">
           <!-- MoE circle (indigo) -->
           <circle cx="120" cy="100" r="80" fill="#4338ca" fill-opacity="0.30" stroke="#6366f1" stroke-width="2"/>
           <!-- Long Context circle (emerald) -->
@@ -3160,7 +3158,7 @@
           </p>
         </div>
         <!-- Mini SVG: token paths through layers -->
-        <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:150px;height:200px">
+        <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:200px;height:270px">
           <!-- Layer boxes -->
           <rect x="40" y="5" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
           <text x="60" y="19" text-anchor="middle" fill="#c7d2fe" font-size="11">L1</text>
@@ -3279,95 +3277,6 @@
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">27 / 31</span>
 </div>
 
-<!-- Slide 25: 核心公式汇总 -->
-<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">公式速查表，可以直接跳过，作为参考材料留给听众。或在答疑时使用。</aside>
-
-  <h2 class="text-5xl font-bold mb-8 text-purple-300">核心公式速查</h2>
-
-  <div class="grid grid-cols-2 gap-8 flex-1 min-h-0 overflow-auto">
-
-    <!-- Left column: MoE formulas -->
-    <div>
-      <h3 class="text-2xl font-bold text-indigo-300 mb-5 flex items-center gap-3">
-        <span class="w-3 h-3 rounded-full bg-indigo-400 inline-block"></span>
-        MoE
-      </h3>
-
-      <!-- Formula 1 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">MoE 前向传播</p>
-        \[ y = \sum_{i \in \mathcal{T}_k} g_i(x) \cdot \text{FFN}_i(x) \]
-      </div>
-
-      <!-- Formula 2 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">Top-K 门控</p>
-        \[ \mathbf{g}(x) = \text{TopK}\!\left(\text{Softmax}(W_g x),\; k\right) \]
-      </div>
-
-      <!-- Formula 3 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">激活 FLOPs 比</p>
-        \[ \text{ratio} = \frac{k}{N_{\text{exp}}} \]
-      </div>
-
-      <!-- Formula 4 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">辅助损失（负载均衡）</p>
-        \[ \mathcal{L}_{\text{aux}} = \alpha\, N_{\text{exp}} \sum_i f_i P_i \]
-      </div>
-
-      <!-- Formula 5 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">专家容量</p>
-        \[ C = \left\lceil \frac{T}{N_{\text{exp}}} \right\rceil \times c_f \]
-      </div>
-    </div>
-
-    <!-- Right column: Long Context formulas -->
-    <div>
-      <h3 class="text-2xl font-bold text-emerald-300 mb-5 flex items-center gap-3">
-        <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span>
-        长上下文
-      </h3>
-
-      <!-- Formula 1 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">Attention 复杂度</p>
-        \[ \text{Time}: \mathcal{O}(L^2 d), \quad \text{Space}: \mathcal{O}(L^2) \]
-      </div>
-
-      <!-- Formula 2 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">FlashAttention 显存</p>
-        \[ \text{Space}: \mathcal{O}(L) \quad \text{(IO recompute)} \]
-      </div>
-
-      <!-- Formula 3 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">KV Cache 大小（每层）</p>
-        \[ \text{size} = 2 \cdot L \cdot H \cdot d_{\text{head}} \text{ per layer} \]
-      </div>
-
-      <!-- Formula 4 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">RoPE 旋转角</p>
-        \[ \theta_i = 10000^{-2i/d}, \quad (R_m q)^T(R_n k) = f(m-n) \]
-      </div>
-
-      <!-- Formula 5 -->
-      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
-        <p class="text-sm text-gray-500 font-mono uppercase mb-1">MLA KV 压缩</p>
-        \[ c_{KV} = W^{DKV} h_t \in \mathbb{R}^{d_c}, \quad d_c \ll H d_h \]
-      </div>
-    </div>
-
-  </div>
-
-  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">28 / 31</span>
-</div>
-
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
 <aside class="notes">用同等激活参数对比让 MoE 的"效率优势"一目了然。重点是 DeepSeek-V2：只用 21B 激活参数，却达到了远大于 Llama-3 70B（70B 激活）的能力区间。</aside>
 
@@ -3454,7 +3363,7 @@
     核心洞察：<span class="text-white font-semibold">MoE 用远小于稠密模型的激活参数实现相近或更强的性能</span>——推理成本大幅降低。
   </p>
 
-  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">29 / 31</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">28 / 31</span>
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
@@ -3530,7 +3439,7 @@
     </div>
   </div>
 
-  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">30 / 31</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">29 / 31</span>
 </div>
 
 <!-- Slide 26: 全文总结 -->
@@ -3619,6 +3528,95 @@
       <circle cx="85" cy="28" r="2" fill="#059669" fill-opacity="0.6"/>
       <circle cx="108" cy="20" r="2" fill="#34d399" fill-opacity="0.7"/>
     </svg>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">30 / 31</span>
+</div>
+
+<!-- Slide 25: 核心公式汇总 -->
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+<aside class="notes">公式速查表，可以直接跳过，作为参考材料留给听众。或在答疑时使用。</aside>
+
+  <h2 class="text-5xl font-bold mb-8 text-purple-300">核心公式速查</h2>
+
+  <div class="grid grid-cols-2 gap-8 flex-1 min-h-0 overflow-auto">
+
+    <!-- Left column: MoE formulas -->
+    <div>
+      <h3 class="text-2xl font-bold text-indigo-300 mb-5 flex items-center gap-3">
+        <span class="w-3 h-3 rounded-full bg-indigo-400 inline-block"></span>
+        MoE
+      </h3>
+
+      <!-- Formula 1 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">MoE 前向传播</p>
+        \[ y = \sum_{i \in \mathcal{T}_k} g_i(x) \cdot \text{FFN}_i(x) \]
+      </div>
+
+      <!-- Formula 2 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">Top-K 门控</p>
+        \[ \mathbf{g}(x) = \text{TopK}\!\left(\text{Softmax}(W_g x),\; k\right) \]
+      </div>
+
+      <!-- Formula 3 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">激活 FLOPs 比</p>
+        \[ \text{ratio} = \frac{k}{N_{\text{exp}}} \]
+      </div>
+
+      <!-- Formula 4 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">辅助损失（负载均衡）</p>
+        \[ \mathcal{L}_{\text{aux}} = \alpha\, N_{\text{exp}} \sum_i f_i P_i \]
+      </div>
+
+      <!-- Formula 5 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">专家容量</p>
+        \[ C = \left\lceil \frac{T}{N_{\text{exp}}} \right\rceil \times c_f \]
+      </div>
+    </div>
+
+    <!-- Right column: Long Context formulas -->
+    <div>
+      <h3 class="text-2xl font-bold text-emerald-300 mb-5 flex items-center gap-3">
+        <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span>
+        长上下文
+      </h3>
+
+      <!-- Formula 1 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">Attention 复杂度</p>
+        \[ \text{Time}: \mathcal{O}(L^2 d), \quad \text{Space}: \mathcal{O}(L^2) \]
+      </div>
+
+      <!-- Formula 2 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">FlashAttention 显存</p>
+        \[ \text{Space}: \mathcal{O}(L) \quad \text{(IO recompute)} \]
+      </div>
+
+      <!-- Formula 3 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">KV Cache 大小（每层）</p>
+        \[ \text{size} = 2 \cdot L \cdot H \cdot d_{\text{head}} \text{ per layer} \]
+      </div>
+
+      <!-- Formula 4 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">RoPE 旋转角</p>
+        \[ \theta_i = 10000^{-2i/d}, \quad (R_m q)^T(R_n k) = f(m-n) \]
+      </div>
+
+      <!-- Formula 5 -->
+      <div class="bg-gray-800 rounded-xl px-6 py-4 mb-3 border border-gray-700">
+        <p class="text-sm text-gray-500 font-mono uppercase mb-1">MLA KV 压缩</p>
+        \[ c_{KV} = W^{DKV} h_t \in \mathbb{R}^{d_c}, \quad d_c \ll H d_h \]
+      </div>
+    </div>
+
   </div>
 
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">31 / 31</span>
