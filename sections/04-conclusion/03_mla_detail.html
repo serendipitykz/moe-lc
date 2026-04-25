@@ -2,7 +2,8 @@
 <div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
 <!-- 演讲备注: 这是偏深入的细节幻灯片，可根据时间决定深度。核心信息：c_KV 的维度远小于 KV 本身，但效果等价。 -->
 
-  <h2 class="text-5xl font-bold mb-8 text-purple-300">MLA 架构详解</h2>
+  <h2 class="text-5xl font-bold mb-4 text-purple-300">MLA 架构详解</h2>
+  <p class="text-xl text-gray-400 mb-6">上一张幻灯片介绍了 MLA（Multi-head Latent Attention）的作用；本页深入其低秩 KV 压缩的具体实现。</p>
 
   <div class="flex gap-8 flex-1 min-h-0">
 
@@ -47,7 +48,7 @@
         </div>
 
         <div class="bg-emerald-900 bg-opacity-30 rounded-xl px-5 py-4 border border-emerald-800">
-          <p class="text-sm font-mono text-emerald-400 uppercase mb-2">DeepSeek-V2 实测</p>
+          <p class="text-sm font-mono text-emerald-400 uppercase mb-2">DeepSeek-V2 实测<cite class="text-gray-500 text-base not-italic ml-1">[DeepSeek-AI, 2024]</cite></p>
           <div class="flex items-center justify-between">
             <div class="text-center">
               <p class="text-sm text-gray-400">标准 MHA</p>
@@ -184,5 +185,5 @@
 
   </div>
 
-  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">21 / ?</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">21 / 26</span>
 </div>

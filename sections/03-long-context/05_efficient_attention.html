@@ -22,7 +22,7 @@
       </div>
 
       <div class="bg-gray-900 rounded-xl p-4 border border-red-900">
-        <p class="text-lg text-gray-300 mb-1">以 Llama-3-70B，\(L = 131\text{K}\) 为例：</p>
+        <p class="text-lg text-gray-300 mb-1">以 Llama-3-70B，\(L = 131\text{K}\) 为例：<cite class="text-gray-500 text-base not-italic ml-1">[Meta AI, 2024]</cite></p>
         <p class="text-lg text-gray-200 leading-relaxed">
           \(2 \times 131072 \times 64 \times 128 \times 2 \approx\)
           <span class="text-red-400 font-bold text-xl">~4.3 GB / 层</span>
@@ -37,7 +37,7 @@
       </p>
 
       <div class="bg-gray-900 rounded-xl p-4 border border-emerald-700">
-        <p class="text-lg text-emerald-300 font-semibold">PagedAttention (vLLM)</p>
+        <p class="text-lg text-emerald-300 font-semibold">PagedAttention (vLLM)<cite class="text-gray-500 text-base not-italic ml-1">[Kwon et al., 2023]</cite></p>
         <p class="text-lg text-gray-300 leading-relaxed">
           借鉴操作系统虚拟内存分页机制管理 KV Cache，支持动态 batching，大幅提升推理吞吐量。
         </p>
@@ -134,8 +134,8 @@
 
   <!-- Bottom footnote -->
   <p class="text-base text-gray-500 mt-4">
-    Ring Attention 通过设备间 KV 传递实现超长序列分布式训练，每设备仅持有 \(L/N\) 的序列片段。
+    Ring Attention 通过设备间 KV 传递实现超长序列分布式训练，每设备仅持有 \(L/N\) 的序列片段。<cite class="text-gray-500 text-base not-italic ml-1">[Liu et al., 2023]</cite>
   </p>
 
-  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">18 / ?</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">18 / 26</span>
 </div>

@@ -4,7 +4,7 @@
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">注意力机制的二次方瓶颈</h2>
 
   <p class="text-xl text-gray-300 mb-6">
-    标准 Self-Attention 的时间与空间复杂度均为 \(\mathcal{O}(L^2)\)，当 \(L\) 超过 100K 时，显存与计算开销成为核心瓶颈。
+    标准 Self-Attention 的时间与空间复杂度均为 \(\mathcal{O}(L^2)\)，当 \(L\) 超过 100K 时，显存与计算开销成为核心瓶颈。下表对比主流方案；Mamba/SSM 是基于状态空间模型的线性替代架构，此处作为参照，本节重点聚焦 Transformer 内的优化路线。
   </p>
 
   <div class="flex gap-8 flex-1 min-h-0">
@@ -33,7 +33,7 @@
             <td class="px-4 py-3 border border-emerald-700 text-emerald-300 font-semibold">FlashAttention</td>
             <td class="px-4 py-3 border border-emerald-700 font-mono text-red-400">\(\mathcal{O}(L^2)\)</td>
             <td class="px-4 py-3 border border-emerald-700 font-mono text-emerald-400">\(\mathcal{O}(L)\)</td>
-            <td class="px-4 py-3 border border-emerald-700 text-emerald-200">IO 优化，精确计算</td>
+            <td class="px-4 py-3 border border-emerald-700 text-emerald-200">IO 优化，精确计算<cite class="text-gray-500 text-base not-italic ml-1">[Dao et al., 2022]</cite></td>
           </tr>
           <!-- Sparse Attention -->
           <tr class="border border-gray-600">
@@ -115,5 +115,5 @@
 
   </div>
 
-  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">15 / ?</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">15 / 26</span>
 </div>
