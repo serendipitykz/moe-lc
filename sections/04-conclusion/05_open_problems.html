@@ -1,0 +1,127 @@
+<!-- Slide 23: 核心开放问题 -->
+<div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+
+  <h2 class="text-5xl font-bold mb-8 text-purple-300">核心开放问题</h2>
+  <p class="text-xl text-gray-400 mb-8 -mt-4">仍待解决的核心问题</p>
+
+  <div class="grid grid-cols-3 gap-7 flex-1 min-h-0">
+
+    <!-- Card 1: Routing Interpretability & Stability -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-indigo-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-full bg-indigo-700 flex items-center justify-center font-mono font-bold text-indigo-200 flex-shrink-0">?</div>
+        <h3 class="text-xl font-bold text-indigo-300">路由的可解释性与稳定性</h3>
+      </div>
+      <ul class="space-y-4 flex-1">
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-indigo-300 font-semibold">黑箱问题：</span>
+            为什么某个 token 被路由到特定专家？当前没有明确的可解释性
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-indigo-300 font-semibold">路由坍缩：</span>
+            训练不稳定时，少数专家主导全部流量——辅助损失不能完全解决
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">开放问题：</span>
+            能否设计具有
+            <span class="text-indigo-300 font-semibold">可解释语义的路由</span>？
+            （如显式按领域、语法类别路由）
+          </p>
+        </li>
+        <li class="mt-auto">
+          <p class="text-sm text-gray-600 font-mono">
+            相关工作：[Zuo et al., 2022] Taming Sparsely Activated Transformer
+          </p>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Card 2: Load Balancing under Long Sequences -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-emerald-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-full bg-emerald-700 flex items-center justify-center font-mono font-bold text-emerald-200 flex-shrink-0">?</div>
+        <h3 class="text-xl font-bold text-emerald-300">超长序列下的负载均衡</h3>
+      </div>
+      <ul class="space-y-4 flex-1">
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            现有辅助损失假设 batch 内 token 分布均匀 →
+            <span class="text-emerald-300 font-semibold">长序列时局部 token 高度相关</span>，假设失效
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            同一文档的 token 可能高度相似 →
+            大量 token 涌向同一专家 →
+            <span class="text-emerald-300 font-semibold">局部 collapse</span>
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">开放问题：</span>
+            <span class="text-emerald-300 font-semibold">序列感知（sequence-aware）</span>的路由与均衡策略
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">潜在方向：</span>
+            per-sequence 辅助损失、动态容量分配
+          </p>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Card 3: MoE + Long Context Co-optimization -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-purple-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-full bg-purple-700 flex items-center justify-center font-mono font-bold text-purple-200 flex-shrink-0">?</div>
+        <h3 class="text-xl font-bold text-purple-300">MoE 与长上下文的协同优化</h3>
+      </div>
+      <ul class="space-y-4 flex-1">
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            绝大多数 MoE 模型在<span class="text-purple-300 font-semibold">短上下文上预训练</span>，
+            长上下文是微调而非预训练——专家分工可能不适用
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            路由模式在长序列和短序列上可能
+            <span class="text-purple-300 font-semibold">截然不同</span>——短文本专家分工在长文本上未必有效
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">开放问题：</span>
+            如何在<span class="text-purple-300 font-semibold">长上下文预训练</span>中维持高效的 MoE 路由？
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">工程挑战：</span>
+            Ring Attention + Expert Parallelism 的集成复杂度极高
+          </p>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">23 / ?</span>
+</div>

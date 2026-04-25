@@ -1,0 +1,163 @@
+<div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+  <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 层结构详解</h2>
+
+  <!-- Central large SVG -->
+  <div class="w-full flex justify-center mb-6">
+    <svg viewBox="0 0 900 380" width="100%" height="320" xmlns="http://www.w3.org/2000/svg" style="max-width:900px">
+      <defs>
+        <marker id="arrowA" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+        </marker>
+        <marker id="arrowB" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#9ca3af"/>
+        </marker>
+        <marker id="arrowBi" markerWidth="8" markerHeight="6" refX="2" refY="3" orient="auto-start-reverse">
+          <path d="M0,3 L8,0 L8,6 z" fill="#f59e0b"/>
+        </marker>
+      </defs>
+      <rect width="900" height="380" fill="#111827" rx="12"/>
+
+      <!-- ===== LEFT: Standard Transformer Block ===== -->
+      <text x="130" y="24" font-size="15" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">标准 Transformer 块</text>
+
+      <!-- 输入 x -->
+      <rect x="70" y="34" width="120" height="32" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+      <text x="130" y="54" font-size="14" fill="#e5e7eb" text-anchor="middle" font-family="sans-serif">输入 x</text>
+      <!-- d_model label -->
+      <text x="200" y="54" font-size="12" fill="#6366f1" font-family="monospace">d_model</text>
+
+      <line x1="130" y1="66" x2="130" y2="78" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <!-- Multi-Head Attention -->
+      <rect x="50" y="82" width="160" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="130" y="103" font-size="13" fill="#93c5fd" text-anchor="middle" font-family="sans-serif">Multi-Head Attention</text>
+
+      <line x1="130" y1="116" x2="130" y2="128" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <!-- Add & Norm 1 -->
+      <rect x="75" y="132" width="110" height="28" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1.5"/>
+      <text x="130" y="150" font-size="13" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Add &amp; Norm</text>
+
+      <line x1="130" y1="160" x2="130" y2="172" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <!-- FFN -->
+      <rect x="70" y="176" width="120" height="34" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+      <text x="130" y="197" font-size="14" fill="#94a3b8" text-anchor="middle" font-family="sans-serif">FFN</text>
+
+      <line x1="130" y1="210" x2="130" y2="222" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <!-- Add & Norm 2 -->
+      <rect x="75" y="226" width="110" height="28" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1.5"/>
+      <text x="130" y="244" font-size="13" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Add &amp; Norm</text>
+
+      <line x1="130" y1="254" x2="130" y2="266" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <!-- Output -->
+      <rect x="70" y="270" width="120" height="32" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+      <text x="130" y="290" font-size="14" fill="#e5e7eb" text-anchor="middle" font-family="sans-serif">输出</text>
+
+      <!-- ===== CENTER: Bidirectional annotation ===== -->
+      <line x1="400" y1="160" x2="500" y2="160" stroke="#f59e0b" stroke-width="2.5" marker-start="url(#arrowBi)" marker-end="url(#arrowBi)"/>
+      <rect x="400" y="140" width="100" height="42" rx="6" fill="#78350f" opacity="0.7"/>
+      <text x="450" y="157" font-size="12" fill="#fcd34d" text-anchor="middle" font-family="sans-serif">将 FFN</text>
+      <text x="450" y="173" font-size="12" fill="#fcd34d" text-anchor="middle" font-family="sans-serif">替换为 MoE</text>
+
+      <!-- ===== RIGHT: MoE Transformer Block ===== -->
+      <text x="700" y="24" font-size="15" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">MoE Transformer 块</text>
+
+      <!-- 输入 x (right) -->
+      <rect x="620" y="34" width="160" height="32" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+      <text x="700" y="54" font-size="14" fill="#e5e7eb" text-anchor="middle" font-family="sans-serif">输入 x</text>
+
+      <line x1="700" y1="66" x2="700" y2="78" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowA)"/>
+
+      <!-- Multi-Head Attention (right) -->
+      <rect x="600" y="82" width="200" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="700" y="103" font-size="13" fill="#93c5fd" text-anchor="middle" font-family="sans-serif">Multi-Head Attention</text>
+
+      <line x1="700" y1="116" x2="700" y2="128" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowA)"/>
+
+      <!-- Add & Norm (right) -->
+      <rect x="625" y="132" width="150" height="28" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1.5"/>
+      <text x="700" y="150" font-size="13" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Add &amp; Norm</text>
+
+      <line x1="700" y1="160" x2="700" y2="172" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowA)"/>
+
+      <!-- MoE Layer (highlighted) -->
+      <rect x="590" y="176" width="220" height="34" rx="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="2.5"/>
+      <text x="700" y="197" font-size="15" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">MoE Layer ★</text>
+
+      <line x1="700" y1="210" x2="700" y2="222" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowA)"/>
+
+      <!-- Add & Norm (right2) -->
+      <rect x="625" y="226" width="150" height="28" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1.5"/>
+      <text x="700" y="244" font-size="13" fill="#9ca3af" text-anchor="middle" font-family="sans-serif">Add &amp; Norm</text>
+
+      <line x1="700" y1="254" x2="700" y2="266" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowA)"/>
+
+      <!-- Output (right) -->
+      <rect x="620" y="270" width="160" height="32" rx="6" fill="#374151" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="700" y="290" font-size="14" fill="#e5e7eb" text-anchor="middle" font-family="sans-serif">输出</text>
+
+      <!-- ===== MoE Layer Zoom (bottom right) ===== -->
+      <!-- Zoom line from MoE Layer box -->
+      <line x1="700" y1="210" x2="700" y2="308" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+      <!-- Router box (zoomed) -->
+      <rect x="590" y="310" width="220" height="26" rx="5" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="700" y="327" font-size="13" fill="#c7d2fe" text-anchor="middle" font-family="sans-serif">Router（门控网络） W_g</text>
+
+      <!-- Expert boxes row -->
+      <!-- Expert 1 -->
+      <rect x="500" y="348" width="46" height="24" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="523" y="364" font-size="11" fill="#a5b4fc" text-anchor="middle" font-family="monospace">E1</text>
+      <!-- Expert 2 -->
+      <rect x="554" y="348" width="46" height="24" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="577" y="364" font-size="11" fill="#a5b4fc" text-anchor="middle" font-family="monospace">E2</text>
+      <!-- Expert 3 -->
+      <rect x="608" y="348" width="46" height="24" rx="4" fill="#1f2937" stroke="#374151" stroke-width="1" opacity="0.5"/>
+      <text x="631" y="364" font-size="11" fill="#6b7280" text-anchor="middle" font-family="monospace" opacity="0.5">E3</text>
+      <!-- ... label -->
+      <text x="670" y="364" font-size="14" fill="#6b7280" text-anchor="middle" font-family="monospace" opacity="0.6">…</text>
+      <!-- Expert N -->
+      <rect x="690" y="348" width="56" height="24" rx="4" fill="#1f2937" stroke="#374151" stroke-width="1" opacity="0.5"/>
+      <text x="718" y="364" font-size="11" fill="#6b7280" text-anchor="middle" font-family="monospace" opacity="0.5">E(N_exp)</text>
+
+      <!-- Lines from router to E1, E2 -->
+      <line x1="690" y1="336" x2="523" y2="348" stroke="#6366f1" stroke-width="1.5"/>
+      <line x1="695" y1="336" x2="577" y2="348" stroke="#6366f1" stroke-width="1.5"/>
+
+      <!-- Annotations for variables -->
+      <text x="520" y="375" font-size="11" fill="#6366f1" text-anchor="middle" font-family="monospace">top-k 选择</text>
+
+      <!-- Variable annotations on the left side -->
+      <text x="40" y="198" font-size="12" fill="#6366f1" font-family="monospace">d_ff</text>
+      <text x="40" y="215" font-size="11" fill="#4b5563" font-family="monospace">(hidden)</text>
+      <text x="860" y="196" font-size="12" fill="#6366f1" font-family="monospace">N_exp</text>
+      <text x="860" y="210" font-size="11" fill="#4b5563" font-family="monospace">experts</text>
+      <text x="860" y="228" font-size="12" fill="#6366f1" font-family="monospace">k active</text>
+    </svg>
+  </div>
+
+  <!-- Two info cards below -->
+  <div class="grid grid-cols-2 gap-6">
+    <div class="bg-gray-800 rounded-2xl p-5 border border-gray-700">
+      <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-2">每层参数量</p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        稠密：\(2 \times d_{\text{model}} \times d_{ff}\)
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        MoE：\(N_{\text{exp}} \times (2 \times d_{\text{model}} \times d_{ff}) + \text{gating}\)
+      </p>
+    </div>
+    <div class="bg-gray-800 rounded-2xl p-5 border border-indigo-700">
+      <p class="text-base text-indigo-400 font-mono uppercase tracking-widest mb-2">每 token 激活</p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        稠密：\(2 \times d_{\text{model}} \times d_{ff}\) FLOPs
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        MoE：\(k \times (2 \times d_{\text{model}} \times d_{ff})\) FLOPs
+      </p>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">7 / ?</span>
+</div>

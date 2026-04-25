@@ -1,0 +1,130 @@
+<!-- Slide 22: MoE 推理的工程挑战 -->
+<div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+
+  <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE 推理的工程挑战</h2>
+  <p class="text-xl text-gray-400 mb-8 -mt-4">部署 MoE 模型的三大工程挑战</p>
+
+  <div class="grid grid-cols-3 gap-7 flex-1 min-h-0">
+
+    <!-- Card 1: Expert Parallelism & Communication -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-amber-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="bg-amber-700 text-amber-200 text-sm font-bold px-3 py-1 rounded-full font-mono">01</span>
+        <h3 class="text-xl font-bold text-amber-300">专家并行与通信开销</h3>
+      </div>
+      <ul class="space-y-4 flex-1">
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">Expert Parallelism：</span>
+            将 \(N_{\text{exp}}\) 个专家分布到多张 GPU，每个专家驻留在一个设备上
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            每个 MoE 层需要
+            <span class="text-amber-300 font-bold">all-to-all 通信</span>：
+            token → 找到对应专家的设备 → 计算 → 返回结果
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            通信延迟随专家数线性增长，可占总推理时间的
+            <span class="text-amber-300 font-bold">20–40%</span>
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">缓解：</span>
+            EP + Tensor Parallelism 混合并行；减少 MoE 层数
+          </p>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Card 2: KV Cache Memory Pressure -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-rose-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="bg-rose-700 text-rose-200 text-sm font-bold px-3 py-1 rounded-full font-mono">02</span>
+        <h3 class="text-xl font-bold text-rose-300">KV Cache 的显存压力</h3>
+      </div>
+      <ul class="space-y-4 flex-1">
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-rose-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            \(L=128\text{K}\) 时，Llama-3-70B 的 KV Cache ≈
+            <span class="text-rose-300 font-bold">344 GB</span>
+            ——远超模型参数本身
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-rose-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            MoE 模型：KV Cache 同样随 \(L\) 线性增长，与
+            <span class="text-rose-300 font-semibold">专家参数竞争显存</span>
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-rose-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">解决方案：</span>
+            PagedAttention（虚拟内存分页）、KV Cache 量化、Sliding Window Attention
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-rose-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-rose-300 font-semibold">Trade-off：</span>
+            截断历史（损失信息）vs. 保留（超显存预算）
+          </p>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Card 3: Expert Cache Warmup -->
+    <div class="bg-gray-800 rounded-2xl p-7 border border-blue-700 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="bg-blue-700 text-blue-200 text-sm font-bold px-3 py-1 rounded-full font-mono">03</span>
+        <h3 class="text-xl font-bold text-blue-300">专家 Cache 预热</h3>
+      </div>
+      <ul class="space-y-4 flex-1">
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            不同 batch 可能路由到不同专家 →
+            <span class="text-blue-300 font-semibold">频繁换入换出</span>专家参数（CPU ↔ GPU 交换）
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            对于总参数远超显存的模型（如 236B DeepSeek-V2），
+            <span class="text-blue-300 font-semibold">专家 offloading 是必要的</span>
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            <span class="text-gray-200">缓解：</span>
+            基于路由统计
+            <span class="text-blue-300 font-semibold">预测下一步激活专家</span>，
+            提前 prefetch 到 GPU，隐藏换入延迟
+          </p>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-2 w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+          <p class="text-lg text-gray-400 leading-relaxed">
+            专家访问具有<span class="text-blue-300 font-semibold">局部性规律</span>（相似输入 → 相似路由），
+            可利用此规律设计高命中率的专家 Cache 策略
+          </p>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">22 / ?</span>
+</div>

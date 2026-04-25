@@ -1,0 +1,74 @@
+<div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+  <h2 class="text-5xl font-bold mb-8 text-indigo-300">MoE 核心要点回顾</h2>
+
+  <!-- 2x2 grid of takeaway cards -->
+  <div class="grid grid-cols-2 gap-6 flex-1 mb-6">
+
+    <!-- Card 1: Sparse Activation (indigo) -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-indigo-700 flex flex-col gap-3">
+      <div class="flex items-center gap-3 mb-1">
+        <span class="text-2xl">🔷</span>
+        <span class="text-base text-indigo-400 font-mono uppercase tracking-widest">稀疏激活</span>
+      </div>
+      <p class="text-xl leading-relaxed text-gray-200">
+        每 token 激活 \(k / N_{\text{exp}}\) 比例的参数，大幅降低推理 FLOPs
+      </p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        Mixtral 8×7B：46.7B 总参数，仅激活 12.9B（≈ 28%）；推理成本与 ~13B 稠密模型相当。
+      </p>
+    </div>
+
+    <!-- Card 2: Routing (purple) -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-purple-700 flex flex-col gap-3">
+      <div class="flex items-center gap-3 mb-1">
+        <span class="text-2xl">🔀</span>
+        <span class="text-base text-purple-400 font-mono uppercase tracking-widest">路由机制</span>
+      </div>
+      <p class="text-xl leading-relaxed text-gray-200">
+        Top-K + Noisy 路由 + 辅助损失共同维持专家均衡
+      </p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        \(\mathcal{L}_{\text{aux}} = \alpha \cdot N_{\text{exp}} \sum f_i P_i\)，α ∈ [0.01, 0.1]；
+        噪声扰动防止"赢者通吃"。
+      </p>
+    </div>
+
+    <!-- Card 3: Capacity Limit (amber) -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-amber-700 flex flex-col gap-3">
+      <div class="flex items-center gap-3 mb-1">
+        <span class="text-2xl">📦</span>
+        <span class="text-base text-amber-400 font-mono uppercase tracking-widest">容量限制</span>
+      </div>
+      <p class="text-xl leading-relaxed text-gray-200">
+        Token dropping 是 MoE 训练的重要工程细节
+      </p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        \(C = \lceil \text{tokens} / N_{\text{exp}} \rceil \times \text{cf}\)；
+        capacity_factor ≈ 1.0–1.25（训练），长序列时丢弃问题尤为突出。
+      </p>
+    </div>
+
+    <!-- Card 4: Expert Specialization (emerald) -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-emerald-700 flex flex-col gap-3">
+      <div class="flex items-center gap-3 mb-1">
+        <span class="text-2xl">🌱</span>
+        <span class="text-base text-emerald-400 font-mono uppercase tracking-widest">专家专业化</span>
+      </div>
+      <p class="text-xl leading-relaxed text-gray-200">
+        分工自发涌现，是 MoE 效果的重要来源
+      </p>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        代码、数学、语法等领域专家自发形成；过度坍缩有害，辅助损失维持适度多样性。
+      </p>
+    </div>
+  </div>
+
+  <!-- Bottom formula strip -->
+  <div class="bg-gray-800 rounded-2xl px-8 py-5 border border-indigo-700">
+    <div class="text-xl text-gray-200 text-center">
+      \[ \underbrace{y = \sum_{i \in \mathcal{T}_k} g_i(x) \cdot \text{FFN}_i(x)}_{\text{MoE 前向传播核心公式}}, \quad |\mathcal{T}_k| = k \ll N_{\text{exp}} \]
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">13 / ?</span>
+</div>

@@ -1,0 +1,73 @@
+<div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
+  <h2 class="text-5xl font-bold mb-8 text-indigo-300">规模化的代价</h2>
+
+  <div class="flex gap-10 flex-1">
+    <!-- Left column: text card -->
+    <div class="flex-1 flex flex-col gap-6">
+      <div class="bg-gray-800 rounded-2xl p-8 border border-indigo-700 flex-1">
+        <h3 class="text-2xl font-semibold text-indigo-300 mb-6">密集模型的算力瓶颈</h3>
+        <ul class="space-y-5">
+          <li class="flex items-start gap-3 text-xl leading-relaxed text-gray-200">
+            <span class="text-indigo-400 mt-1 flex-shrink-0">▸</span>
+            <span>GPT-3：175B 参数，FP16 推理需 ~350GB 显存，训练耗资约 $460 万
+              <span class="text-base text-gray-500 font-mono ml-2">[Brown et al., 2020]</span>
+            </span>
+          </li>
+          <li class="flex items-start gap-3 text-xl leading-relaxed text-gray-200">
+            <span class="text-indigo-400 mt-1 flex-shrink-0">▸</span>
+            <span>核心瓶颈：FFN 层占每层约 <strong class="text-indigo-300">2/3</strong> 的计算量</span>
+          </li>
+          <li class="flex items-start gap-3 text-xl leading-relaxed text-gray-200">
+            <span class="text-indigo-400 mt-1 flex-shrink-0">▸</span>
+            <span>每个 token 都要激活全部 FFN 参数 → 大量计算"浪费"</span>
+          </li>
+          <li class="flex items-start gap-3 text-xl leading-relaxed text-gray-200">
+            <span class="text-indigo-400 mt-1 flex-shrink-0">▸</span>
+            <span>朴素扩展路线：参数翻倍 → 算力翻倍 → 成本翻倍</span>
+          </li>
+        </ul>
+
+        <!-- Amber callout -->
+        <div class="mt-8 bg-amber-900/40 border border-amber-600/60 rounded-xl p-5">
+          <p class="text-xl text-amber-200 leading-relaxed">
+            💡 能否让不同 token 只激活<strong class="text-amber-300">部分</strong>参数？
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: bar chart SVG -->
+    <div class="flex-1 flex flex-col items-center justify-center">
+      <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-4">Transformer 层计算占比</p>
+      <svg viewBox="0 0 300 260" width="300" height="260" xmlns="http://www.w3.org/2000/svg">
+        <rect width="300" height="260" fill="#111827" rx="12"/>
+
+        <!-- Y axis line -->
+        <line x1="90" y1="20" x2="90" y2="220" stroke="#374151" stroke-width="1.5"/>
+        <!-- X axis line -->
+        <line x1="90" y1="220" x2="285" y2="220" stroke="#374151" stroke-width="1.5"/>
+
+        <!-- Bar 1: Self-Attention ~33% -->
+        <rect x="90" y="40" width="63" height="38" fill="#4f46e5" rx="3"/>
+        <text x="98" y="63" font-size="14" fill="#e0e7ff" font-family="monospace">33%</text>
+        <text x="4" y="64" font-size="13" fill="#9ca3af" font-family="sans-serif">Self-Attn</text>
+
+        <!-- Bar 2: FFN ~67% -->
+        <rect x="90" y="100" width="126" height="38" fill="#7c3aed" rx="3"/>
+        <text x="98" y="123" font-size="14" fill="#e0e7ff" font-family="monospace">67%</text>
+        <text x="28" y="124" font-size="13" fill="#9ca3af" font-family="sans-serif">FFN</text>
+
+        <!-- Bar 3: Other ~5% (token as approximate small width) -->
+        <rect x="90" y="160" width="10" height="38" fill="#374151" rx="3"/>
+        <text x="105" y="183" font-size="12" fill="#6b7280" font-family="monospace">≈5%</text>
+        <text x="8" y="183" font-size="11" fill="#6b7280" font-family="sans-serif">其他</text>
+
+        <!-- Axis label -->
+        <text x="170" y="245" font-size="12" fill="#6b7280" text-anchor="middle" font-family="sans-serif">计算量占比</text>
+        <text x="45" y="15" font-size="12" fill="#6b7280" text-anchor="middle" font-family="sans-serif">层组件</text>
+      </svg>
+    </div>
+  </div>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">4 / ?</span>
+</div>

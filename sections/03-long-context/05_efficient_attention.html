@@ -1,0 +1,140 @@
+<div class="slide hidden relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
+
+  <h2 class="text-5xl font-bold mb-6 text-emerald-300">KV Cache 与高效注意力变体</h2>
+
+  <div class="flex gap-8 flex-1 min-h-0">
+
+    <!-- Left card: KV Cache -->
+    <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 flex flex-col gap-5 flex-1">
+
+      <h3 class="text-2xl font-bold text-emerald-300">KV Cache</h3>
+
+      <p class="text-xl leading-relaxed text-gray-200">
+        推理时对每个 token 缓存 Key 和 Value 向量，避免对历史 token 重复计算注意力。
+      </p>
+
+      <div class="bg-gray-900 rounded-xl p-4 border border-gray-600">
+        <p class="text-lg text-gray-300 mb-1">每层 KV Cache 大小（FP16）：</p>
+        <div class="text-center text-lg">
+          \[2 \times L \times H \times d_{\text{head}} \;\text{字节}\]
+        </div>
+      </div>
+
+      <div class="bg-gray-900 rounded-xl p-4 border border-red-900">
+        <p class="text-lg text-gray-300 mb-1">以 Llama-3-70B，\(L = 131\text{K}\) 为例：</p>
+        <p class="text-lg text-gray-200 leading-relaxed">
+          \(2 \times 131072 \times 64 \times 128 \times 2 \approx\)
+          <span class="text-red-400 font-bold text-xl">~4.3 GB / 层</span>
+        </p>
+        <p class="text-lg text-gray-300 mt-2">
+          × 80 层 = <span class="text-red-400 font-bold text-xl">~344 GB</span> 仅用于 KV Cache！
+        </p>
+      </div>
+
+      <p class="text-xl leading-relaxed text-gray-200">
+        KV Cache 随 \(L\) 线性增长——长上下文下的核心显存瓶颈。
+      </p>
+
+      <div class="bg-gray-900 rounded-xl p-4 border border-emerald-700">
+        <p class="text-lg text-emerald-300 font-semibold">PagedAttention (vLLM)</p>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          借鉴操作系统虚拟内存分页机制管理 KV Cache，支持动态 batching，大幅提升推理吞吐量。
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Right card: Attention Head Variants SVG -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-4 items-center" style="min-width:440px;">
+      <h3 class="text-2xl font-bold text-emerald-300 self-start">注意力头变体对比</h3>
+
+      <svg viewBox="0 0 380 280" width="380" height="280" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+
+        <!-- Column labels -->
+        <text x="64"  y="22" text-anchor="middle" font-size="14" fill="#f9fafb" font-weight="bold">MHA</text>
+        <text x="192" y="22" text-anchor="middle" font-size="14" fill="#f9fafb" font-weight="bold">GQA</text>
+        <text x="316" y="22" text-anchor="middle" font-size="14" fill="#f9fafb" font-weight="bold">MQA</text>
+
+        <!-- ===== MHA: H Q heads, H K heads, H V heads ===== -->
+        <!-- Q heads (blue) -->
+        <rect x="20" y="34" width="88" height="16" rx="2" fill="#1d4ed8" stroke="#3b82f6" stroke-width="1"/>
+        <text x="64" y="46" text-anchor="middle" font-size="13" fill="#bfdbfe">Q × H</text>
+        <!-- K heads (indigo) -->
+        <rect x="20" y="54" width="88" height="16" rx="2" fill="#3730a3" stroke="#6366f1" stroke-width="1"/>
+        <text x="64" y="66" text-anchor="middle" font-size="13" fill="#c7d2fe">K × H</text>
+        <!-- V heads (emerald) -->
+        <rect x="20" y="74" width="88" height="16" rx="2" fill="#065f46" stroke="#10b981" stroke-width="1"/>
+        <text x="64" y="86" text-anchor="middle" font-size="13" fill="#6ee7b7">V × H</text>
+
+        <text x="64" y="114" text-anchor="middle" font-size="13" fill="#9ca3af">H 组 KV</text>
+        <text x="64" y="130" text-anchor="middle" font-size="12" fill="#6b7280">（基线）</text>
+        <text x="64" y="148" text-anchor="middle" font-size="12" fill="#6b7280">Used in: classic</text>
+
+        <!-- ===== GQA: H Q heads, G K heads, G V heads (G < H) ===== -->
+        <!-- Q heads (blue, full width) -->
+        <rect x="148" y="34" width="88" height="16" rx="2" fill="#1d4ed8" stroke="#3b82f6" stroke-width="1"/>
+        <text x="192" y="46" text-anchor="middle" font-size="13" fill="#bfdbfe">Q × H</text>
+        <!-- K heads (indigo, half width = G groups) -->
+        <rect x="166" y="54" width="52" height="16" rx="2" fill="#3730a3" stroke="#6366f1" stroke-width="1"/>
+        <text x="192" y="66" text-anchor="middle" font-size="13" fill="#c7d2fe">K × G</text>
+        <!-- V heads (emerald, half width) -->
+        <rect x="166" y="74" width="52" height="16" rx="2" fill="#065f46" stroke="#10b981" stroke-width="1"/>
+        <text x="192" y="86" text-anchor="middle" font-size="13" fill="#6ee7b7">V × G</text>
+
+        <text x="192" y="114" text-anchor="middle" font-size="13" fill="#fbbf24">G 组 KV (G &lt; H)</text>
+        <text x="192" y="130" text-anchor="middle" font-size="12" fill="#10b981">H/G× KV 压缩</text>
+        <text x="192" y="148" text-anchor="middle" font-size="12" fill="#6b7280">Llama3, Mixtral</text>
+
+        <!-- ===== MQA: H Q heads, 1 K head, 1 V head ===== -->
+        <!-- Q heads (blue, full width) -->
+        <rect x="272" y="34" width="88" height="16" rx="2" fill="#1d4ed8" stroke="#3b82f6" stroke-width="1"/>
+        <text x="316" y="46" text-anchor="middle" font-size="13" fill="#bfdbfe">Q × H</text>
+        <!-- K single (indigo, thin) -->
+        <rect x="298" y="54" width="36" height="16" rx="2" fill="#3730a3" stroke="#6366f1" stroke-width="1"/>
+        <text x="316" y="66" text-anchor="middle" font-size="13" fill="#c7d2fe">K × 1</text>
+        <!-- V single (emerald, thin) -->
+        <rect x="298" y="74" width="36" height="16" rx="2" fill="#065f46" stroke="#10b981" stroke-width="1"/>
+        <text x="316" y="86" text-anchor="middle" font-size="13" fill="#6ee7b7">V × 1</text>
+
+        <text x="316" y="114" text-anchor="middle" font-size="13" fill="#fbbf24">1 组 KV</text>
+        <text x="316" y="130" text-anchor="middle" font-size="12" fill="#10b981">H× KV 压缩</text>
+        <text x="316" y="148" text-anchor="middle" font-size="12" fill="#6b7280">Used in: PaLM</text>
+
+        <!-- Legend: Q / K / V color -->
+        <rect x="14" y="168" width="14" height="12" rx="2" fill="#1d4ed8" stroke="#3b82f6"/>
+        <text x="32" y="179" font-size="13" fill="#bfdbfe">Q (Query)</text>
+        <rect x="120" y="168" width="14" height="12" rx="2" fill="#3730a3" stroke="#6366f1"/>
+        <text x="138" y="179" font-size="13" fill="#c7d2fe">K (Key)</text>
+        <rect x="220" y="168" width="14" height="12" rx="2" fill="#065f46" stroke="#10b981"/>
+        <text x="238" y="179" font-size="13" fill="#6ee7b7">V (Value)</text>
+
+        <!-- Divider lines between columns -->
+        <line x1="128" y1="28" x2="128" y2="160" stroke="#374151" stroke-width="1" stroke-dasharray="4 3"/>
+        <line x1="256" y1="28" x2="256" y2="160" stroke="#374151" stroke-width="1" stroke-dasharray="4 3"/>
+
+        <!-- Horizontal label for shared KV -->
+        <text x="192" y="210" text-anchor="middle" font-size="13" fill="#9ca3af">← Query heads 共享 KV 头 →</text>
+
+        <!-- Bottom comparison bar -->
+        <rect x="14" y="220" width="88" height="16" rx="3" fill="#1d4ed8" stroke="#3b82f6"/>
+        <rect x="148" y="220" width="52" height="16" rx="3" fill="#1d4ed8" stroke="#3b82f6"/>
+        <rect x="298" y="220" width="14" height="16" rx="3" fill="#1d4ed8" stroke="#3b82f6"/>
+
+        <text x="64"  y="254" text-anchor="middle" font-size="13" fill="#9ca3af">KV 全量</text>
+        <text x="192" y="254" text-anchor="middle" font-size="13" fill="#fbbf24">KV ÷ G</text>
+        <text x="316" y="254" text-anchor="middle" font-size="13" fill="#10b981">KV ÷ H</text>
+
+        <text x="192" y="272" text-anchor="middle" font-size="13" fill="#6b7280">KV Cache 大小（相对）</text>
+      </svg>
+
+    </div>
+
+  </div>
+
+  <!-- Bottom footnote -->
+  <p class="text-base text-gray-500 mt-4">
+    Ring Attention 通过设备间 KV 传递实现超长序列分布式训练，每设备仅持有 \(L/N\) 的序列片段。
+  </p>
+
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">18 / ?</span>
+</div>
