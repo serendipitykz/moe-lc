@@ -1,10 +1,10 @@
 <div class="slide hidden flex flex-col justify-start h-screen bg-gray-900 text-white px-20 py-16">
 
   <!-- Heading -->
-  <h2 class="text-4xl font-bold mb-4 text-emerald-300">注意力机制的扩展性挑战</h2>
+  <h2 class="text-5xl font-bold mb-4 text-emerald-300">注意力机制的扩展性挑战</h2>
 
   <!-- Problem statement -->
-  <p class="text-gray-300 text-lg leading-relaxed mb-8">
+  <p class="text-xl text-gray-300 leading-relaxed mb-8">
     标准 Self-Attention 的时间与空间复杂度均为 \(\mathcal{O}(L^2)\)，当 \(L\) 增大至 128K–1M 时，
     计算与显存开销成为主要瓶颈。
   </p>
@@ -15,10 +15,10 @@
     <!-- Left: comparison table -->
     <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden flex flex-col">
       <div class="px-6 py-3 bg-gray-700 border-b border-gray-600">
-        <h3 class="text-base font-semibold text-emerald-300 tracking-wide uppercase">复杂度对比</h3>
+        <h3 class="text-lg font-semibold text-emerald-300 tracking-wide uppercase">复杂度对比</h3>
       </div>
       <div class="overflow-auto flex-1">
-        <table class="w-full text-sm text-left border-collapse">
+        <table class="w-full text-lg text-left border-collapse">
           <thead>
             <tr class="bg-gray-700 text-gray-300">
               <th class="px-5 py-3 font-semibold">方法</th>
@@ -40,7 +40,7 @@
               <td class="px-5 py-3 font-mono text-emerald-300 font-semibold">FlashAttention</td>
               <td class="px-4 py-3 text-center text-red-400">\(\mathcal{O}(L^2)\)</td>
               <td class="px-4 py-3 text-center text-emerald-300 font-semibold">\(\mathcal{O}(L)\)</td>
-              <td class="px-4 py-3 text-emerald-200 text-xs leading-tight">IO 优化，不改变<br/>渐近复杂度</td>
+              <td class="px-4 py-3 text-emerald-200 text-base leading-tight">IO 优化，不改变<br/>渐近复杂度</td>
             </tr>
             <!-- Sparse Attention -->
             <tr class="bg-gray-800 border-b border-gray-700">
@@ -70,7 +70,7 @@
 
     <!-- Right: scaling curve SVG -->
     <div class="bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col">
-      <h3 class="text-base font-semibold text-emerald-300 tracking-wide uppercase mb-3">计算/显存开销随序列长度的增长</h3>
+        <h3 class="text-lg font-semibold text-emerald-300 tracking-wide uppercase mb-3">计算/显存开销随序列长度的增长</h3>
       <svg viewBox="0 0 480 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg" style="background:#1f2937; border-radius:0.75rem;">
 
         <!-- Grid lines vertical -->
@@ -155,7 +155,7 @@
       </svg>
 
       <!-- Key insight callout -->
-      <p class="mt-4 text-xs text-gray-400 leading-relaxed">
+      <p class="mt-4 text-base text-gray-400 leading-relaxed">
         <span class="text-emerald-300 font-semibold">关键洞察：</span>
         FlashAttention 将显存从 \(\mathcal{O}(L^2)\) 降至 \(\mathcal{O}(L)\)（IO 重计算），
         是目前工程实践中最广泛使用的优化。Mamba 等 SSM 方法则在算法层面实现真正线性复杂度。

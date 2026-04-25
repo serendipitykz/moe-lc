@@ -1,7 +1,7 @@
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
 
   <!-- Heading -->
-  <h2 class="text-4xl font-bold mb-10 text-white">核心收获与展望</h2>
+  <h2 class="text-5xl font-bold mb-10 text-white">核心收获与展望</h2>
 
   <!-- 2×2 card grid -->
   <div class="grid grid-cols-2 gap-6 flex-1 min-h-0">
@@ -22,9 +22,9 @@
           <line x1="30" y1="26" x2="26" y2="34" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
           <line x1="30" y1="26" x2="34" y2="34" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
         </svg>
-        <h3 class="text-xl font-semibold text-indigo-400">Mixture of Experts</h3>
+        <h3 class="text-2xl font-semibold text-indigo-400">Mixture of Experts</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-indigo-400 mt-0.5 shrink-0">▸</span>
           <span>稀疏激活：每 token 仅激活 \(k\) / \(N_{\text{exp}}\) 个专家，大幅降低 active FLOPs</span>
@@ -52,9 +52,9 @@
           <line x1="18" y1="14" x2="18" y2="26" stroke="#34d399" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.5"/>
           <line x1="26" y1="14" x2="26" y2="26" stroke="#34d399" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.5"/>
         </svg>
-        <h3 class="text-xl font-semibold text-emerald-400">长上下文技术</h3>
+        <h3 class="text-2xl font-semibold text-emerald-400">长上下文技术</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-emerald-400 mt-0.5 shrink-0">▸</span>
           <span>位置编码外推：RoPE, ALiBi, YaRN — 突破训练时长度限制</span>
@@ -79,9 +79,9 @@
           <circle cx="25" cy="20" r="11" stroke="#a78bfa" stroke-width="2"/>
           <path d="M20 10.5 a11 11 0 0 1 0 19 a11 11 0 0 1 0-19 Z" fill="#a78bfa" opacity="0.25"/>
         </svg>
-        <h3 class="text-xl font-semibold text-purple-400">MoE × 长上下文</h3>
+        <h3 class="text-2xl font-semibold text-purple-400">MoE × 长上下文</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-purple-400 mt-0.5 shrink-0">▸</span>
           <span>稀疏激活缓解长序列带来的计算压力，使 \(L\) 规模化更可行</span>
@@ -110,9 +110,9 @@
           <line x1="12" y1="36" x2="12" y2="40" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
           <line x1="28" y1="4"  x2="28" y2="0"  stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
         </svg>
-        <h3 class="text-xl font-semibold text-amber-400">待解决问题</h3>
+        <h3 class="text-2xl font-semibold text-amber-400">待解决问题</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-amber-400 mt-0.5 shrink-0">▸</span>
           <span>路由可解释性与稳定性：专家坍缩与 token dropping 如何根治？</span>

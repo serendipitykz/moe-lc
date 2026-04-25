@@ -36,82 +36,81 @@
   <div class="w-24 h-1 bg-indigo-500 mb-10 rounded-full"></div>
 
   <!-- Main title -->
-  <h1 class="text-5xl font-extrabold tracking-tight text-center leading-tight mb-6 text-white">
-    Mixture of Experts &amp; Long Context:<br/>
-    <span class="text-indigo-400">Scaling Efficiency to 1M Tokens</span>
+  <h1 class="text-6xl font-extrabold tracking-tight text-center leading-tight mb-6 text-white">
+    混合专家与长上下文：<br/>
+    <span class="text-indigo-400">效率扩展至百万 Token</span>
   </h1>
+  <p class="text-2xl text-gray-500 text-center mb-1">Mixture of Experts &amp; Long Context: Scaling Efficiency to 1M Tokens</p>
 
   <!-- Subtitle / course -->
-  <p class="text-xl text-gray-400 mb-2">ACM Class 2026 · CS2916-01 Large Language Models</p>
+  <p class="text-2xl text-gray-400 mb-2">ACM 班 2026 · CS2916-01 大语言模型</p>
 
   <!-- Divider -->
   <div class="w-16 h-px bg-gray-600 my-6"></div>
 
   <!-- Authors -->
-  <p class="text-lg text-gray-300">Your Name</p>
+  <p class="text-xl text-gray-300">演讲者：Your Name</p>
 
   <!-- Slide counter -->
-  <span class="absolute bottom-16 right-10 text-sm text-gray-500 font-mono">1 / 3</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">1 / 6</span>
 </div>
 
 <div class="slide hidden flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
 
   <!-- Heading -->
-  <h2 class="text-4xl font-bold mb-10 text-indigo-300">Why MoE + Long Context?</h2>
+  <h2 class="text-5xl font-bold mb-10 text-indigo-300">为什么需要 MoE + 长上下文？</h2>
 
   <!-- Two-column body -->
   <div class="grid grid-cols-2 gap-10 flex-1">
 
     <!-- Left: MoE -->
     <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
-      <h3 class="text-2xl font-semibold text-indigo-400 mb-2">Mixture of Experts (MoE)</h3>
-      <p class="text-gray-200 leading-relaxed">
-        Activates only \(k\) of \(N_{\text{exp}}\) experts per token, slashing
-        <span class="text-indigo-300 font-medium">active FLOPs</span> while keeping
-        total model capacity high.
+      <h3 class="text-3xl font-semibold text-indigo-400 mb-2">混合专家 (MoE)</h3>
+      <p class="text-xl text-gray-200 leading-relaxed">
+        每个 token 仅激活 \(k\) / \(N_{\text{exp}}\) 个专家，在保持模型总容量的同时，
+        大幅削减<span class="text-indigo-300 font-medium">实际激活的 FLOPs</span>。
       </p>
-      <p class="text-gray-400 text-sm leading-relaxed">
-        Example: <span class="text-white font-semibold">Mixtral-8×7B</span> activates
-        <strong>2 of 8</strong> experts per token — same inference cost as a ~13B dense model,
-        but 47B total parameters of knowledge.
+      <p class="text-lg text-gray-400 leading-relaxed">
+        示例：<span class="text-white font-semibold">Mixtral-8×7B</span> 每个 token 激活
+        <strong>8 个专家中的 2 个</strong>——推理成本约等于 13B 稠密模型，
+        但拥有 47B 参数量的知识容量。
       </p>
-      <div class="mt-auto text-center text-gray-300 text-base font-mono bg-gray-900 rounded-xl px-4 py-3">
-        \[ \text{Active FLOPs} \approx \frac{k}{N_{\text{exp}}} \times \text{Dense FLOPs} \]
+      <div class="mt-auto text-center text-gray-300 text-xl font-mono bg-gray-900 rounded-xl px-4 py-3">
+        \[ \text{激活 FLOPs} \approx \frac{k}{N_{\text{exp}}} \times \text{稠密模型 FLOPs} \]
       </div>
     </div>
 
     <!-- Right: Long Context -->
     <div class="bg-gray-800 rounded-2xl p-8 flex flex-col gap-4 border border-gray-700">
-      <h3 class="text-2xl font-semibold text-emerald-400 mb-2">Long Context</h3>
-      <p class="text-gray-200 leading-relaxed">
-        Extends sequence length \(L\) to
-        <span class="text-emerald-300 font-medium">128K – 1M tokens</span>,
-        enabling document-level and repository-scale reasoning in a single forward pass.
+      <h3 class="text-3xl font-semibold text-emerald-400 mb-2">长上下文</h3>
+      <p class="text-xl text-gray-200 leading-relaxed">
+        将序列长度 \(L\) 扩展至
+        <span class="text-emerald-300 font-medium">128K – 1M token</span>，
+        使模型能在单次前向传播中完成文档级、仓库级推理。
       </p>
-      <p class="text-gray-400 text-sm leading-relaxed">
-        Key challenge: standard attention is \(\mathcal{O}(L^2)\) in memory.
-        Techniques like FlashAttention, RoPE extrapolation, and chunk-wise recurrence
-        tame this cost.
+      <p class="text-lg text-gray-400 leading-relaxed">
+        核心挑战：标准注意力的显存复杂度为 \(\mathcal{O}(L^2)\)。
+        FlashAttention、RoPE 外推、分块循环等技术正在攻克这一瓶颈。
       </p>
-      <div class="mt-auto text-center text-gray-300 text-base font-mono bg-gray-900 rounded-xl px-4 py-3">
+      <div class="mt-auto text-center text-gray-300 text-xl font-mono bg-gray-900 rounded-xl px-4 py-3">
         \[ L \in [128\text{K},\; 1\text{M}] \text{ tokens} \]
       </div>
     </div>
   </div>
 
   <!-- Footer callout -->
-  <p class="mt-8 text-center text-gray-400 italic text-base">
-    Together: capable models that stay <span class="text-white font-semibold">compute-efficient</span> at scale.
+  <p class="mt-8 text-center text-xl text-gray-400 italic">
+    两者结合：在保持<span class="text-white font-semibold">计算高效</span>的同时实现大规模语言能力。
   </p>
 
   <!-- Slide counter -->
-  <span class="absolute bottom-16 right-10 text-sm text-gray-500 font-mono">2 / 3</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">2 / 6</span>
 </div>
 
 <div class="slide hidden flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
 
   <!-- Heading -->
-  <h2 class="text-4xl font-bold mb-12 text-indigo-300">Talk Structure</h2>
+  <h2 class="text-5xl font-bold mb-12 text-indigo-300">内容结构</h2>
 
   <!-- SVG pipeline diagram -->
   <div class="flex justify-center items-center flex-1">
@@ -127,65 +126,65 @@
       <!-- Box colours: indigo shades cycling -->
       <!-- Box 1: Background -->
       <rect x="5"   y="25" width="130" height="60" rx="10" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
-      <text x="70"  y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Background</text>
-      <text x="70"  y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">8 min</text>
+      <text x="70"  y="51" text-anchor="middle" fill="#e0e7ff" font-size="15" font-weight="bold">背景知识</text>
+      <text x="70"  y="69" text-anchor="middle" fill="#a5b4fc" font-size="13">8 min</text>
 
       <!-- Arrow 1→2 -->
       <line x1="135" y1="55" x2="160" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
 
       <!-- Box 2: MoE Arch -->
       <rect x="160" y="25" width="130" height="60" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
-      <text x="225" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">MoE Arch</text>
-      <text x="225" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">12 min</text>
+      <text x="225" y="51" text-anchor="middle" fill="#e0e7ff" font-size="15" font-weight="bold">MoE 架构</text>
+      <text x="225" y="69" text-anchor="middle" fill="#a5b4fc" font-size="13">12 min</text>
 
       <!-- Arrow 2→3 -->
       <line x1="290" y1="55" x2="315" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
 
       <!-- Box 3: Routing -->
       <rect x="315" y="25" width="130" height="60" rx="10" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
-      <text x="380" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Routing</text>
-      <text x="380" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">12 min</text>
+      <text x="380" y="51" text-anchor="middle" fill="#e0e7ff" font-size="15" font-weight="bold">路由算法</text>
+      <text x="380" y="69" text-anchor="middle" fill="#a5b4fc" font-size="13">12 min</text>
 
       <!-- Arrow 3→4 -->
       <line x1="445" y1="55" x2="470" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
 
       <!-- Box 4: Long Context -->
       <rect x="470" y="25" width="130" height="60" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
-      <text x="535" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Long Context</text>
-      <text x="535" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">12 min</text>
+      <text x="535" y="51" text-anchor="middle" fill="#e0e7ff" font-size="15" font-weight="bold">长上下文</text>
+      <text x="535" y="69" text-anchor="middle" fill="#a5b4fc" font-size="13">12 min</text>
 
       <!-- Arrow 4→5 -->
       <line x1="600" y1="55" x2="625" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
 
       <!-- Box 5: Integration -->
       <rect x="625" y="25" width="130" height="60" rx="10" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
-      <text x="690" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Integration</text>
-      <text x="690" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">15 min</text>
+      <text x="690" y="51" text-anchor="middle" fill="#e0e7ff" font-size="15" font-weight="bold">协同整合</text>
+      <text x="690" y="69" text-anchor="middle" fill="#a5b4fc" font-size="13">15 min</text>
 
       <!-- Arrow 5→6 -->
       <line x1="755" y1="55" x2="780" y2="55" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
 
       <!-- Box 6: Open Problems -->
       <rect x="780" y="25" width="135" height="60" rx="10" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.5"/>
-      <text x="847" y="51" text-anchor="middle" fill="#e0e7ff" font-size="13" font-weight="bold">Open Problems</text>
-      <text x="847" y="68" text-anchor="middle" fill="#a5b4fc" font-size="11">11 min</text>
+      <text x="847" y="51" text-anchor="middle" fill="#e0e7ff" font-size="14" font-weight="bold">开放问题</text>
+      <text x="847" y="69" text-anchor="middle" fill="#a5b4fc" font-size="13">11 min</text>
     </svg>
   </div>
 
   <!-- Total time note -->
-  <p class="text-center text-gray-500 text-sm mt-4">
-    Total: 8 + 12 + 12 + 12 + 15 + 11 = <span class="text-gray-300 font-semibold">70 minutes</span>
+  <p class="text-center text-gray-500 text-lg mt-4">
+    合计：8 + 12 + 12 + 12 + 15 + 11 = <span class="text-gray-300 font-semibold">70 分钟</span>
   </p>
 
   <!-- Slide counter -->
-  <span class="absolute bottom-16 right-10 text-sm text-gray-500 font-mono">3 / 3</span>
+  <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">3 / 6</span>
 </div>
 
 <div class="slide hidden relative flex flex-col justify-center bg-gray-900 text-white h-screen px-20 py-16">
 
   <!-- Title -->
-  <h2 class="text-3xl font-bold text-indigo-300 mb-8 tracking-tight">
-    专家路由机制 <span class="text-gray-400 text-xl font-normal ml-2">(Expert Routing)</span>
+  <h2 class="text-4xl font-bold text-indigo-300 mb-8 tracking-tight">
+    专家路由机制 <span class="text-gray-400 text-2xl font-normal ml-2">(Expert Routing)</span>
   </h2>
 
   <!-- Two-column layout -->
@@ -195,7 +194,7 @@
     <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 flex flex-col justify-between w-2/5 shrink-0">
 
       <div>
-        <p class="text-sm text-gray-400 uppercase tracking-widest mb-5 font-mono">Gating Function</p>
+        <p class="text-lg text-gray-400 uppercase tracking-widest mb-5 font-mono">Gating Function</p>
 
         <div class="text-base leading-loose mb-6">
           \[
@@ -203,7 +202,7 @@
           \]
         </div>
 
-        <p class="text-sm text-gray-400 uppercase tracking-widest mb-5 font-mono">Final Output</p>
+        <p class="text-lg text-gray-400 uppercase tracking-widest mb-5 font-mono">Final Output</p>
 
         <div class="text-base leading-loose mb-6">
           \[
@@ -211,7 +210,7 @@
           \]
         </div>
 
-        <p class="text-gray-300 text-sm leading-relaxed">
+        <p class="text-gray-300 text-lg leading-relaxed">
           每个 token 独立选择 top-&#x202f;<span class="text-indigo-300 font-semibold">\(k\)</span> 个专家，
           仅激活对应的 FFN 子网络，其余专家参数在推理时不参与计算。
         </p>
@@ -220,7 +219,7 @@
       <!-- Load balancing warning -->
       <div class="mt-6 bg-amber-950 border border-amber-700 rounded-xl px-5 py-3 flex items-start gap-3">
         <span class="text-amber-300 text-lg mt-0.5">&#9888;</span>
-        <p class="text-amber-300 text-sm leading-relaxed">
+        <p class="text-amber-300 text-base leading-relaxed">
           <span class="font-semibold">负载均衡：</span>需辅助损失防止路由坍塌
           <span class="text-amber-400 text-xs ml-1">(auxiliary loss prevents expert collapse)</span>
         </p>
@@ -229,7 +228,7 @@
 
     <!-- Right: SVG Flow Diagram -->
     <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col flex-1 justify-center">
-      <p class="text-sm text-gray-400 uppercase tracking-widest mb-4 font-mono">路由流程示意</p>
+      <p class="text-lg text-gray-400 uppercase tracking-widest mb-4 font-mono">路由流程示意</p>
 
       <svg
         viewBox="0 0 820 270"
@@ -259,32 +258,32 @@
 
         <!-- 1. 输入 token -->
         <rect x="14" y="108" width="88" height="54" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
-        <text x="58" y="130" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">输入</text>
-        <text x="58" y="148" text-anchor="middle" fill="#93c5fd" font-size="12" font-family="sans-serif">token</text>
+        <text x="58" y="130" text-anchor="middle" fill="white" font-size="14" font-family="sans-serif">输入</text>
+        <text x="58" y="148" text-anchor="middle" fill="#93c5fd" font-size="14" font-family="sans-serif">token</text>
 
         <!-- Arrow 1→2 -->
         <line x1="102" y1="135" x2="128" y2="135" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrow)"/>
 
         <!-- 2. 门控网络 W_g -->
         <rect x="130" y="108" width="92" height="54" rx="8" fill="#1f2937" stroke="#6366f1" stroke-width="1.5"/>
-        <text x="176" y="130" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">门控网络</text>
-        <text x="176" y="149" text-anchor="middle" fill="#a5b4fc" font-size="12" font-family="sans-serif" font-style="italic">W&#x2092;</text>
+        <text x="176" y="130" text-anchor="middle" fill="white" font-size="14" font-family="sans-serif">门控网络</text>
+        <text x="176" y="149" text-anchor="middle" fill="#a5b4fc" font-size="14" font-family="sans-serif" font-style="italic">W&#x2092;</text>
 
         <!-- Arrow 2→3 -->
         <line x1="222" y1="135" x2="248" y2="135" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrow)"/>
 
         <!-- 3. Softmax -->
         <rect x="250" y="108" width="88" height="54" rx="8" fill="#1f2937" stroke="#6366f1" stroke-width="1.5"/>
-        <text x="294" y="130" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">Softmax</text>
-        <text x="294" y="149" text-anchor="middle" fill="#a5b4fc" font-size="11" font-family="sans-serif">得分归一化</text>
+        <text x="294" y="130" text-anchor="middle" fill="white" font-size="14" font-family="sans-serif">Softmax</text>
+        <text x="294" y="149" text-anchor="middle" fill="#a5b4fc" font-size="13" font-family="sans-serif">得分归一化</text>
 
         <!-- Arrow 3→4 -->
         <line x1="338" y1="135" x2="364" y2="135" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrow)"/>
 
         <!-- 4. TopK 选择 -->
         <rect x="366" y="108" width="92" height="54" rx="8" fill="#1f2937" stroke="#6366f1" stroke-width="1.5"/>
-        <text x="412" y="130" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">TopK 选择</text>
-        <text x="412" y="149" text-anchor="middle" fill="#a5b4fc" font-size="11" font-family="sans-serif">k 个专家</text>
+        <text x="412" y="130" text-anchor="middle" fill="white" font-size="14" font-family="sans-serif">TopK 选择</text>
+        <text x="412" y="149" text-anchor="middle" fill="#a5b4fc" font-size="13" font-family="sans-serif">k 个专家</text>
 
         <!-- Fan-out arrows from TopK to experts -->
         <!-- To Expert 1 (top) -->
@@ -298,23 +297,23 @@
 
         <!-- Expert 1 (active, indigo) -->
         <rect x="522" y="36" width="96" height="44" rx="7" fill="#4f46e5" stroke="#818cf8" stroke-width="1.8"/>
-        <text x="570" y="53" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif" font-weight="600">Expert 1</text>
-        <text x="570" y="70" text-anchor="middle" fill="#c7d2fe" font-size="11" font-family="sans-serif">FFN&#x2081;(x)</text>
+        <text x="570" y="53" text-anchor="middle" fill="white" font-size="14" font-family="sans-serif" font-weight="600">Expert 1</text>
+        <text x="570" y="70" text-anchor="middle" fill="#c7d2fe" font-size="13" font-family="sans-serif">FFN&#x2081;(x)</text>
 
         <!-- Expert 2 (active, indigo) -->
         <rect x="522" y="83" width="96" height="44" rx="7" fill="#4f46e5" stroke="#818cf8" stroke-width="1.8"/>
-        <text x="570" y="100" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif" font-weight="600">Expert 2</text>
-        <text x="570" y="117" text-anchor="middle" fill="#c7d2fe" font-size="11" font-family="sans-serif">FFN&#x2082;(x)</text>
+        <text x="570" y="100" text-anchor="middle" fill="white" font-size="14" font-family="sans-serif" font-weight="600">Expert 2</text>
+        <text x="570" y="117" text-anchor="middle" fill="#c7d2fe" font-size="13" font-family="sans-serif">FFN&#x2082;(x)</text>
 
         <!-- Expert 3 (inactive) -->
         <rect x="522" y="141" width="96" height="44" rx="7" fill="#374151" stroke="#4b5563" stroke-width="1.4" opacity="0.5"/>
-        <text x="570" y="158" text-anchor="middle" fill="#9ca3af" font-size="12" font-family="sans-serif">Expert 3</text>
-        <text x="570" y="175" text-anchor="middle" fill="#6b7280" font-size="11" font-family="sans-serif">FFN&#x2083;(x)</text>
+        <text x="570" y="158" text-anchor="middle" fill="#9ca3af" font-size="14" font-family="sans-serif">Expert 3</text>
+        <text x="570" y="175" text-anchor="middle" fill="#6b7280" font-size="13" font-family="sans-serif">FFN&#x2083;(x)</text>
 
         <!-- Expert N (inactive) -->
         <rect x="522" y="188" width="96" height="44" rx="7" fill="#374151" stroke="#4b5563" stroke-width="1.4" opacity="0.5"/>
-        <text x="570" y="205" text-anchor="middle" fill="#9ca3af" font-size="12" font-family="sans-serif">Expert N</text>
-        <text x="570" y="222" text-anchor="middle" fill="#6b7280" font-size="11" font-family="sans-serif">FFN&#x2099;(x)</text>
+        <text x="570" y="205" text-anchor="middle" fill="#9ca3af" font-size="14" font-family="sans-serif">Expert N</text>
+        <text x="570" y="222" text-anchor="middle" fill="#6b7280" font-size="13" font-family="sans-serif">FFN&#x2099;(x)</text>
 
         <!-- Ellipsis between expert 3 and N -->
         <text x="570" y="242" text-anchor="middle" fill="#4b5563" font-size="16" font-family="sans-serif">&#183;&#183;&#183;</text>
@@ -325,8 +324,8 @@
 
         <!-- 加权求和 -->
         <rect x="677" y="97" width="84" height="54" rx="8" fill="#1f2937" stroke="#6366f1" stroke-width="1.5"/>
-        <text x="719" y="119" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">加权求和</text>
-        <text x="719" y="138" text-anchor="middle" fill="#a5b4fc" font-size="11" font-family="sans-serif">&#x03A3; g&#x1D62;&#xB7;FFN&#x1D62;</text>
+        <text x="719" y="119" text-anchor="middle" fill="white" font-size="14" font-family="sans-serif">加权求和</text>
+        <text x="719" y="138" text-anchor="middle" fill="#a5b4fc" font-size="13" font-family="sans-serif">&#x03A3; g&#x1D62;&#xB7;FFN&#x1D62;</text>
 
         <!-- Arrow → 输出 -->
         <line x1="761" y1="124" x2="786" y2="124" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrow)"/>
@@ -337,9 +336,9 @@
 
         <!-- Legend -->
         <rect x="16" y="220" width="14" height="14" rx="3" fill="#4f46e5" stroke="#818cf8" stroke-width="1.2"/>
-        <text x="36" y="232" fill="#a5b4fc" font-size="11" font-family="sans-serif">激活专家 (active expert)</text>
+        <text x="36" y="232" fill="#a5b4fc" font-size="13" font-family="sans-serif">激活专家 (active expert)</text>
         <rect x="200" y="220" width="14" height="14" rx="3" fill="#374151" stroke="#4b5563" stroke-width="1.2" opacity="0.6"/>
-        <text x="220" y="232" fill="#6b7280" font-size="11" font-family="sans-serif">未激活专家 (inactive expert)</text>
+        <text x="220" y="232" fill="#6b7280" font-size="13" font-family="sans-serif">未激活专家 (inactive expert)</text>
       </svg>
     </div>
   </div>
@@ -352,10 +351,10 @@
 <div class="slide hidden flex flex-col justify-start h-screen bg-gray-900 text-white px-20 py-16">
 
   <!-- Heading -->
-  <h2 class="text-4xl font-bold mb-4 text-emerald-300">注意力机制的扩展性挑战</h2>
+  <h2 class="text-5xl font-bold mb-4 text-emerald-300">注意力机制的扩展性挑战</h2>
 
   <!-- Problem statement -->
-  <p class="text-gray-300 text-lg leading-relaxed mb-8">
+  <p class="text-xl text-gray-300 leading-relaxed mb-8">
     标准 Self-Attention 的时间与空间复杂度均为 \(\mathcal{O}(L^2)\)，当 \(L\) 增大至 128K–1M 时，
     计算与显存开销成为主要瓶颈。
   </p>
@@ -366,10 +365,10 @@
     <!-- Left: comparison table -->
     <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden flex flex-col">
       <div class="px-6 py-3 bg-gray-700 border-b border-gray-600">
-        <h3 class="text-base font-semibold text-emerald-300 tracking-wide uppercase">复杂度对比</h3>
+        <h3 class="text-lg font-semibold text-emerald-300 tracking-wide uppercase">复杂度对比</h3>
       </div>
       <div class="overflow-auto flex-1">
-        <table class="w-full text-sm text-left border-collapse">
+        <table class="w-full text-lg text-left border-collapse">
           <thead>
             <tr class="bg-gray-700 text-gray-300">
               <th class="px-5 py-3 font-semibold">方法</th>
@@ -391,7 +390,7 @@
               <td class="px-5 py-3 font-mono text-emerald-300 font-semibold">FlashAttention</td>
               <td class="px-4 py-3 text-center text-red-400">\(\mathcal{O}(L^2)\)</td>
               <td class="px-4 py-3 text-center text-emerald-300 font-semibold">\(\mathcal{O}(L)\)</td>
-              <td class="px-4 py-3 text-emerald-200 text-xs leading-tight">IO 优化，不改变<br/>渐近复杂度</td>
+              <td class="px-4 py-3 text-emerald-200 text-base leading-tight">IO 优化，不改变<br/>渐近复杂度</td>
             </tr>
             <!-- Sparse Attention -->
             <tr class="bg-gray-800 border-b border-gray-700">
@@ -421,7 +420,7 @@
 
     <!-- Right: scaling curve SVG -->
     <div class="bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col">
-      <h3 class="text-base font-semibold text-emerald-300 tracking-wide uppercase mb-3">计算/显存开销随序列长度的增长</h3>
+        <h3 class="text-lg font-semibold text-emerald-300 tracking-wide uppercase mb-3">计算/显存开销随序列长度的增长</h3>
       <svg viewBox="0 0 480 260" width="100%" height="260" xmlns="http://www.w3.org/2000/svg" style="background:#1f2937; border-radius:0.75rem;">
 
         <!-- Grid lines vertical -->
@@ -506,7 +505,7 @@
       </svg>
 
       <!-- Key insight callout -->
-      <p class="mt-4 text-xs text-gray-400 leading-relaxed">
+      <p class="mt-4 text-base text-gray-400 leading-relaxed">
         <span class="text-emerald-300 font-semibold">关键洞察：</span>
         FlashAttention 将显存从 \(\mathcal{O}(L^2)\) 降至 \(\mathcal{O}(L)\)（IO 重计算），
         是目前工程实践中最广泛使用的优化。Mamba 等 SSM 方法则在算法层面实现真正线性复杂度。
@@ -521,7 +520,7 @@
 <div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
 
   <!-- Heading -->
-  <h2 class="text-4xl font-bold mb-10 text-white">核心收获与展望</h2>
+  <h2 class="text-5xl font-bold mb-10 text-white">核心收获与展望</h2>
 
   <!-- 2×2 card grid -->
   <div class="grid grid-cols-2 gap-6 flex-1 min-h-0">
@@ -542,9 +541,9 @@
           <line x1="30" y1="26" x2="26" y2="34" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
           <line x1="30" y1="26" x2="34" y2="34" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
         </svg>
-        <h3 class="text-xl font-semibold text-indigo-400">Mixture of Experts</h3>
+        <h3 class="text-2xl font-semibold text-indigo-400">Mixture of Experts</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-indigo-400 mt-0.5 shrink-0">▸</span>
           <span>稀疏激活：每 token 仅激活 \(k\) / \(N_{\text{exp}}\) 个专家，大幅降低 active FLOPs</span>
@@ -572,9 +571,9 @@
           <line x1="18" y1="14" x2="18" y2="26" stroke="#34d399" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.5"/>
           <line x1="26" y1="14" x2="26" y2="26" stroke="#34d399" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.5"/>
         </svg>
-        <h3 class="text-xl font-semibold text-emerald-400">长上下文技术</h3>
+        <h3 class="text-2xl font-semibold text-emerald-400">长上下文技术</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-emerald-400 mt-0.5 shrink-0">▸</span>
           <span>位置编码外推：RoPE, ALiBi, YaRN — 突破训练时长度限制</span>
@@ -599,9 +598,9 @@
           <circle cx="25" cy="20" r="11" stroke="#a78bfa" stroke-width="2"/>
           <path d="M20 10.5 a11 11 0 0 1 0 19 a11 11 0 0 1 0-19 Z" fill="#a78bfa" opacity="0.25"/>
         </svg>
-        <h3 class="text-xl font-semibold text-purple-400">MoE × 长上下文</h3>
+        <h3 class="text-2xl font-semibold text-purple-400">MoE × 长上下文</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-purple-400 mt-0.5 shrink-0">▸</span>
           <span>稀疏激活缓解长序列带来的计算压力，使 \(L\) 规模化更可行</span>
@@ -630,9 +629,9 @@
           <line x1="12" y1="36" x2="12" y2="40" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
           <line x1="28" y1="4"  x2="28" y2="0"  stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
         </svg>
-        <h3 class="text-xl font-semibold text-amber-400">待解决问题</h3>
+        <h3 class="text-2xl font-semibold text-amber-400">待解决问题</h3>
       </div>
-      <ul class="text-gray-200 text-sm leading-relaxed space-y-2 flex-1">
+      <ul class="text-gray-200 text-lg leading-relaxed space-y-2 flex-1">
         <li class="flex items-start gap-2">
           <span class="text-amber-400 mt-0.5 shrink-0">▸</span>
           <span>路由可解释性与稳定性：专家坍缩与 token dropping 如何根治？</span>
