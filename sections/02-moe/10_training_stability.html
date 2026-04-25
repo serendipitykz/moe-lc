@@ -1,5 +1,5 @@
-<div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<!-- 演讲备注: 强调没有辅助损失时路由会"塌陷"到少数专家，导致大多数专家永远不被激活。展示公式推导辅助损失如何把 f_i 拉向均匀分布。Z-loss 是 ST-MoE 引入的额外稳定项。 -->
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">强调没有辅助损失时路由会"塌陷"到少数专家，导致大多数专家永远不被激活。展示公式推导辅助损失如何把 f_i 拉向均匀分布。Z-loss 是 ST-MoE 引入的额外稳定项。</aside>
 
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 训练稳定性</h2>
   <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-6">负载均衡损失 · 专家崩塌 · Z-loss</p>

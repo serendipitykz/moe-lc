@@ -1,5 +1,5 @@
-<div class="slide hidden flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<!-- 演讲备注: Ring Attention 是长上下文的"分布式解法"。类比：一个大圆桌上 P 个人互相传菜单（K/V），每个人同时对自己面前的菜单做计算。通信和计算完全重叠，所以没有延迟代价。 -->
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">Ring Attention 是长上下文的"分布式解法"。类比：一个大圆桌上 P 个人互相传菜单（K/V），每个人同时对自己面前的菜单做计算。通信和计算完全重叠，所以没有延迟代价。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">Ring Attention 与序列并行</h2>
   <p class="text-xl text-gray-400 mb-6">将超长序列分布到多个 GPU，打破单卡显存上限</p>
