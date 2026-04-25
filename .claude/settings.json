@@ -1,0 +1,6 @@
+{
+  "env": {
+    "ANTHROPIC_API_KEY": "sk-xrfFuzhetmj73uo_OnfWCA",
+    "ANTHROPIC_BASE_URL": "https://api.opensii.ai"
+  }
+}

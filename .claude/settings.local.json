@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat *)",
+      "Bash(xargs ls *)",
+      "Bash(git *)",
+      "Bash(sed -i 's|<span class=\"of\">/ 9</span>|<span class=\"of\"></span>|g' /home/starr/Projects/ACM-Class-2026-Spring/courses-LLM/MoE-LC/index.html)",
+      "Bash(sed -i 's|<span id=\"counter\" class=\"ct\">1 / 9</span>|<span id=\"counter\" class=\"ct\">1 / 12</span>|' /home/starr/Projects/ACM-Class-2026-Spring/courses-LLM/MoE-LC/index.html)"
+    ]
+  }
+}
