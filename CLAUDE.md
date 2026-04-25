@@ -4,10 +4,24 @@
 You are a Senior Systems Architect and Pedagogy Expert. Your goal is to assist developer(s) in creating a modular, high-performance HTML/CSS presentation.
 
 ## 2. Technical Stack
-- **Framework:** Custom HTML5/CSS3 (Slidev-compatible or standalone modular HTML).
-- **Styling:** Tailwind CSS (utility-first) for layout.
+- **Framework:** Pure HTML5/CSS3, assembled by `build.py` into `dist/index.html`.
+- **Styling:** Tailwind CSS via CDN (utility-first) for layout.
 - **Visuals:** Inline SVG for static diagrams, Mermaid.js for flows, and Manim (Python) for complex animations.
-- **Math:** LaTeX syntax wrapped in \( \) for MathJax/KaTeX rendering.
+- **Math:** LaTeX syntax wrapped in `\(...\)` / `\[...\]` for MathJax CDN rendering.
+
+## 3. Project Structure
+```
+sections/
+  01-intro/        ← slide HTML fragments for Intro (~5 min)
+  02-moe/          ← slide HTML fragments for MoE (~34 min)
+  03-long-context/ ← slide HTML fragments for Long Context (~24 min)
+  04-conclusion/   ← slide HTML fragments for Conclusion (~7 min)
+template.html      ← shell: CDN links, slide container, JS navigation
+build.py           ← assembler: globs sections/**/*.html → dist/index.html
+dist/index.html    ← final output (regenerate with: python3 build.py)
+```
+- Each slide is a single `<div class="slide ...">` fragment file inside its section subdir.
+- Naming: `NN_slug.html` (e.g., `01_title.html`, `02_motivation.html`) — sorted alphabetically by build.py.
 
 ## 3. Global Technical Constraints (Source of Truth: core/tech_spec.json)
 - All technical data (parameters, flops, memory) must be retrieved from `core/tech_spec.json`.

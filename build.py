@@ -35,10 +35,10 @@ def main() -> None:
     if PLACEHOLDER not in template_html:
         sys.exit(f"Error: placeholder '{PLACEHOLDER}' not found in template.html.")
 
-    # 2. Glob and sort section files
-    section_files = sorted(SECTIONS_DIR.glob("*.html"))
+    # 2. Glob and sort section files across subdirs (sections/NN-name/NN_slug.html)
+    section_files = sorted(SECTIONS_DIR.rglob("*.html"))
     if not section_files:
-        sys.exit(f"Error: no .html files found in {SECTIONS_DIR}.")
+        sys.exit(f"Error: no .html files found under {SECTIONS_DIR}.")
 
     # 3. Concatenate fragments
     fragments: list[str] = []
