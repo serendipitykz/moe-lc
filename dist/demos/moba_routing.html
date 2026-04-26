@@ -13,79 +13,79 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 28px 20px 40px;
+      padding: 28px 3% 40px;
     }
 
     /* ── Back button ── */
     .back-btn {
       position: fixed; top: 14px; left: 14px;
       background: #1e293b; border: 1px solid #334155;
-      color: #94a3b8; padding: 6px 14px; border-radius: 8px;
-      cursor: pointer; font-size: 13px; transition: background 0.15s, color 0.15s;
+      color: #94a3b8; padding: 8px 18px; border-radius: 8px;
+      cursor: pointer; font-size: 15px; transition: background 0.15s, color 0.15s;
     }
     .back-btn:hover { background: #334155; color: #f1f5f9; }
 
     /* ── Header ── */
-    h1 { font-size: 22px; font-weight: 700; color: #a78bfa; margin-bottom: 4px; }
-    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 28px; text-align: center; }
+    h1 { font-size: 34px; font-weight: 700; color: #a78bfa; margin-bottom: 6px; }
+    .subtitle { font-size: 17px; color: #64748b; margin-bottom: 32px; text-align: center; }
 
     /* ── Main layout ── */
     .card {
-      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
-      padding: 20px 24px; width: 100%; max-width: 780px; margin-bottom: 16px;
+      background: #1e293b; border: 1px solid #334155; border-radius: 18px;
+      padding: 28px 36px; width: 100%; max-width: min(95vw, 1400px); margin-bottom: 20px;
     }
     .section-label {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
-      color: #475569; margin-bottom: 10px; font-weight: 600;
+      font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #475569; margin-bottom: 16px; font-weight: 600;
     }
 
     /* ── Block sequence row ── */
     .blocks-row {
-      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
     }
     .block {
-      width: 62px; height: 62px; border-radius: 10px;
+      width: 92px; height: 92px; border-radius: 14px;
       border: 2px solid #334155; background: #0f172a;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 3px;
+      align-items: center; justify-content: center; gap: 5px;
       cursor: pointer; transition: all 0.25s; user-select: none;
     }
-    .block .blabel { font-size: 13px; font-weight: 700; }
-    .block .bsub   { font-size: 9px;  color: #475569; }
+    .block .blabel { font-size: 20px; font-weight: 700; }
+    .block .bsub   { font-size: 13px; color: #475569; }
     .block:hover   { border-color: #64748b; }
 
     .block.inactive .blabel { color: #475569; }
     .block.inactive .bsub   { color: #334155; }
 
     .block.current {
-      background: #431407; border-color: #f59e0b; border-width: 2.5px;
+      background: #431407; border-color: #f59e0b; border-width: 3px;
     }
     .block.current .blabel { color: #fbbf24; }
     .block.current .bsub   { color: #d97706; }
 
     .block.selected {
-      background: #1e1b4b; border-color: #7c3aed; border-width: 2.5px;
+      background: #1e1b4b; border-color: #7c3aed; border-width: 3px;
     }
     .block.selected .blabel { color: #c4b5fd; }
     .block.selected .bsub   { color: #7c3aed; }
 
     /* ── Score bars ── */
-    .scores-section { margin-top: 14px; }
+    .scores-section { margin-top: 20px; }
     .scores-row {
-      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
       align-items: flex-end;
     }
     .score-col {
-      width: 62px; display: flex; flex-direction: column;
-      align-items: center; gap: 4px;
+      width: 92px; display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
     }
     .bar-track {
-      width: 26px; height: 72px; background: #0f172a;
-      border-radius: 5px; position: relative; overflow: hidden;
+      width: 40px; height: 110px; background: #0f172a;
+      border-radius: 7px; position: relative; overflow: hidden;
     }
     .bar-fill {
       position: absolute; bottom: 0; left: 0; right: 0;
-      border-radius: 5px;
+      border-radius: 6px;
       transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
                   background 0.3s ease;
     }
@@ -93,7 +93,7 @@
     .bar-fill.selected  { background: #7c3aed; }
     .bar-fill.current   { background: #f59e0b; height: 100% !important; }
     .score-num {
-      font-size: 10px; font-family: monospace; color: #475569;
+      font-size: 13px; font-family: monospace; color: #475569;
       transition: color 0.2s;
     }
     .score-num.selected { color: #a78bfa; }
@@ -101,37 +101,37 @@
 
     /* ── Controls ── */
     .controls {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
     }
-    .ctrl-label { font-size: 13px; color: #94a3b8; }
+    .ctrl-label { font-size: 18px; color: #94a3b8; }
     input[type=range] {
-      width: 100%; max-width: 540px;
+      width: 100%; max-width: 800px;
       accent-color: #7c3aed; cursor: pointer;
     }
 
     /* ── Formula ── */
     .formula-row {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      justify-content: center; margin-top: 2px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      justify-content: center; margin-top: 4px;
     }
     .formula-chip {
       background: #1e1b4b; border: 1px solid #4c1d95;
-      border-radius: 8px; padding: 8px 16px;
-      font-family: monospace; font-size: 13px; color: #c4b5fd;
+      border-radius: 10px; padding: 10px 22px;
+      font-family: monospace; font-size: 16px; color: #c4b5fd;
     }
-    .formula-note { font-size: 12px; color: #64748b; text-align: center; margin-top: 6px; }
+    .formula-note { font-size: 15px; color: #64748b; text-align: center; margin-top: 10px; }
 
     /* ── Legend ── */
     .legend {
-      display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+      display: flex; gap: 28px; flex-wrap: wrap; justify-content: center;
     }
-    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #94a3b8; }
-    .leg-dot { width: 13px; height: 13px; border-radius: 4px; flex-shrink: 0; }
+    .legend-item { display: flex; align-items: center; gap: 10px; font-size: 16px; color: #94a3b8; }
+    .leg-dot { width: 18px; height: 18px; border-radius: 6px; flex-shrink: 0; }
 
     /* ── Status banner ── */
     .status-banner {
-      font-size: 13px; color: #94a3b8; text-align: center; padding: 6px 0;
-      min-height: 22px;
+      font-size: 17px; color: #94a3b8; text-align: center; padding: 12px 0;
+      min-height: 30px;
     }
     .status-banner .hi { color: #c4b5fd; font-weight: 600; }
     .status-banner .lo { color: #fbbf24; font-weight: 600; }
@@ -162,11 +162,11 @@
   <div class="card controls">
     <div class="ctrl-label" id="ctrl-label">Query position: Block 1</div>
     <input type="range" id="query-slider" min="0" max="9" value="0" />
-    <div style="display:flex;gap:12px;align-items:center;margin-top:4px">
-      <label style="font-size:12px;color:#64748b">Top-k blocks:</label>
+    <div style="display:flex;gap:16px;align-items:center;margin-top:6px">
+      <label style="font-size:16px;color:#64748b">Top-k blocks:</label>
       <input type="range" id="topk-slider" min="1" max="4" value="2"
-             style="width:120px;accent-color:#7c3aed"/>
-      <span id="topk-display" style="font-size:13px;color:#c4b5fd;font-family:monospace">k = 2</span>
+             style="width:160px;accent-color:#7c3aed"/>
+      <span id="topk-display" style="font-size:18px;color:#c4b5fd;font-family:monospace">k = 2</span>
     </div>
   </div>
 
