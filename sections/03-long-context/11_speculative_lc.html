@@ -1,0 +1,171 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
+<aside class="notes">长上下文推理的速度问题：传统投机采样在长上下文下失效，RAPID 和 SuffixDecoding 是两种不同的解决路径。重点是投机采样失效的原因——这是一个值得深思的系统性问题。
+---
+讲完了注意力机制本身的效率，我们来看推理速度的另一个角度：**投机采样（Speculative Decoding）**在长上下文下的问题和新的解决方案。
+
+**为什么传统投机采样在长上下文下失效？**
+
+投机采样的基本思路大家应该熟悉：用一个小的 draft 模型快速生成若干候选 token，然后用大的 target 模型批量验证，接受或拒绝。在短上下文场景下这很有效，典型加速 3-4x。
+
+但在长上下文场景（128K 甚至 1M token），传统投机采样面临两个根本性问题：
+
+第一，**KV Cache 内存压力**。长上下文下，target 模型的 KV Cache 本身就需要几十 GB。再加上 draft 模型的 KV Cache，两套缓存同时占用内存，导致 batch size 被迫减小，整体吞吐量反而下降。
+
+第二，**接受率崩溃**。draft 模型通常参数量比 target 模型小 5-10 倍，在短上下文下还能给出相近的分布。但在长上下文下，draft 模型对这么长的 prefix 的理解已经严重偏离 target 模型——它的"注意力能力"不足以处理长序列，生成的 token 会偏离分布，导致大量被拒绝，加速效果消失。
+
+**RAPID：用 RAG 替代 draft 模型**
+
+RAPID 的洞察是：为什么 draft 模型对长序列理解差？因为它需要处理全部 prefix。但如果我们用 RAG 从长上下文里检索出最相关的 4K token，再让 draft 用这个**短**的检索结果来预测，draft 的准确率就能大幅提升。
+
+理论依据：4K 精确检索 ≈ 128K 全量上下文的准确率。实验表明，对于大多数 QA 任务，检索到正确片段后，4K 上下文模型的答案和 128K 全量模型高度一致。
+
+RAPID 修改了传统的接受准则：加入检索置信度作为权重，接受条件变为 r ≤ min(1, p_φ(x_i|C) / q_ψ(x_i|C_S))，其中 C 是完整上下文，C_S 是检索子集。
+
+**SuffixDecoding：从历史生成中找规律**
+
+SuffixDecoding 的思路完全不同。它的观察是：语言有大量的重复模式——特定的短语后面往往跟着相似的后续词。如果我们维护两棵后缀树：一棵来自当前推理会话的历史输出，一棵来自大型语言模型语料库，就可以在推理时查找"当前上下文末尾的后缀"对应的历史续写，生成一棵投机树。然后让 target 模型批量验证这棵树，取最优分支。
+
+SuffixDecoding 完全不需要 draft 模型，也不需要额外的 KV Cache——它是纯粹基于历史记录的模式匹配。实测约 3 倍加速。
+
+总结来说，长上下文推理加速是一个系统级问题，不只是算法问题——需要内存管理、并行策略和推理策略的联合优化。</aside>
+
+  <h2 class="text-4xl font-bold mb-1 text-orange-300">长上下文推理加速</h2>
+  <p class="text-lg text-gray-400 mb-3">传统投机采样在长上下文下失效——RAPID（RAG 代草稿）与 SuffixDecoding（后缀树投机）两条新路径</p>
+
+  <div class="flex gap-6 flex-1 min-h-0">
+
+    <!-- Left: Why SD fails -->
+    <div class="flex-[3] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-red-900 p-4 flex flex-col gap-3">
+        <h3 class="text-lg font-semibold text-red-300">传统投机采样的失效</h3>
+
+        <div class="flex flex-col gap-2">
+          <div class="bg-red-950 bg-opacity-40 border border-red-900 rounded-xl p-3">
+            <p class="text-sm font-semibold text-red-300 mb-1">① KV Cache 内存压力</p>
+            <p class="text-sm text-gray-300">128K 上下文下，target + draft 两套 KV Cache 同时占显存，强制减小 batch size，整体吞吐量下降。</p>
+          </div>
+          <div class="bg-red-950 bg-opacity-40 border border-red-900 rounded-xl p-3">
+            <p class="text-sm font-semibold text-red-300 mb-1">② 接受率崩溃</p>
+            <p class="text-sm text-gray-300">Draft 模型对超长 prefix 的理解严重偏离 target 模型——生成 token 偏离分布，大量被拒绝，加速效果消失。</p>
+          </div>
+        </div>
+
+        <!-- SD acceptance rate SVG -->
+        <svg viewBox="0 0 200 80" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="ax-sd" markerWidth="5" markerHeight="4" refX="5" refY="2" orient="auto">
+              <polygon points="0 0,5 2,0 4" fill="#4b5563"/>
+            </marker>
+          </defs>
+          <line x1="20" y1="68" x2="195" y2="68" stroke="#4b5563" stroke-width="1" marker-end="url(#ax-sd)"/>
+          <line x1="20" y1="68" x2="20"  y2="8"  stroke="#4b5563" stroke-width="1" marker-end="url(#ax-sd)"/>
+          <text x="107" y="78" text-anchor="middle" font-size="7" fill="#9ca3af">context length</text>
+          <text x="14"  y="38" text-anchor="middle" font-size="7" fill="#9ca3af" transform="rotate(-90,14,38)">accept rate</text>
+          <!-- Normal SD line (drops steeply) -->
+          <path d="M 20 20 C 60 18 100 40 170 65" stroke="#ef4444" stroke-width="2" fill="none"/>
+          <text x="175" y="62" font-size="7" fill="#ef4444">std SD</text>
+          <!-- RAPID line (stays high) -->
+          <path d="M 20 20 C 80 20 120 22 170 26" stroke="#22c55e" stroke-width="2" fill="none" stroke-dasharray="4 2"/>
+          <text x="175" y="22" font-size="7" fill="#22c55e">RAPID</text>
+          <!-- Vertical markers -->
+          <line x1="90"  y1="14" x2="90"  y2="68" stroke="#374151" stroke-width="1" stroke-dasharray="3 2"/>
+          <line x1="140" y1="14" x2="140" y2="68" stroke="#374151" stroke-width="1" stroke-dasharray="3 2"/>
+          <text x="90"  y="11" text-anchor="middle" font-size="7" fill="#6b7280">32K</text>
+          <text x="140" y="11" text-anchor="middle" font-size="7" fill="#6b7280">128K</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Middle: RAPID -->
+    <div class="flex-[4] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-green-800 p-4 flex flex-col gap-3">
+        <h3 class="text-lg font-semibold text-green-200">RAPID：RAG 充当草稿模型</h3>
+        <p class="text-sm text-gray-300">用 RAG 检索器替代 draft 模型——4K 精确检索片段 ≈ 128K 全量上下文的预测准确率。</p>
+
+        <!-- RAPID flow SVG -->
+        <svg viewBox="0 0 240 120" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Long context input -->
+          <rect x="5"  y="4"  width="230" height="18" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+          <text x="120" y="16" text-anchor="middle" font-size="8" fill="#93c5fd">full context C  (128K tokens)</text>
+
+          <!-- RAG retrieval -->
+          <line x1="120" y1="22" x2="120" y2="36" stroke="#6b7280" stroke-width="1"/>
+          <rect x="40" y="36" width="160" height="20" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="1.2"/>
+          <text x="120" y="50" text-anchor="middle" font-size="8" fill="#6ee7b7">RAG retrieval  →  C_S  (4K)</text>
+
+          <!-- Draft model (small) -->
+          <line x1="120" y1="56" x2="120" y2="70" stroke="#6b7280" stroke-width="1"/>
+          <rect x="60" y="70" width="120" height="20" rx="3" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="120" y="84" text-anchor="middle" font-size="8" fill="#a5b4fc">small draft model q_ψ(x|C_S)</text>
+
+          <!-- Target model verification -->
+          <line x1="120" y1="90" x2="120" y2="104" stroke="#6b7280" stroke-width="1"/>
+          <rect x="40" y="104" width="160" height="14" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1"/>
+          <text x="120" y="114" text-anchor="middle" font-size="8" fill="#fbbf24">target verify: r ≤ min(1, p_φ/q_ψ)</text>
+        </svg>
+
+        <p class="text-sm text-gray-400">接受准则纳入检索置信度：r ≤ min(1, p_φ(x|C) / q_ψ(x|C_S))。</p>
+
+        <div class="bg-green-950 bg-opacity-40 border border-green-800 rounded-xl p-3">
+          <p class="text-sm text-green-300 font-semibold">关键洞察</p>
+          <p class="text-sm text-gray-300 mt-0.5">4K 精确检索 ≈ 128K 全量上下文准确率（大多数 QA 任务）；draft 始终在短上下文下运行，接受率稳定。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: SuffixDecoding -->
+    <div class="flex-[4] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-purple-800 p-4 flex flex-col gap-3">
+        <h3 class="text-lg font-semibold text-purple-200">SuffixDecoding：后缀树投机</h3>
+        <p class="text-sm text-gray-300">无 draft 模型——从推理历史和语料库构建后缀树，生成投机树后批量验证。</p>
+
+        <!-- Suffix tree SVG -->
+        <svg viewBox="0 0 240 100" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Two suffix trees -->
+          <rect x="4"  y="4"  width="106" height="36" rx="4" fill="#1e3a5f" stroke="#6366f1" stroke-width="1"/>
+          <text x="57" y="17"  text-anchor="middle" font-size="7.5" fill="#a5b4fc" font-weight="bold">Session Suffix Tree</text>
+          <text x="57" y="29"  text-anchor="middle" font-size="7"   fill="#6b7280">current inference history</text>
+          <rect x="130" y="4"  width="106" height="36" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
+          <text x="183" y="17" text-anchor="middle" font-size="7.5" fill="#6ee7b7" font-weight="bold">Corpus Suffix Tree</text>
+          <text x="183" y="29" text-anchor="middle" font-size="7"   fill="#6b7280">large LM corpus</text>
+
+          <!-- Merge arrow -->
+          <line x1="110" y1="22" x2="130" y2="22" stroke="#6b7280" stroke-width="1"/>
+          <text x="120" y="19" text-anchor="middle" font-size="7" fill="#4b5563">+</text>
+
+          <!-- Speculation tree -->
+          <line x1="120" y1="40" x2="120" y2="52" stroke="#6b7280" stroke-width="1"/>
+          <rect x="60" y="52" width="120" height="20" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1"/>
+          <text x="120" y="65" text-anchor="middle" font-size="8" fill="#c4b5fd">speculation tree</text>
+
+          <!-- Verification -->
+          <line x1="120" y1="72" x2="120" y2="84" stroke="#6b7280" stroke-width="1"/>
+          <rect x="40" y="84" width="160" height="14" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1"/>
+          <text x="120" y="94" text-anchor="middle" font-size="8" fill="#fbbf24">target LLM batch-verify → accept best branch</text>
+        </svg>
+
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-purple-950 bg-opacity-40 border border-purple-800 rounded-xl p-3">
+            <p class="text-sm font-semibold text-purple-300">优势</p>
+            <p class="text-sm text-gray-300 mt-0.5">无额外 KV Cache（无 draft 模型），无需知道上下文长度</p>
+          </div>
+          <div class="bg-gray-900 border border-gray-700 rounded-xl p-3">
+            <p class="text-sm font-semibold text-yellow-300">加速</p>
+            <p class="text-sm text-gray-300 mt-0.5">~3× over incremental decoding</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Demo link spanning the bottom -->
+  <div class="absolute bottom-10 left-20 right-20 flex justify-center">
+    <a href="demos/speculative_decoding.html" target="_blank"
+       onclick="this.href='demos/speculative_decoding.html?from='+encodeURIComponent(location.href)"
+       class="flex items-center justify-center gap-2 text-sm font-medium text-indigo-300 bg-gray-900 border border-indigo-800 rounded-lg px-6 py-2 hover:bg-indigo-900 hover:border-indigo-500 transition-colors">
+      ▶ 动画演示 — Speculative Decoding Accept/Reject
+    </a>
+  </div>
+  <span class="absolute bottom-4 right-10 text-base text-gray-500 font-mono">19 / 26</span>
+</div>

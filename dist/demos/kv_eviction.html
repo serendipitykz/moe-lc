@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>KV Cache Eviction Comparison</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a; color: #f1f5f9;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh; padding: 24px 20px 36px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .back-btn {
+      position: fixed; top: 14px; left: 14px;
+      background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+      padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+      transition: background .15s, color .15s;
+    }
+    .back-btn:hover { background: #334155; color: #f1f5f9; }
+
+    h1 { font-size: 20px; font-weight: 700; color: #34d399; margin-bottom: 4px; }
+    .subtitle { font-size: 12px; color: #64748b; margin-bottom: 20px; text-align: center; }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 18px;
+      flex-wrap: wrap; justify-content: center;
+    }
+    button {
+      padding: 6px 16px; border-radius: 7px; cursor: pointer; font-size: 13px;
+      border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
+      transition: background .15s;
+    }
+    button:hover { background: #334155; }
+    button.primary { background: #1d4ed8; border-color: #3b82f6; color: white; }
+    button.primary:hover { background: #2563eb; }
+    .ctrl-label { font-size: 12px; color: #64748b; }
+    input[type=range] { accent-color: #7c3aed; width: 90px; }
+    #step-display { font-size: 13px; color: #94a3b8; font-family: monospace; min-width: 70px; }
+
+    /* ── Grid ── */
+    .grid-wrapper { display: flex; gap: 16px; width: 100%; max-width: 860px; }
+    .method-col {
+      flex: 1; background: #1e293b; border: 1px solid #334155;
+      border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .method-title { font-size: 14px; font-weight: 700; }
+    .method-desc  { font-size: 11px; color: #64748b; line-height: 1.4; min-height: 44px; }
+    .token-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;
+    }
+    .tok {
+      aspect-ratio: 1; border-radius: 5px; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600; font-family: monospace;
+      border: 1.5px solid transparent;
+      transition: background .3s, border-color .3s, color .3s, opacity .3s;
+    }
+    /* States per method */
+    .tok.evicted { background: #0f172a; border-color: #1e293b; color: #334155; }
+    .tok.future  { background: #0f172a; border-color: #1e293b; color: #1e293b; }
+
+    /* H2O */
+    .tok.h2o-heavy  { background: #064e3b; border-color: #10b981; color: #6ee7b7; }
+    .tok.h2o-normal { background: #134e4a; border-color: #0d9488; color: #5eead4; }
+    /* StreamingLLM */
+    .tok.sllm-sink   { background: #431407; border-color: #f59e0b; color: #fbbf24; }
+    .tok.sllm-recent { background: #064e3b; border-color: #10b981; color: #6ee7b7; }
+    /* SnapKV */
+    .tok.snap-prefix { background: #1e1b4b; border-color: #7c3aed; color: #c4b5fd; }
+    .tok.snap-recent { background: #064e3b; border-color: #10b981; color: #6ee7b7; }
+
+    /* ── Stats row ── */
+    .stats {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #64748b; border-top: 1px solid #334155; padding-top: 8px;
+    }
+    .stats span { color: #94a3b8; font-family: monospace; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      margin-top: 14px; font-size: 11px; color: #94a3b8;
+    }
+    .leg { display: flex; align-items: center; gap: 5px; }
+    .leg-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="goBack()">← Back</button>
+  <h1>KV Cache Eviction Strategies</h1>
+  <p class="subtitle">Budget = 8 slots · Total sequence = 24 tokens · Step through to watch each policy's decisions</p>
+
+  <div class="controls">
+    <button onclick="reset()">⟳ Reset</button>
+    <button onclick="stepFwd()" id="step-btn">Step →</button>
+    <button class="primary" id="play-btn" onclick="togglePlay()">▶ Play</button>
+    <span class="ctrl-label">Speed:</span>
+    <input type="range" id="speed" min="1" max="10" value="4"/>
+    <span id="step-display">t = 0 / 24</span>
+  </div>
+
+  <div class="grid-wrapper" id="grid-wrapper">
+    <!-- H2O -->
+    <div class="method-col">
+      <div class="method-title" style="color:#34d399">H2O — Heavy Hitter Oracle</div>
+      <div class="method-desc">
+        Tracks cumulative attention scores. Evicts the token with the
+        lowest score when the budget is exceeded. Heavy-hitter tokens
+        (high attention) persist; low-importance tokens are evicted.
+      </div>
+      <div class="token-grid" id="grid-h2o"></div>
+      <div class="stats">
+        <span>Cache: <span id="h2o-size">0</span>/8</span>
+        <span>Evicted: <span id="h2o-evict">0</span></span>
+      </div>
+    </div>
+
+    <!-- StreamingLLM -->
+    <div class="method-col">
+      <div class="method-title" style="color:#fbbf24">StreamingLLM — Sink + Recent</div>
+      <div class="method-desc">
+        Always keeps the first K<sub>s</sub>=3 "sink" tokens (amber) and
+        the most recent K<sub>r</sub>=5 tokens (green). Everything in
+        between is evicted. O(1) memory, infinite streaming.
+      </div>
+      <div class="token-grid" id="grid-sllm"></div>
+      <div class="stats">
+        <span>Cache: <span id="sllm-size">0</span>/8</span>
+        <span>Evicted: <span id="sllm-evict">0</span></span>
+      </div>
+    </div>
+
+    <!-- SnapKV -->
+    <div class="method-col">
+      <div class="method-title" style="color:#a78bfa">SnapKV — Cluster + Recent</div>
+      <div class="method-desc">
+        After an observation window, votes on prefix importance via
+        pooled attention scores. Keeps top-4 prefix tokens (purple) +
+        4 most recent (green). Per-layer granularity.
+      </div>
+      <div class="token-grid" id="grid-snap"></div>
+      <div class="stats">
+        <span>Cache: <span id="snap-size">0</span>/8</span>
+        <span>Evicted: <span id="snap-evict">0</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#10b981;border:1.5px solid #10b981"></div>In cache (normal)</div>
+    <div class="leg"><div class="leg-dot" style="background:#f59e0b;border:1.5px solid #f59e0b"></div>Sink token (StreamingLLM)</div>
+    <div class="leg"><div class="leg-dot" style="background:#7c3aed;border:1.5px solid #7c3aed"></div>Important prefix (SnapKV)</div>
+    <div class="leg"><div class="leg-dot" style="background:#0f172a;border:1.5px solid #334155"></div>Evicted</div>
+  </div>
+
+  <script>
+    const TOTAL  = 24;
+    const BUDGET = 8;
+    const SINK   = 3;
+    const RECENT_SLLM = BUDGET - SINK;   // 5
+    const OBS    = 6;                    // SnapKV observation-window size
+    const HALF   = Math.floor(BUDGET / 2); // 4
+
+    // ── Seeded random & importance ──────────────────────────────────────────
+    function rand01(seed) {
+      const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+      return x - Math.floor(x);
+    }
+
+    // Power-law importance: most tokens low, a few are heavy hitters
+    const importance = Array.from({ length: TOTAL }, (_, i) => {
+      const r = rand01(i * 3 + 7);
+      return r * r * r; // cube → extreme power-law
+    });
+    // Boost explicit heavy hitters so they're clearly visible
+    [2, 7, 14, 19].forEach(i => { importance[i] = 0.75 + rand01(i * 5) * 0.2; });
+
+    // ── H2O simulation ──────────────────────────────────────────────────────
+    function runH2O() {
+      const states = []; // states[t] = { cache: Set, scores: Map }
+      const cache  = new Set();
+      const scores = new Map();
+
+      for (let t = 0; t < TOTAL; t++) {
+        // Add new token
+        scores.set(t, importance[t]);
+        cache.add(t);
+
+        // Boost cumulative scores for all existing cached tokens
+        for (const ct of cache) {
+          if (ct !== t) scores.set(ct, scores.get(ct) + importance[ct] * 0.12);
+        }
+
+        // Evict lowest-score non-current token until within budget
+        while (cache.size > BUDGET) {
+          let minS = Infinity, evict = -1;
+          for (const ct of cache) {
+            if (ct === t) continue;
+            if (scores.get(ct) < minS) { minS = scores.get(ct); evict = ct; }
+          }
+          cache.delete(evict); scores.delete(evict);
+        }
+
+        // Tag which tokens are "heavy hitters" in current cache
+        const sorted = [...cache].map(i => ({ i, s: scores.get(i) }))
+                                  .sort((a, b) => b.s - a.s);
+        const topHalf = new Set(sorted.slice(0, Math.ceil(BUDGET / 2)).map(x => x.i));
+        states.push({ cache: new Set(cache), heavy: new Set(topHalf) });
+      }
+      return states;
+    }
+
+    // ── StreamingLLM simulation ─────────────────────────────────────────────
+    function runStreamingLLM() {
+      return Array.from({ length: TOTAL }, (_, t) => {
+        const cache = new Set();
+        for (let i = 0; i < SINK && i <= t; i++) cache.add(i);
+        const recentStart = Math.max(SINK, t - RECENT_SLLM + 1);
+        for (let i = recentStart; i <= t; i++) cache.add(i);
+        return { cache };
+      });
+    }
+
+    // ── SnapKV simulation ───────────────────────────────────────────────────
+    function runSnapKV() {
+      const states = [];
+      let pinnedPrefix = new Set();
+
+      for (let t = 0; t < TOTAL; t++) {
+        const cache = new Set();
+
+        if (t < BUDGET) {
+          for (let i = 0; i <= t; i++) cache.add(i);
+          pinnedPrefix = new Set();
+        } else {
+          // Re-observe every OBS tokens or at the start of "full" regime
+          if (t === BUDGET || (t - BUDGET) % OBS === 0) {
+            // Score prefix tokens (everything before obs window) by importance
+            const prefixEnd = t - Math.floor(OBS / 2);
+            const prefixScores = [];
+            for (let i = 0; i < prefixEnd; i++) {
+              prefixScores.push({ i, s: importance[i] });
+            }
+            prefixScores.sort((a, b) => b.s - a.s);
+            pinnedPrefix = new Set(prefixScores.slice(0, HALF).map(x => x.i));
+          }
+
+          pinnedPrefix.forEach(i => cache.add(i));
+          const recentStart = Math.max(0, t - HALF + 1);
+          for (let i = recentStart; i <= t; i++) cache.add(i);
+        }
+
+        states.push({ cache: new Set(cache), pinned: new Set(pinnedPrefix) });
+      }
+      return states;
+    }
+
+    // ── Precompute ──────────────────────────────────────────────────────────
+    const h2oStates   = runH2O();
+    const sllmStates  = runStreamingLLM();
+    const snapStates  = runSnapKV();
+
+    // ── Render ──────────────────────────────────────────────────────────────
+    let currentStep = 0;
+
+    function renderMethod(gridId, sizeId, evictId, state, method) {
+      const grid = document.getElementById(gridId);
+      grid.innerHTML = '';
+
+      for (let i = 0; i < TOTAL; i++) {
+        const tok = document.createElement('div');
+        tok.className = 'tok';
+        tok.textContent = i;
+
+        if (i > currentStep) {
+          tok.classList.add('future');
+        } else if (!state.cache.has(i)) {
+          tok.classList.add('evicted');
+        } else {
+          if (method === 'h2o') {
+            tok.classList.add(state.heavy.has(i) ? 'h2o-heavy' : 'h2o-normal');
+          } else if (method === 'sllm') {
+            tok.classList.add(i < SINK ? 'sllm-sink' : 'sllm-recent');
+          } else {
+            tok.classList.add(state.pinned.has(i) ? 'snap-prefix' : 'snap-recent');
+          }
+        }
+        grid.appendChild(tok);
+      }
+
+      document.getElementById(sizeId).textContent  = Math.min(state.cache.size, currentStep + 1);
+      document.getElementById(evictId).textContent = Math.max(0, currentStep + 1 - state.cache.size);
+    }
+
+    function render() {
+      const t = currentStep;
+      document.getElementById('step-display').textContent = `t = ${t + 1} / ${TOTAL}`;
+      renderMethod('grid-h2o',  'h2o-size',  'h2o-evict',  h2oStates[t],  'h2o');
+      renderMethod('grid-sllm', 'sllm-size', 'sllm-evict', sllmStates[t], 'sllm');
+      renderMethod('grid-snap', 'snap-size', 'snap-evict', snapStates[t], 'snap');
+    }
+
+    function stepFwd() {
+      if (currentStep < TOTAL - 1) { currentStep++; render(); }
+      else stopPlay();
+    }
+
+    function reset() {
+      stopPlay();
+      currentStep = 0;
+      render();
+    }
+
+    let playTimer = null;
+    function togglePlay() {
+      if (playTimer) stopPlay();
+      else startPlay();
+    }
+    function startPlay() {
+      document.getElementById('play-btn').textContent = '⏸ Pause';
+      document.getElementById('play-btn').classList.add('primary');
+      tick();
+    }
+    function stopPlay() {
+      clearTimeout(playTimer); playTimer = null;
+      document.getElementById('play-btn').textContent = '▶ Play';
+    }
+    function tick() {
+      if (currentStep >= TOTAL - 1) { stopPlay(); return; }
+      stepFwd();
+      const speed = parseInt(document.getElementById('speed').value);
+      const delay = Math.round(1500 / speed);
+      playTimer = setTimeout(tick, delay);
+    }
+
+    render();
+
+    function goBack() {
+      if (window.opener && !window.opener.closed) { window.opener.focus(); window.close(); }
+      else {
+        const from = new URLSearchParams(location.search).get('from');
+        if (from) location.href = from; else history.back();
+      }
+    }
+  </script>
+</body>
+</html>

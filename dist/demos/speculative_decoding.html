@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Speculative Decoding Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a; color: #f1f5f9;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh; padding: 24px 20px 40px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .back-btn {
+      position: fixed; top: 14px; left: 14px;
+      background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+      padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+      transition: background .15s, color .15s;
+    }
+    .back-btn:hover { background: #334155; color: #f1f5f9; }
+
+    h1 { font-size: 20px; font-weight: 700; color: #818cf8; margin-bottom: 4px; }
+    .subtitle { font-size: 12px; color: #64748b; margin-bottom: 22px; text-align: center; }
+
+    /* ── Main card ── */
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+      padding: 20px 24px; width: 100%; max-width: 800px; margin-bottom: 14px;
+    }
+    .card-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+                  color: #475569; font-weight: 600; margin-bottom: 10px; }
+
+    /* ── Token sequence ── */
+    .sequence {
+      display: flex; flex-wrap: wrap; gap: 5px; min-height: 44px; align-items: center;
+    }
+    .tok {
+      padding: 5px 9px; border-radius: 7px; font-size: 13px; font-family: monospace;
+      border: 1.5px solid; transition: all .3s; white-space: nowrap;
+    }
+    .tok.context   { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+    .tok.accepted  { background: #064e3b; border-color: #10b981; color: #6ee7b7; }
+    .tok.rejected  { background: #450a0a; border-color: #ef4444; color: #fca5a5;
+                     text-decoration: line-through; opacity: .7; }
+    .tok.draft     { background: #1e1b4b; border-color: #6366f1;
+                     color: #a5b4fc; border-style: dashed; }
+    .tok.verifying { background: #312e81; border-color: #7c3aed; color: #c4b5fd;
+                     box-shadow: 0 0 8px #7c3aed66; }
+    .tok.regen     { background: #432004; border-color: #f59e0b; color: #fbbf24; }
+
+    /* ── Phase banner ── */
+    .phase-banner {
+      text-align: center; padding: 10px; border-radius: 8px; font-size: 13px;
+      font-weight: 600; min-height: 38px; display: flex; align-items: center;
+      justify-content: center; gap: 8px;
+      transition: background .3s, border-color .3s;
+      border: 1px solid #334155; background: #0f172a;
+    }
+    .phase-banner.draft-phase   { background: #1e1b4b; border-color: #6366f1; color: #a5b4fc; }
+    .phase-banner.verify-phase  { background: #1c1917; border-color: #f59e0b; color: #fbbf24; }
+    .phase-banner.accept-phase  { background: #052e16; border-color: #16a34a; color: #4ade80; }
+    .phase-banner.reject-phase  { background: #450a0a; border-color: #ef4444; color: #fca5a5; }
+    .phase-banner.idle          { color: #475569; }
+
+    /* ── Controls ── */
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    button {
+      padding: 7px 18px; border-radius: 7px; cursor: pointer; font-size: 13px;
+      border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
+      transition: background .15s;
+    }
+    button:hover { background: #334155; }
+    button.primary { background: #4f46e5; border-color: #6366f1; color: white; }
+    button.primary:hover { background: #6366f1; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Stats ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    .stat-box {
+      background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+      padding: 10px; text-align: center;
+    }
+    .stat-val { font-size: 22px; font-weight: 700; font-family: monospace; }
+    .stat-lbl { font-size: 10px; color: #64748b; margin-top: 2px; }
+
+    /* ── Legend ── */
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+               margin-top: 6px; font-size: 11px; color: #94a3b8; }
+    .leg { display: flex; align-items: center; gap: 5px; }
+    .leg-dot { width: 10px; height: 10px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="goBack()">← Back</button>
+  <h1>Speculative Decoding</h1>
+  <p class="subtitle">
+    Draft model generates k=4 tokens quickly · Target model batch-verifies · Accepted tokens keep, rejected triggers regen<br>
+    Long-context challenge: low acceptance rate when draft model diverges from target on long prefixes
+  </p>
+
+  <!-- Token sequence -->
+  <div class="card">
+    <div class="card-title">Output sequence</div>
+    <div class="sequence" id="sequence"></div>
+  </div>
+
+  <!-- Phase indicator -->
+  <div class="card" style="padding: 12px 24px">
+    <div class="phase-banner idle" id="phase-banner">
+      Click "Draft" to start a speculative round
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="card controls">
+    <button id="btn-draft"  onclick="startDraft()">🖊 Draft (×4)</button>
+    <button id="btn-verify" onclick="startVerify()" disabled>✓ Verify</button>
+    <button id="btn-auto"   class="primary" onclick="runAuto()">▶ Auto-run</button>
+    <button onclick="resetAll()">⟳ Reset</button>
+    <label style="font-size:12px;color:#64748b">Accept prob:
+      <input type="range" id="accept-prob" min="20" max="95" value="65" style="width:80px;accent-color:#6366f1"/>
+      <span id="prob-display">65%</span>
+    </label>
+  </div>
+
+  <!-- Stats -->
+  <div class="card">
+    <div class="card-title">Statistics</div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-val" id="stat-total" style="color:#93c5fd">0</div>
+        <div class="stat-lbl">Tokens generated</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-accepted" style="color:#4ade80">0</div>
+        <div class="stat-lbl">Draft accepted</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-rejected" style="color:#f87171">0</div>
+        <div class="stat-lbl">Draft rejected</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-speedup" style="color:#fbbf24">—</div>
+        <div class="stat-lbl">Est. speedup</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>Context</div>
+    <div class="leg"><div class="leg-dot" style="background:#6366f1;border:1.5px dashed #818cf8"></div>Draft (pending)</div>
+    <div class="leg"><div class="leg-dot" style="background:#10b981"></div>Accepted ✓</div>
+    <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Rejected ✗</div>
+    <div class="leg"><div class="leg-dot" style="background:#f59e0b"></div>Target regen</div>
+  </div>
+
+  <script>
+    // A fake "vocabulary" of word fragments to make it look real
+    const VOCAB = [
+      'the','of','and','to','in','a','is','that','for','it',
+      'with','as','on','by','this','at','from','or','an','be',
+      'attention','context','token','model','layer','expert','key','value',
+      'sparse','linear','block','query','route','cache','draft','verify'
+    ];
+    function randWord(seed) {
+      const r = Math.abs(Math.sin(seed * 127.1 + 311.7) * 43758.5453);
+      return VOCAB[Math.floor(r % VOCAB.length)];
+    }
+
+    // State
+    let tokens   = [];   // {text, state: 'context'|'accepted'|'rejected'|'regen'}
+    let draftBuf = [];   // pending draft tokens (text + acceptance decision)
+    let step     = 0;    // global step counter (for seeded rand)
+    let totalGen = 0, totalAcc = 0, totalRej = 0;
+    let autoTimer = null;
+
+    // Init with some context tokens
+    function resetAll() {
+      clearTimeout(autoTimer); autoTimer = null;
+      tokens = []; draftBuf = []; step = 0; totalGen = 0; totalAcc = 0; totalRej = 0;
+      for (let i = 0; i < 6; i++) {
+        tokens.push({ text: randWord(step++), state: 'context' });
+      }
+      setBanner('idle', 'Click "Draft" to start a speculative round');
+      setBtn('draft', true); setBtn('verify', false);
+      renderAll(); updateStats();
+    }
+
+    function startDraft() {
+      if (draftBuf.length) return;
+      const prob = parseInt(document.getElementById('accept-prob').value) / 100;
+      draftBuf = [];
+      // Generate k=4 draft tokens with predetermined accept/reject
+      for (let k = 0; k < 4; k++) {
+        const r = Math.abs(Math.sin((step + k * 31 + totalGen) * 311.7) * 43758.5453);
+        const accepted = (r % 1) < prob;
+        draftBuf.push({ text: randWord(step + k), accepted });
+      }
+      step += 4;
+
+      // Add all as 'draft' to token sequence
+      draftBuf.forEach(d => tokens.push({ text: d.text, state: 'draft' }));
+      setBanner('draft-phase', '🖊 Draft model generated 4 candidate tokens (awaiting verification)');
+      setBtn('draft', false); setBtn('verify', true);
+      renderAll();
+    }
+
+    function startVerify() {
+      setBtn('verify', false); setBtn('draft', false);
+      verifyNext(0);
+    }
+
+    function verifyNext(idx) {
+      if (idx >= draftBuf.length) {
+        // All verified - clean up
+        draftBuf = [];
+        setBanner('idle', 'Round complete. Click "Draft" for the next round.');
+        setBtn('draft', true);
+        renderAll();
+        return;
+      }
+
+      const draftStart = tokens.length - draftBuf.length;
+      const tokIdx     = draftStart + idx;
+
+      // Highlight currently verifying token
+      tokens[tokIdx].state = 'verifying';
+      setBanner('verify-phase', `🔍 Target model verifying token ${idx + 1}/4: "${tokens[tokIdx].text}"`);
+      renderAll();
+
+      setTimeout(() => {
+        if (draftBuf[idx].accepted) {
+          tokens[tokIdx].state = 'accepted';
+          totalAcc++; totalGen++;
+          setBanner('accept-phase', `✓ Token "${tokens[tokIdx].text}" accepted`);
+          renderAll(); updateStats();
+
+          if (idx === draftBuf.length - 1) {
+            // All accepted — bonus: target also generates one more
+            setTimeout(() => {
+              draftBuf = [];
+              const bonus = { text: randWord(step++), state: 'regen' };
+              tokens.push(bonus);
+              totalGen++;
+              setBanner('accept-phase', '✓ All 4 accepted! Target generates 1 bonus token.');
+              setBtn('draft', true); renderAll(); updateStats();
+            }, 600);
+          } else {
+            setTimeout(() => verifyNext(idx + 1), 500);
+          }
+        } else {
+          // Rejected — remove this and all subsequent draft tokens
+          tokens[tokIdx].state = 'rejected';
+          totalRej += (draftBuf.length - idx);
+          setBanner('reject-phase', `✗ Token "${tokens[tokIdx].text}" rejected — target regenerates`);
+          renderAll(); updateStats();
+
+          setTimeout(() => {
+            // Remove rejected + remaining drafts; add target regen
+            tokens = tokens.slice(0, tokIdx);
+            const regen = { text: randWord(step++), state: 'regen' };
+            tokens.push(regen);
+            totalGen++;
+            draftBuf = [];
+            setBanner('idle', `Target regenerated "${regen.text}". Click "Draft" for next round.`);
+            setBtn('draft', true); renderAll(); updateStats();
+          }, 800);
+        }
+      }, 600);
+    }
+
+    // Auto-run: draft + verify repeatedly
+    function runAuto() {
+      if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; return; }
+      autoStep();
+    }
+    function autoStep() {
+      if (tokens.length > 40) return; // stop after enough tokens
+      startDraft();
+      autoTimer = setTimeout(() => {
+        startVerify();
+        autoTimer = setTimeout(autoStep, 3600);
+      }, 1200);
+    }
+
+    // ── Rendering ────────────────────────────────────────────────────────────
+    function renderAll() {
+      const seq = document.getElementById('sequence');
+      seq.innerHTML = '';
+      tokens.forEach(t => {
+        const d = document.createElement('div');
+        d.className = `tok ${t.state}`;
+        d.textContent = t.text;
+        seq.appendChild(d);
+      });
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').textContent    = totalGen;
+      document.getElementById('stat-accepted').textContent = totalAcc;
+      document.getElementById('stat-rejected').textContent = totalRej;
+      const rounds = totalAcc + totalRej;
+      const speedup = rounds > 0
+        ? (1 + totalAcc / Math.max(1, totalRej + 1)).toFixed(1) + '×'
+        : '—';
+      document.getElementById('stat-speedup').textContent = speedup;
+    }
+
+    function setBanner(cls, msg) {
+      const b = document.getElementById('phase-banner');
+      b.className = `phase-banner ${cls}`;
+      b.textContent = msg;
+    }
+    function setBtn(id, enabled) {
+      document.getElementById(`btn-${id}`).disabled = !enabled;
+    }
+
+    document.getElementById('accept-prob').addEventListener('input', e => {
+      document.getElementById('prob-display').textContent = e.target.value + '%';
+    });
+
+    resetAll();
+
+    function goBack() {
+      if (window.opener && !window.opener.closed) { window.opener.focus(); window.close(); }
+      else {
+        const from = new URLSearchParams(location.search).get('from');
+        if (from) location.href = from; else history.back();
+      }
+    }
+  </script>
+</body>
+</html>

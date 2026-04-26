@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Linear Attention: Accumulator vs Softmax Matrix</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a; color: #f1f5f9;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh; padding: 24px 20px 40px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .back-btn {
+      position: fixed; top: 14px; left: 14px;
+      background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+      padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+      transition: background .15s, color .15s;
+    }
+    .back-btn:hover { background: #334155; color: #f1f5f9; }
+
+    h1 { font-size: 20px; font-weight: 700; color: #22d3ee; margin-bottom: 4px; }
+    .subtitle { font-size: 12px; color: #64748b; margin-bottom: 22px; text-align: center; }
+
+    /* ── Controls ── */
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+                justify-content: center; margin-bottom: 18px; }
+    button {
+      padding: 6px 16px; border-radius: 7px; cursor: pointer; font-size: 13px;
+      border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
+      transition: background .15s;
+    }
+    button:hover { background: #334155; }
+    button.primary { background: #0e7490; border-color: #22d3ee; color: white; }
+    button.primary:hover { background: #0891b2; }
+    .ctrl-label { font-size: 12px; color: #64748b; }
+    input[type=range] { accent-color: #22d3ee; width: 90px; }
+    #step-info { font-size: 13px; color: #94a3b8; font-family: monospace; min-width: 90px; }
+
+    /* ── Two-panel layout ── */
+    .panels { display: flex; gap: 16px; width: 100%; max-width: 860px; }
+    .panel {
+      flex: 1; background: #1e293b; border: 1px solid #334155;
+      border-radius: 14px; padding: 18px; display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+    }
+    .panel-title { font-size: 14px; font-weight: 700; text-align: center; }
+    .panel-formula {
+      font-family: monospace; font-size: 11px; color: #64748b;
+      text-align: center; line-height: 1.5;
+    }
+
+    /* ── Softmax attention matrix (grows) ── */
+    .attn-matrix-wrap {
+      display: flex; flex-direction: column; gap: 2px;
+      min-height: 220px; justify-content: flex-end; align-items: center;
+    }
+    .attn-row { display: flex; gap: 2px; }
+    .attn-cell {
+      width: 22px; height: 22px; border-radius: 3px;
+      transition: background .3s, opacity .3s;
+      border: 1px solid #0f172a;
+    }
+
+    /* ── Linear accumulator (fixed d×d) ── */
+    .accum-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .accum-title { font-size: 10px; color: #475569; margin-bottom: 4px; }
+    .accum-grid { display: flex; flex-direction: column; gap: 2px; }
+    .accum-row { display: flex; gap: 2px; }
+    .accum-cell {
+      width: 32px; height: 32px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-family: monospace; color: #1e293b;
+      font-weight: 700; border: 1px solid #0f172a;
+      transition: background .35s, color .35s;
+    }
+
+    /* ── Memory bar ── */
+    .mem-bar-wrap {
+      width: 100%; display: flex; flex-direction: column; gap: 5px;
+      border-top: 1px solid #334155; padding-top: 10px;
+    }
+    .mem-label {
+      display: flex; justify-content: space-between; font-size: 11px; color: #64748b;
+    }
+    .mem-track { height: 8px; background: #0f172a; border-radius: 4px; overflow: hidden; }
+    .mem-fill  { height: 100%; border-radius: 4px; transition: width .4s cubic-bezier(.4,0,.2,1); }
+    .mem-val   { font-size: 12px; font-weight: 700; font-family: monospace; text-align: center; }
+
+    /* ── Complexity chips ── */
+    .complexity-row { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
+    .chip {
+      padding: 3px 10px; border-radius: 12px; font-size: 11px;
+      font-family: monospace; border: 1px solid; font-weight: 600;
+    }
+
+    /* ── Arrival animation ── */
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.5 } }
+    .arriving { animation: pulse .6s ease-in-out; }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="goBack()">← Back</button>
+  <h1>Softmax vs Linear Attention: Memory Growth</h1>
+  <p class="subtitle">
+    Each new token grows the Softmax attention matrix by one row + column (O(n²) total).<br>
+    The Linear attention accumulator C<sub>t</sub> stays fixed at d×d — only its values change.
+  </p>
+
+  <div class="controls">
+    <button onclick="reset()">⟳ Reset</button>
+    <button onclick="stepFwd()" id="step-btn">+ Token</button>
+    <button class="primary" id="play-btn" onclick="togglePlay()">▶ Play</button>
+    <span class="ctrl-label">Speed:</span>
+    <input type="range" id="speed" min="1" max="8" value="3"/>
+    <span id="step-info">n = 0</span>
+  </div>
+
+  <div class="panels">
+    <!-- Left: Softmax attention matrix -->
+    <div class="panel">
+      <div class="panel-title" style="color:#ef4444">Softmax Attention</div>
+      <div class="panel-formula">
+        Attn(Q,K,V) = softmax(QK<sup>T</sup>/√d) · V<br>
+        Memory: O(n²) — full n×n matrix
+      </div>
+      <div class="complexity-row">
+        <div class="chip" id="softmax-chip" style="color:#ef4444;border-color:#ef4444">0 cells</div>
+      </div>
+      <div class="attn-matrix-wrap" id="attn-matrix"></div>
+      <div class="mem-bar-wrap">
+        <div class="mem-label"><span>Memory</span><span id="softmax-mem">0 cells</span></div>
+        <div class="mem-track"><div class="mem-fill" id="softmax-bar" style="background:#dc2626;width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Right: Linear accumulator -->
+    <div class="panel">
+      <div class="panel-title" style="color:#22d3ee">Linear Attention</div>
+      <div class="panel-formula">
+        out<sub>t</sub> = φ(q<sub>t</sub>) · C<sub>t</sub><br>
+        C<sub>t</sub> = C<sub>t−1</sub> + φ(k<sub>t</sub>) v<sub>t</sub><sup>T</sup><br>
+        Memory: O(d²) — fixed d×d accumulator
+      </div>
+      <div class="complexity-row">
+        <div class="chip" style="color:#22d3ee;border-color:#22d3ee" id="linear-chip">d² = 16 cells</div>
+      </div>
+      <div class="accum-wrap">
+        <div class="accum-title">C<sub>t</sub> ∈ ℝ<sup>d×d</sup>  (d = 4, shown as heatmap)</div>
+        <div class="accum-grid" id="accum-grid"></div>
+      </div>
+      <div style="font-size:11px;color:#475569;text-align:center;margin-top:4px">
+        Size is constant — only values update as tokens arrive
+      </div>
+      <div class="mem-bar-wrap">
+        <div class="mem-label"><span>Memory</span><span id="linear-mem">16 cells</span></div>
+        <div class="mem-track" style="background:#134e4a">
+          <div class="mem-fill" id="linear-bar" style="background:#0891b2;width:100%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const D = 4;        // accumulator dimension (d×d = 16 cells)
+    const MAX_N = 12;   // max tokens to show
+
+    // ── Seeded random ───────────────────────────────────────────────────────
+    function rand(seed) {
+      const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+      return x - Math.floor(x);
+    }
+
+    // ── State ───────────────────────────────────────────────────────────────
+    let n = 0;            // current number of tokens
+    let accumC = Array(D).fill(null).map(() => Array(D).fill(0)); // d×d accumulator
+    let playTimer = null;
+
+    // Simulate a token's phi(k) * v^T outer product
+    function tokenUpdate(t) {
+      const phiK = Array.from({ length: D }, (_, i) => rand(t * 100 + i * 7 + 1));
+      const v    = Array.from({ length: D }, (_, i) => rand(t * 100 + i * 13 + 3));
+      // Outer product: phiK[i] * v[j]
+      const delta = phiK.map(ki => v.map(vj => ki * vj));
+      return delta;
+    }
+
+    // Simulated attention weights for row t (token t attending to 0..t)
+    function attentionRow(t) {
+      const scores = Array.from({ length: t + 1 }, (_, i) => rand(t * 50 + i * 11 + 2));
+      const expScores = scores.map(s => Math.exp(s * 3)); // sharpen
+      const sum = expScores.reduce((a, b) => a + b, 0);
+      return expScores.map(s => s / sum);
+    }
+
+    // ── Softmax matrix rendering ────────────────────────────────────────────
+    function heatColor(v) {
+      // v in [0,1] → dark-to-bright emerald
+      const r = Math.round(v * 255);
+      const g = Math.round(16 + v * 80);
+      const b = Math.round(60 + v * 40);
+      return `rgb(${Math.round(v * 30)},${Math.round(v * 150 + 40)},${Math.round(v * 80 + 60)})`;
+    }
+    function accumColor(v, maxV) {
+      const t = maxV > 0 ? Math.min(1, v / maxV) : 0;
+      const intensity = Math.round(t * 200);
+      return { bg: `rgb(${Math.round(t*14)},${Math.round(t*116+20)},${Math.round(t*155+15)})`,
+               fg: t > 0.5 ? '#0f172a' : '#22d3ee' };
+    }
+
+    function renderSoftmax() {
+      const container = document.getElementById('attn-matrix');
+      container.innerHTML = '';
+
+      // Build full n×n matrix rows
+      for (let t = 0; t < n; t++) {
+        const rowWeights = attentionRow(t);
+        const row = document.createElement('div');
+        row.className = 'attn-row';
+
+        for (let i = 0; i <= t; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'attn-cell';
+          const v = rowWeights[i];
+          cell.style.background = heatColor(v);
+          row.appendChild(cell);
+        }
+        // Causal mask: remaining cells are dark
+        for (let i = t + 1; i < n; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'attn-cell';
+          cell.style.background = '#1e293b';
+          cell.style.opacity = '0.3';
+          row.appendChild(cell);
+        }
+        if (t === n - 1) row.classList.add('arriving');
+        container.appendChild(row);
+      }
+
+      const cells = n * n;
+      document.getElementById('softmax-chip').textContent = `${cells} cells (n²)`;
+      document.getElementById('softmax-mem').textContent  = `${cells} cells`;
+      const maxCells = MAX_N * MAX_N;
+      document.getElementById('softmax-bar').style.width  = `${(cells / maxCells * 100).toFixed(1)}%`;
+    }
+
+    function renderAccum() {
+      const grid = document.getElementById('accum-grid');
+      grid.innerHTML = '';
+
+      const flatVals = accumC.flat();
+      const maxV = Math.max(...flatVals.map(Math.abs), 0.001);
+
+      accumC.forEach((row, ri) => {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'accum-row';
+        row.forEach((val, ci) => {
+          const cell = document.createElement('div');
+          cell.className = 'accum-cell';
+          const { bg, fg } = accumColor(Math.abs(val), maxV);
+          cell.style.background = bg;
+          cell.style.color = fg;
+          cell.textContent = val.toFixed(2);
+          rowEl.appendChild(cell);
+        });
+        grid.appendChild(rowEl);
+      });
+
+      const fixedCells = D * D;
+      document.getElementById('linear-chip').textContent = `d² = ${fixedCells} cells (fixed)`;
+      document.getElementById('linear-mem').textContent  = `${fixedCells} cells`;
+      // Bar stays full — memory is constant
+    }
+
+    function render() {
+      document.getElementById('step-info').textContent = `n = ${n}`;
+      renderSoftmax();
+      renderAccum();
+    }
+
+    // ── Token arrival ────────────────────────────────────────────────────────
+    function addToken() {
+      if (n >= MAX_N) { stopPlay(); return; }
+      const delta = tokenUpdate(n);
+      for (let i = 0; i < D; i++)
+        for (let j = 0; j < D; j++)
+          accumC[i][j] += delta[i][j];
+      n++;
+      render();
+    }
+
+    function reset() {
+      stopPlay();
+      n = 0;
+      accumC = Array(D).fill(null).map(() => Array(D).fill(0));
+      render();
+    }
+
+    function stepFwd() { if (n < MAX_N) addToken(); }
+
+    let playRunning = false;
+    function togglePlay() {
+      if (playRunning) stopPlay(); else startPlay();
+    }
+    function startPlay() {
+      playRunning = true;
+      document.getElementById('play-btn').textContent = '⏸ Pause';
+      document.getElementById('play-btn').classList.add('primary');
+      tick();
+    }
+    function stopPlay() {
+      clearTimeout(playTimer); playTimer = null; playRunning = false;
+      document.getElementById('play-btn').textContent = '▶ Play';
+    }
+    function tick() {
+      if (n >= MAX_N) { stopPlay(); return; }
+      addToken();
+      const speed = parseInt(document.getElementById('speed').value);
+      playTimer = setTimeout(tick, Math.round(1400 / speed));
+    }
+
+    render();
+
+    function goBack() {
+      if (window.opener && !window.opener.closed) { window.opener.focus(); window.close(); }
+      else {
+        const from = new URLSearchParams(location.search).get('from');
+        if (from) location.href = from; else history.back();
+      }
+    }
+  </script>
+</body>
+</html>
