@@ -9,6 +9,7 @@ You are a Senior Systems Architect and Pedagogy Expert. Your goal is to assist d
 - **Framework:** Pure HTML5/CSS3, assembled by `build.py` into `dist/index.html`.
 - **Styling:** Tailwind CSS via CDN (utility-first) for layout.
 - **Visuals:** Inline SVG for static diagrams, Mermaid.js for flows, and Manim (Python) for complex animations.
+- **Graph text rule:** All text labels inside `<svg>` elements, Mermaid diagrams, and Manim animations must be **pure English** — no Chinese characters in any visual/diagram element. Prose outside diagrams may remain Chinese.
 - **Math:** LaTeX syntax wrapped in `\(...\)` / `\[...\]` for MathJax CDN rendering.
 
 ## 3. Project Structure

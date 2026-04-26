@@ -1557,7 +1557,7 @@
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex items-center justify-center">
         <svg viewBox="0 0 420 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <!-- Token batch row -->
-          <text x="210" y="15" text-anchor="middle" font-size="13" fill="#9ca3af">Token batch  (B tokens, 每个 token 有 top-k=2 目标专家)</text>
+          <text x="210" y="15" text-anchor="middle" font-size="13" fill="#9ca3af">Token batch  (B tokens, each with top-k=2 target experts)</text>
           <rect x="20"  y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
           <text x="43"  y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₀</text>
           <rect x="72"  y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
@@ -1607,13 +1607,13 @@
           <line x1="355" y1="44" x2="343" y2="68" stroke="#f472b6" stroke-width="1.2" stroke-dasharray="4 2"/>
 
           <!-- Combine label -->
-          <text x="210" y="153" text-anchor="middle" font-size="12" fill="#fbbf24">② All-to-All Combine ↑  (结果返回原始 GPU)</text>
+          <text x="210" y="153" text-anchor="middle" font-size="12" fill="#fbbf24">② All-to-All Combine ↑  (outputs returned to origin GPUs)</text>
 
           <!-- Communication cost box -->
           <rect x="20" y="164" width="380" height="58" rx="6" fill="#111827" stroke="#374151" stroke-width="1.2"/>
-          <text x="210" y="184" text-anchor="middle" font-size="12" fill="#9ca3af">每个方向通信量 (per MoE layer)：</text>
-          <text x="210" y="208" text-anchor="middle" font-size="14" fill="#fbbf24">k × B × d_model  (元素数)</text>
-          <text x="210" y="225" text-anchor="middle" font-size="11" fill="#6b7280">两次 all-to-all 共 2 倍；k = top-K 专家数，B = batch size</text>
+          <text x="210" y="184" text-anchor="middle" font-size="12" fill="#9ca3af">Volume per direction (per MoE layer):</text>
+          <text x="210" y="208" text-anchor="middle" font-size="14" fill="#fbbf24">k × B × d_model  elements</text>
+          <text x="210" y="225" text-anchor="middle" font-size="11" fill="#6b7280">2 all-to-all per layer total;  k = top-K experts,  B = batch size</text>
         </svg>
       </div>
     </div>
@@ -1742,15 +1742,15 @@
 
           <!-- Shared experts (always active) -->
           <rect x="10"  y="55" width="80" height="50" rx="5" fill="#78350f" fill-opacity="0.4" stroke="#f59e0b" stroke-width="1.5"/>
-          <text x="50" y="74"  text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">共享专家</text>
-          <text x="50" y="89"  text-anchor="middle" font-size="10" fill="#fbbf24">K_s 个，常激活</text>
-          <text x="50" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">通用知识</text>
+          <text x="50" y="74"  text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">Shared Experts</text>
+          <text x="50" y="89"  text-anchor="middle" font-size="10" fill="#fbbf24">K_s, always active</text>
+          <text x="50" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">general knowledge</text>
 
           <!-- Routed experts -->
           <rect x="155" y="55" width="115" height="50" rx="5" fill="#064e3b" fill-opacity="0.5" stroke="#10b981" stroke-width="1.5"/>
-          <text x="213" y="74"  text-anchor="middle" font-size="11" fill="#6ee7b7" font-weight="bold">路由专家</text>
+          <text x="213" y="74"  text-anchor="middle" font-size="11" fill="#6ee7b7" font-weight="bold">Routed Experts</text>
           <text x="213" y="89"  text-anchor="middle" font-size="10" fill="#6ee7b7">Top-K_r of N_r</text>
-          <text x="213" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">专业知识</text>
+          <text x="213" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">specialized</text>
 
           <!-- Arrows to combine -->
           <line x1="50"  y1="105" x2="110" y2="130" stroke="#fbbf24" stroke-width="1.2"/>
@@ -1761,8 +1761,8 @@
           <text x="140" y="148" text-anchor="middle" font-size="11" fill="#d1d5db">h_t = u_t + Σshared + Σrouted</text>
 
           <!-- Labels -->
-          <text x="50"  y="50" text-anchor="middle" font-size="10" fill="#fbbf24">始终</text>
-          <text x="213" y="50" text-anchor="middle" font-size="10" fill="#6ee7b7">按路由</text>
+          <text x="50"  y="50" text-anchor="middle" font-size="10" fill="#fbbf24">always</text>
+          <text x="213" y="50" text-anchor="middle" font-size="10" fill="#6ee7b7">routed</text>
         </svg>
       </div>
     </div>
@@ -2735,7 +2735,7 @@
       </div>
 
       <!-- Attention pattern SVG: band + first col -->
-      <svg viewBox="0 0 130 130" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 130 148" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="band-local" x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
             <rect width="26" height="26" fill="#064e3b"/>
@@ -2777,11 +2777,11 @@
         <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
         <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
 
-        <!-- Legend -->
-        <rect x="0" y="131" width="8" height="8" fill="#047857"/>
-        <text x="10" y="140" font-size="10" fill="#6ee7b7">局部窗口</text>
-        <rect x="65" y="131" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
-        <text x="75" y="140" font-size="10" fill="#fbbf24">全局 token</text>
+        <!-- Legend (inside extended viewBox height=148) -->
+        <rect x="0" y="132" width="8" height="8" fill="#047857"/>
+        <text x="10" y="141" font-size="10" fill="#6ee7b7">local window</text>
+        <rect x="65" y="132" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
+        <text x="75" y="141" font-size="10" fill="#fbbf24">global token</text>
       </svg>
     </div>
 
@@ -2798,7 +2798,7 @@
       </div>
 
       <!-- Attention pattern SVG: band + global + random dots -->
-      <svg viewBox="0 0 130 130" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 130 148" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" width="130" height="130" fill="#111827" rx="4"/>
         <!-- Local band -->
         <rect x="0"  y="0"  width="26" height="26" fill="#047857" opacity="0.9"/>
@@ -2831,13 +2831,13 @@
         <line x1="0" y1="52"  x2="130" y2="52"  stroke="#1f2937" stroke-width="0.8"/>
         <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
         <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
-        <!-- Legend -->
-        <rect x="0"  y="131" width="8" height="8" fill="#047857"/>
-        <text x="10" y="140" font-size="9" fill="#6ee7b7">局部</text>
-        <rect x="40" y="131" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
-        <text x="50" y="140" font-size="9" fill="#fbbf24">全局</text>
-        <rect x="78" y="131" width="8" height="8" fill="#818cf8"/>
-        <text x="88" y="140" font-size="9" fill="#a5b4fc">随机</text>
+        <!-- Legend (inside extended viewBox height=148) -->
+        <rect x="0"  y="132" width="8" height="8" fill="#047857"/>
+        <text x="10" y="141" font-size="9" fill="#6ee7b7">local</text>
+        <rect x="40" y="132" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
+        <text x="50" y="141" font-size="9" fill="#fbbf24">global</text>
+        <rect x="78" y="132" width="8" height="8" fill="#818cf8"/>
+        <text x="88" y="141" font-size="9" fill="#a5b4fc">random</text>
       </svg>
     </div>
 
@@ -2851,23 +2851,35 @@
           \[O(L \cdot w),\quad w = 4096\]
         </div>
 
-        <!-- Simple visual: band only, causal -->
-        <svg viewBox="0 0 130 80" width="80%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width="130" height="80" fill="#111827" rx="4"/>
-          <!-- Lower-triangular band (causal) -->
-          <rect x="0"  y="0"  width="26" height="16" fill="#047857" opacity="0.9"/>
-          <rect x="0"  y="16" width="52" height="16" fill="#047857" opacity="0.9"/>
-          <rect x="26" y="32" width="52" height="16" fill="#047857" opacity="0.9"/>
-          <rect x="52" y="48" width="52" height="16" fill="#047857" opacity="0.9"/>
-          <rect x="78" y="64" width="52" height="16" fill="#047857" opacity="0.9"/>
-          <line x1="26"  y1="0" x2="26"  y2="80" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="52"  y1="0" x2="52"  y2="80" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="78"  y1="0" x2="78"  y2="80" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="104" y1="0" x2="104" y2="80" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="16" x2="130" y2="16" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="32" x2="130" y2="32" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="48" x2="130" y2="48" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="64" x2="130" y2="64" stroke="#1f2937" stroke-width="0.8"/>
+        <!-- Simple visual: causal sliding window w=3, 5x5 grid, 26x26 cells -->
+        <svg viewBox="0 0 130 130" width="80%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="130" height="130" fill="#111827" rx="4"/>
+          <!-- Row 0: col 0 -->
+          <rect x="0"  y="0"   width="26" height="26" fill="#047857" opacity="0.9"/>
+          <!-- Row 1: col 0,1 -->
+          <rect x="0"  y="26"  width="26" height="26" fill="#065f46" opacity="0.9"/>
+          <rect x="26" y="26"  width="26" height="26" fill="#047857" opacity="0.9"/>
+          <!-- Row 2: col 0,1,2 -->
+          <rect x="0"  y="52"  width="26" height="26" fill="#064e3b" opacity="0.9"/>
+          <rect x="26" y="52"  width="26" height="26" fill="#065f46" opacity="0.9"/>
+          <rect x="52" y="52"  width="26" height="26" fill="#047857" opacity="0.9"/>
+          <!-- Row 3: col 1,2,3 -->
+          <rect x="26" y="78"  width="26" height="26" fill="#064e3b" opacity="0.9"/>
+          <rect x="52" y="78"  width="26" height="26" fill="#065f46" opacity="0.9"/>
+          <rect x="78" y="78"  width="26" height="26" fill="#047857" opacity="0.9"/>
+          <!-- Row 4: col 2,3,4 -->
+          <rect x="52" y="104" width="26" height="26" fill="#064e3b" opacity="0.9"/>
+          <rect x="78" y="104" width="26" height="26" fill="#065f46" opacity="0.9"/>
+          <rect x="104" y="104" width="26" height="26" fill="#047857" opacity="0.9"/>
+          <!-- Grid lines -->
+          <line x1="26"  y1="0" x2="26"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="52"  y1="0" x2="52"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="78"  y1="0" x2="78"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="104" y1="0" x2="104" y2="130" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="26"  x2="130" y2="26"  stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="52"  x2="130" y2="52"  stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
         </svg>
       </div>
 
@@ -2957,8 +2969,8 @@
           <line x1="32" y1="10" x2="32" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr-sink)"/>
           <!-- X axis -->
           <line x1="32" y1="130" x2="315" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr-sink)"/>
-          <text x="22" y="80" text-anchor="middle" font-size="11" fill="#9ca3af" transform="rotate(-90,22,80)">注意力权重</text>
-          <text x="173" y="148" text-anchor="middle" font-size="11" fill="#9ca3af">Token 位置</text>
+          <text x="22" y="80" text-anchor="middle" font-size="11" fill="#9ca3af" transform="rotate(-90,22,80)">Attn. Weight</text>
+          <text x="173" y="148" text-anchor="middle" font-size="11" fill="#9ca3af">Token Position</text>
 
           <!-- Sink bars (positions 0-2) - tall, amber -->
           <rect x="36"  y="34"  width="18" height="96" fill="#f59e0b" opacity="0.9" rx="2"/>
@@ -2978,7 +2990,7 @@
 
           <!-- Annotation -->
           <text x="60"  y="28" text-anchor="middle" font-size="11" fill="#fbbf24">Sink tokens</text>
-          <text x="190" y="108" text-anchor="middle" font-size="11" fill="#6ee7b7">正常位置</text>
+          <text x="190" y="108" text-anchor="middle" font-size="11" fill="#6ee7b7">normal positions</text>
 
           <!-- Brace for sink -->
           <line x1="36" y1="22" x2="98" y2="22" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3 2"/>
@@ -3004,14 +3016,14 @@
           <text x="18" y="36" text-anchor="middle" font-size="10" fill="#fbbf24">Sink</text>
           <!-- Evicted middle -->
           <rect x="36" y="18" width="140" height="28" fill="#1f2937" stroke="#374151" stroke-width="1" rx="3"/>
-          <text x="106" y="36" text-anchor="middle" font-size="10" fill="#4b5563">丢弃 ✕</text>
+          <text x="106" y="36" text-anchor="middle" font-size="10" fill="#4b5563">evicted ✕</text>
           <!-- Recent window -->
           <rect x="176" y="18" width="104" height="28" fill="#064e3b" fill-opacity="0.7" stroke="#10b981" stroke-width="1.2" rx="3"/>
-          <text x="228" y="36" text-anchor="middle" font-size="10" fill="#6ee7b7">最近窗口</text>
+          <text x="228" y="36" text-anchor="middle" font-size="10" fill="#6ee7b7">recent window</text>
           <!-- Braces -->
           <text x="18"  y="57" text-anchor="middle" font-size="10" fill="#fbbf24">K_s≈4</text>
-          <text x="228" y="57" text-anchor="middle" font-size="10" fill="#6ee7b7">K_r 个 token</text>
-          <text x="106" y="57" text-anchor="middle" font-size="10" fill="#4b5563">无限长可能</text>
+          <text x="228" y="57" text-anchor="middle" font-size="10" fill="#6ee7b7">K_r tokens</text>
+          <text x="106" y="57" text-anchor="middle" font-size="10" fill="#4b5563">unbounded</text>
         </svg>
       </div>
 
