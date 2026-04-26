@@ -1,13 +1,13 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
 <aside class="notes">DeepSeekMoE 解决了标准 MoE 中专家"知识混杂"的问题。强调两点创新：细粒度让专家分工更精确；共享专家承担通用知识让路由专家更专。可用"全科医生 vs 各科专科医生"类比。</aside>
 
-  <h2 class="text-5xl font-bold mb-1 text-indigo-300">DeepSeekMoE：细粒度专家与共享专家</h2>
+  <h2 class="text-4xl font-bold leading-tight mb-1 text-indigo-300">DeepSeekMoE：细粒度专家与共享专家</h2>
   <p class="text-lg text-gray-400 mb-2">解决标准 MoE 的"知识混杂"问题——让每位专家更专</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
     <!-- Left card: problem + innovation 1 -->
-    <div class="flex-1 flex flex-col gap-4">
+    <div class="flex-[4] flex flex-col gap-4">
 
       <div class="bg-gray-800 rounded-2xl border border-red-900 p-4">
         <h3 class="text-lg font-semibold text-red-300 mb-1">问题：粗粒度专家的知识混杂</h3>
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Middle card: innovation 2 + architecture SVG -->
-    <div class="flex-1 flex flex-col gap-4">
+    <div class="flex-[4] flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-amber-800 p-4 flex-1 flex flex-col gap-3">
         <h3 class="text-lg font-semibold text-amber-300">创新 2：共享专家隔离</h3>
         <p class="text-sm text-gray-300">保留 <span class="text-amber-300">\(K_s\)</span> 个专家始终激活（共享专家），承担所有 token 共同需要的通用知识，让路由专家专注于专业化知识。</p>
@@ -94,7 +94,7 @@
     </div>
 
     <!-- Right: formula + DeepSeek-V2 numbers -->
-    <div class="w-64 flex flex-col gap-4">
+    <div class="flex-[3] flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-gray-600 p-4 flex flex-col gap-3">
         <h3 class="text-lg font-semibold text-indigo-200">输出公式</h3>
         <div class="text-xs text-center leading-relaxed">
