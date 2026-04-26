@@ -1,180 +1,253 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">Attention Sink 是 2023 年一个意外发现——模型不是在真正"理解"前几个 token，而是把无处可放的注意力权重"倒"在那里。StreamingLLM 利用这一发现实现无限流式推理。KV 内存公式让听众直观感受 128K 上下文的代价。
-----------
-最后讲 KV Cache 管理，以及一个有趣的发现——Attention Sink。
-
-首先看数字：大语言模型的 KV Cache 有多占显存？看这张表：LLaMA-3 70B 在 128K 上下文下，KV Cache 需要约 40 GB；Mixtral 8×7B 需要约 16 GB；而 DeepSeek-V2 用了 MLA，只需约 6 GB。数量级的差距，来自 MLA 对 KV 向量的低秩压缩，后面我们会详细讲。
-
-**Attention Sink 现象** [Xiao et al., 2023] 是个意外发现：无论输入什么内容，前几个 token（位置 0 到 3）的注意力权重始终异常高。这些 token 本身没有特别的语义，可能只是换行符或空格，但模型把大量"多余"的注意力权重倾倒在那里。
-
-为什么？因为 Softmax 无法输出 0，如果模型不确定该关注哪里，就把多余的权重"倒"在这几个初始 token 上作为"泄压阀"。这就是所谓的 attention sink。
-
-**StreamingLLM** [Xiao et al., 2023] 利用这个发现设计了一个极简的无限流式推理方案：只保留 Sink 窗口（前 4 个 token 的 KV）+ 最近窗口（最后 K_r 个 token 的 KV），中间的全部丢弃。这样 KV Cache 的大小是 O(1)，可以支持无限长序列的流式推理，而且无需重新训练。
-
-代价是明显的：中段信息完全丢失，和 "Lost in the Middle" 效应叠加，是长上下文实际利用率低的系统性根源之一。
-
+<aside class="notes">KV Cache 是长上下文推理最核心的内存瓶颈。MLA 从架构层面解决它；SnapKV 和 H2O 是推理时的动态驱逐；StreamingLLM 是极简无限流推方案。三种思路层次不同，可以叠加使用。
 ---
+我们现在来看 KV Cache 管理这个主题——它是长上下文推理的核心瓶颈，也是几乎所有生产部署都必须面对的工程问题。
 
-## 第四部分：协同、挑战与展望（约 20 分钟）</aside>
+先感受一下规模：LLaMA-3 70B 在 128K 上下文下，KV Cache 需要约 40 GB，已超过单张 A100。Mixtral 8×7B 约 16 GB。而 DeepSeek-V2 用了 MLA，只需约 6 GB——差距是数量级的。
 
-  <h2 class="text-5xl font-bold mb-2 text-emerald-300">KV Cache 管理与 Attention Sink</h2>
-  <p class="text-xl text-gray-400 mb-3">内存瓶颈、注意力汇聚现象与流式推理策略</p>
+**MLA（Multi-head Latent Attention）**，DeepSeek-V2。
 
-  <div class="flex gap-6 flex-1 min-h-0">
+MLA 的解法是架构级低秩压缩。标准 MHA 要缓存每层每头的完整 K 和 V（DeepSeek-V2 的 d_model=5120）。MLA 改为：给每个 token 的隐状态 h_t（dim=5120），先用下投影矩阵 W^DKV 压缩到一个低维潜在向量 c_KV（dim=512）。推理时只缓存这个 512 维的向量，需要 K、V 时再用上投影矩阵 W^UKV 还原为完整维度。
 
-    <!-- Left: KV memory math -->
-    <div class="w-72 flex flex-col gap-4">
-      <div class="bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3">
-        <h3 class="text-xl font-semibold text-emerald-200">KV Cache 内存公式</h3>
-        <div class="text-center text-sm">
-          \[\text{Mem} = 2 \times P \times H_{kv} \times d_{head} \times L \times \text{bytes}\]
-        </div>
-        <p class="text-sm text-gray-500 text-center">2 = K+V，P = 层数，FP16 = 2 bytes/元素</p>
+这把 KV Cache 从 5120×2 = 10240 维压缩到 512 维，约 12 倍压缩。DeepSeek-V2 60 层下，每 token 从 ~480 KB 降到 ~48 KB，128K 上下文从 ~40 GB 降到 ~6 GB。
+
+一个限制：RoPE 位置编码不能被纳入低秩压缩（RoPE 需要精确的位置感知，而低秩 c_KV 丢失了位置信息）。MLA 用"解耦 RoPE"处理这个问题——为 RoPE 单独保留一组小 head，这些 head 的完整 K 向量仍需缓存。
+
+**SnapKV** [Li et al., 2024]：三步流程。
+
+在 prompt 末尾设一个"观察窗口"，在这个窗口内计算 query 对所有 prefix KV 的注意力分数——这些分数是 prefix 中每个 token 被"关注过多少次"的投票。用池化聚类算法保留高票的代表性 KV + 最近窗口。SnapKV 是 per-layer 粒度，不同层独立决策。
+
+**H2O（Heavy Hitter Oracle）** [Zhang et al., 2023]：注意力分数的分布呈幂律——少数"重击者"token 累积了大部分注意力权重。动态维护 top-k 累积分数 + 最近性，只保留 20% 的 KV 预算即可近似全精度。
+
+**Attention Sink + StreamingLLM** [Xiao et al., 2023]：一个意外的发现——前几个 token（位置 0–3）无论内容如何都会吸引异常高的注意力权重，因为 softmax 无法输出 0，模型把"多余的"权重倾倒在初始位置作为泄压阀。StreamingLLM 利用这个现象：只保留 Sink 窗口（前 K_s≈4 token）+ 最近窗口（后 K_r token），实现 O(1) 内存的无限流式推理，无需重训练。代价是中段信息完全丢失。</aside>
+
+  <h2 class="text-4xl font-bold mb-1 text-emerald-300">KV Cache 压缩与管理</h2>
+  <p class="text-lg text-gray-400 mb-3">架构级低秩压缩（MLA）· 推理时动态驱逐（SnapKV · H2O）· 无限流推（StreamingLLM）</p>
+
+  <div class="flex gap-5 flex-1 min-h-0">
+
+    <!-- Left: MLA -->
+    <div class="flex-[4] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-blue-800 p-4 flex flex-col gap-3 h-full">
+        <h3 class="text-base font-semibold text-blue-200">MLA：低秩 KV 压缩 <cite class="text-gray-500 text-xs not-italic">[DeepSeek-V2, 2024]</cite></h3>
+
+        <!-- MLA compression flow SVG -->
+        <svg viewBox="0 0 200 155" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- h_t input box -->
+          <rect x="25" y="2" width="150" height="18" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.2"/>
+          <text x="100" y="14" text-anchor="middle" font-size="8" fill="#93c5fd">hidden state  h_t  (dim = 5120)</text>
+
+          <!-- Down-projection -->
+          <line x1="100" y1="20" x2="100" y2="34" stroke="#6b7280" stroke-width="1"/>
+          <rect x="50"  y="34" width="100" height="16" rx="3" fill="#1c1917" stroke="#f59e0b" stroke-width="1"/>
+          <text x="100" y="45" text-anchor="middle" font-size="7.5" fill="#fbbf24">W^DKV  ↓  compress</text>
+
+          <!-- c_KV (the cached latent) -->
+          <line x1="100" y1="50" x2="100" y2="64" stroke="#6b7280" stroke-width="1"/>
+          <rect x="55"  y="64" width="90" height="22" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+          <text x="100" y="78" text-anchor="middle" font-size="8.5" fill="#6ee7b7" font-weight="bold">c_KV  (dim = 512)</text>
+          <rect x="148" y="68" width="46" height="14" rx="2" fill="#065f46" stroke="#10b981" stroke-width="0.8"/>
+          <text x="171" y="78" text-anchor="middle" font-size="6.5" fill="#34d399">cached ✓</text>
+
+          <!-- Up-projection (on demand at inference) -->
+          <line x1="100" y1="86" x2="100" y2="100" stroke="#6b7280" stroke-width="1"/>
+          <rect x="40"  y="100" width="120" height="16" rx="3" fill="#1c1917" stroke="#f59e0b" stroke-width="1"/>
+          <text x="100" y="111" text-anchor="middle" font-size="7.5" fill="#fbbf24">W^UKV  ↑  on-demand</text>
+
+          <!-- K, V outputs -->
+          <line x1="80"  y1="116" x2="55"  y2="130" stroke="#6b7280" stroke-width="1"/>
+          <line x1="120" y1="116" x2="145" y2="130" stroke="#6b7280" stroke-width="1"/>
+          <rect x="22"  y="130" width="66" height="18" rx="3" fill="#312e81" stroke="#6366f1" stroke-width="1"/>
+          <rect x="112" y="130" width="66" height="18" rx="3" fill="#312e81" stroke="#6366f1" stroke-width="1"/>
+          <text x="55"  y="142" text-anchor="middle" font-size="7.5" fill="#a5b4fc">K  (5120)</text>
+          <text x="145" y="142" text-anchor="middle" font-size="7.5" fill="#a5b4fc">V  (5120)</text>
+
+          <!-- Compression ratio label -->
+          <text x="100" y="155" text-anchor="middle" font-size="6.5" fill="#6b7280">5120 → 512: ~12× KV compression</text>
+        </svg>
+
+        <!-- Memory comparison table -->
         <div class="rounded-xl overflow-hidden border border-gray-600">
-          <table class="w-full text-sm">
+          <table class="w-full text-xs">
             <thead>
               <tr class="bg-gray-700 bg-opacity-50">
-                <th class="px-2 py-1 text-left text-gray-400">模型</th>
-                <th class="px-2 py-1 text-right text-gray-400">每 token</th>
+                <th class="px-2 py-1 text-left text-gray-400">Model</th>
+                <th class="px-2 py-1 text-right text-gray-400">per token</th>
                 <th class="px-2 py-1 text-right text-gray-400">@128K</th>
               </tr>
             </thead>
             <tbody>
               <tr class="border-t border-gray-700">
                 <td class="px-2 py-1 text-gray-300">LLaMA-3 70B</td>
-                <td class="px-2 py-1 text-right text-yellow-300">320 KB</td>
+                <td class="px-2 py-1 text-right text-red-400">320 KB</td>
                 <td class="px-2 py-1 text-right text-red-400">~40 GB</td>
               </tr>
               <tr class="border-t border-gray-700">
-                <td class="px-2 py-1 text-gray-300">Mixtral 8×7B</td>
-                <td class="px-2 py-1 text-right text-yellow-300">128 KB</td>
-                <td class="px-2 py-1 text-right text-yellow-400">~16 GB</td>
-              </tr>
-              <tr class="border-t border-gray-700">
-                <td class="px-2 py-1 text-gray-300">DeepSeek-V2 (MLA)</td>
-                <td class="px-2 py-1 text-right text-yellow-300">~48 KB</td>
+                <td class="px-2 py-1 text-gray-300">DeepSeek-V2 MLA</td>
+                <td class="px-2 py-1 text-right text-emerald-400">~48 KB</td>
                 <td class="px-2 py-1 text-right text-emerald-400">~6 GB</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p class="text-sm text-gray-500">DeepSeek-V2 的 MLA 将 KV 压缩至潜在维度 512（原 5120），实现 <span class="text-emerald-400">5–13×</span> 压缩比。</p>
+        <p class="text-xs text-gray-500">Decoupled RoPE：RoPE 无法低秩化，额外缓存少量独立 head 的完整 K 向量。</p>
+      </div>
+    </div>
+
+    <!-- Middle: SnapKV + H2O -->
+    <div class="flex-[4] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-purple-800 p-4 flex flex-col gap-3">
+        <h3 class="text-base font-semibold text-purple-200">SnapKV：观测→投票→聚类 <cite class="text-gray-500 text-xs not-italic">[Li et al., 2024]</cite></h3>
+
+        <!-- SnapKV 3-step SVG -->
+        <svg viewBox="0 0 220 128" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Step 1 box -->
+          <rect x="2"   y="4"  width="64" height="52" rx="4" fill="#1e1b4b" stroke="#818cf8" stroke-width="1"/>
+          <text x="34"  y="17" text-anchor="middle" font-size="7.5" fill="#a5b4fc" font-weight="bold">① Observe</text>
+          <rect x="8"   y="22" width="52" height="10" rx="2" fill="#374151"/>
+          <text x="34"  y="30" text-anchor="middle" font-size="6" fill="#6b7280">prefix KV (long)</text>
+          <rect x="8"   y="34" width="36" height="10" rx="2" fill="#312e81" stroke="#6366f1" stroke-width="0.8"/>
+          <text x="26"  y="42" text-anchor="middle" font-size="6" fill="#a5b4fc">obs window</text>
+          <text x="34"  y="52" text-anchor="middle" font-size="6" fill="#6b7280">end of prompt</text>
+
+          <!-- Arrow 1→2 -->
+          <line x1="66" y1="30" x2="78" y2="30" stroke="#6b7280" stroke-width="1"/>
+          <polygon points="78,27 84,30 78,33" fill="#6b7280"/>
+
+          <!-- Step 2 box -->
+          <rect x="84"  y="4"  width="64" height="52" rx="4" fill="#1e1b4b" stroke="#818cf8" stroke-width="1"/>
+          <text x="116" y="17" text-anchor="middle" font-size="7.5" fill="#a5b4fc" font-weight="bold">② Vote</text>
+          <!-- Attention score bars -->
+          <rect x="90"  y="20" width="7" height="22" rx="1" fill="#4c1d95"/>
+          <rect x="99"  y="27" width="7" height="15" rx="1" fill="#4c1d95"/>
+          <rect x="108" y="16" width="7" height="26" rx="1" fill="#7c3aed"/>
+          <rect x="117" y="29" width="7" height="13" rx="1" fill="#4c1d95"/>
+          <rect x="126" y="20" width="7" height="22" rx="1" fill="#7c3aed"/>
+          <rect x="135" y="24" width="7" height="18" rx="1" fill="#4c1d95"/>
+          <text x="116" y="50" text-anchor="middle" font-size="6" fill="#9ca3af">attn score → vote</text>
+          <text x="116" y="58" text-anchor="middle" font-size="5.5" fill="#6b7280">per prefix token</text>
+
+          <!-- Arrow 2→3 -->
+          <line x1="148" y1="30" x2="160" y2="30" stroke="#6b7280" stroke-width="1"/>
+          <polygon points="160,27 166,30 160,33" fill="#6b7280"/>
+
+          <!-- Step 3 box -->
+          <rect x="166" y="4"  width="52" height="52" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
+          <text x="192" y="17" text-anchor="middle" font-size="7.5" fill="#6ee7b7" font-weight="bold">③ Keep</text>
+          <rect x="170" y="22" width="44" height="10" rx="2" fill="#065f46" stroke="#10b981" stroke-width="0.8"/>
+          <text x="192" y="30" text-anchor="middle" font-size="5.5" fill="#6ee7b7">top KV (clustered)</text>
+          <rect x="170" y="34" width="44" height="10" rx="2" fill="#065f46" stroke="#10b981" stroke-width="0.8"/>
+          <text x="192" y="42" text-anchor="middle" font-size="5.5" fill="#6ee7b7">+ local window</text>
+          <text x="192" y="56" text-anchor="middle" font-size="5.5" fill="#4b5563">per-layer</text>
+
+          <!-- Summary label -->
+          <rect x="2" y="62" width="216" height="16" rx="3" fill="#1e1b4b" stroke="#6366f1" stroke-width="0.8"/>
+          <text x="110" y="73" text-anchor="middle" font-size="6.5" fill="#a5b4fc">Cluster-pool votes → representative KVs (not just top-1 scores)</text>
+
+          <!-- H2O section -->
+          <rect x="2"  y="84" width="216" height="40" rx="4" fill="#1c1917" stroke="#f59e0b" stroke-width="1"/>
+          <text x="30" y="99" text-anchor="middle" font-size="8" fill="#fbbf24" font-weight="bold">H2O</text>
+          <text x="30" y="111" text-anchor="middle" font-size="6" fill="#6b7280">Zhang et al., 2023</text>
+          <text x="140" y="97" text-anchor="middle" font-size="7" fill="#fbbf24">power-law attn → heavy hitters</text>
+          <text x="140" y="109" text-anchor="middle" font-size="6.5" fill="#9ca3af">20% KV budget ≈ full accuracy</text>
+          <text x="140" y="119" text-anchor="middle" font-size="6.5" fill="#6b7280">top-k cumulative score + recency, per-head</text>
+        </svg>
       </div>
 
       <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
-        <p class="text-base text-gray-300 font-semibold mb-1">KV 量化</p>
-        <p class="text-sm text-gray-400">INT8 → 2× 压缩，INT4 → 4× 压缩。离群值需特殊处理（分组量化或混合精度）。</p>
+        <p class="text-xs text-gray-400">KV 量化：INT8 → 2× 压缩，INT4 → 4× 压缩；离群值需分组量化或混合精度处理。</p>
       </div>
     </div>
 
-    <!-- Middle: Attention Sink diagram -->
-    <div class="flex-1 flex flex-col gap-4">
-      <h3 class="text-xl font-semibold text-emerald-200">Attention Sink 现象 <cite class="text-gray-500 text-sm not-italic">[Xiao et al., 2023]</cite></h3>
+    <!-- Right: Attention Sink + StreamingLLM -->
+    <div class="flex-[4] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-amber-800 p-4 flex flex-col gap-3 h-full">
+        <h3 class="text-base font-semibold text-amber-200">Attention Sink + StreamingLLM <cite class="text-gray-500 text-xs not-italic">[Xiao et al., 2023]</cite></h3>
 
-      <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex flex-col gap-3">
-        <p class="text-base text-gray-300 leading-relaxed">无论输入内容如何，前几个 token（位置 0–3）的注意力权重异常高——模型将"多余"的注意力倾倒在此，因为 softmax 无法输出 0。</p>
-
-        <!-- Bar chart of attention scores across positions -->
-        <svg viewBox="0 0 320 160" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <!-- Attention sink bar chart SVG -->
+        <svg viewBox="0 0 220 96" width="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <marker id="arr-sink" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-              <polygon points="0 0, 7 2.5, 0 5" fill="#6b7280"/>
+            <marker id="ax-sk09" markerWidth="5" markerHeight="4" refX="5" refY="2" orient="auto">
+              <polygon points="0 0,5 2,0 4" fill="#6b7280"/>
             </marker>
           </defs>
-          <!-- Y axis -->
-          <line x1="32" y1="10" x2="32" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr-sink)"/>
-          <!-- X axis -->
-          <line x1="32" y1="130" x2="315" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr-sink)"/>
-          <text x="22" y="80" text-anchor="middle" font-size="11" fill="#9ca3af" transform="rotate(-90,22,80)">Attn. Weight</text>
-          <text x="173" y="148" text-anchor="middle" font-size="11" fill="#9ca3af">Token Position</text>
+          <line x1="16" y1="8"  x2="16"  y2="78" stroke="#6b7280" stroke-width="1.2" marker-end="url(#ax-sk09)"/>
+          <line x1="16" y1="78" x2="215" y2="78" stroke="#6b7280" stroke-width="1.2" marker-end="url(#ax-sk09)"/>
+          <text x="9"  y="47"  text-anchor="middle" font-size="6" fill="#9ca3af" transform="rotate(-90,9,47)">attn weight</text>
+          <text x="115" y="90" text-anchor="middle" font-size="7" fill="#9ca3af">token position</text>
 
-          <!-- Sink bars (positions 0-2) - tall, amber -->
-          <rect x="36"  y="34"  width="18" height="96" fill="#f59e0b" opacity="0.9" rx="2"/>
-          <rect x="58"  y="48"  width="18" height="82" fill="#f59e0b" opacity="0.7" rx="2"/>
-          <rect x="80"  y="62"  width="18" height="68" fill="#f59e0b" opacity="0.5" rx="2"/>
+          <!-- Sink bars (high, amber) -->
+          <rect x="20"  y="20" width="12" height="58" fill="#f59e0b" opacity="0.9" rx="1"/>
+          <rect x="34"  y="30" width="12" height="48" fill="#f59e0b" opacity="0.7" rx="1"/>
+          <rect x="48"  y="42" width="12" height="36" fill="#f59e0b" opacity="0.5" rx="1"/>
+          <rect x="62"  y="48" width="12" height="30" fill="#f59e0b" opacity="0.35" rx="1"/>
 
-          <!-- Normal positions - short, emerald -->
-          <rect x="102" y="116" width="18" height="14" fill="#065f46" rx="2"/>
-          <rect x="124" y="112" width="18" height="18" fill="#065f46" rx="2"/>
-          <rect x="146" y="118" width="18" height="12" fill="#065f46" rx="2"/>
-          <rect x="168" y="114" width="18" height="16" fill="#065f46" rx="2"/>
-          <rect x="190" y="117" width="18" height="13" fill="#065f46" rx="2"/>
-          <rect x="212" y="115" width="18" height="15" fill="#065f46" rx="2"/>
-          <rect x="234" y="119" width="18" height="11" fill="#065f46" rx="2"/>
-          <rect x="256" y="116" width="18" height="14" fill="#065f46" rx="2"/>
-          <rect x="278" y="113" width="18" height="17" fill="#065f46" rx="2"/>
+          <!-- Normal tokens (low, emerald) -->
+          <rect x="80"  y="70" width="10" height="8"  fill="#065f46" rx="1"/>
+          <rect x="92"  y="67" width="10" height="11" fill="#065f46" rx="1"/>
+          <rect x="104" y="71" width="10" height="7"  fill="#065f46" rx="1"/>
+          <rect x="116" y="68" width="10" height="10" fill="#065f46" rx="1"/>
+          <rect x="128" y="70" width="10" height="8"  fill="#065f46" rx="1"/>
+          <rect x="140" y="69" width="10" height="9"  fill="#065f46" rx="1"/>
+          <rect x="152" y="71" width="10" height="7"  fill="#065f46" rx="1"/>
+          <rect x="164" y="68" width="10" height="10" fill="#065f46" rx="1"/>
+          <rect x="176" y="70" width="10" height="8"  fill="#065f46" rx="1"/>
+          <rect x="188" y="69" width="10" height="9"  fill="#065f46" rx="1"/>
+          <rect x="200" y="71" width="10" height="7"  fill="#065f46" rx="1"/>
 
-          <!-- Annotation -->
-          <text x="60"  y="28" text-anchor="middle" font-size="11" fill="#fbbf24">Sink tokens</text>
-          <text x="190" y="108" text-anchor="middle" font-size="11" fill="#6ee7b7">normal positions</text>
+          <!-- Annotations -->
+          <text x="42"  y="14" text-anchor="middle" font-size="6.5" fill="#fbbf24">Sink tokens</text>
+          <text x="144" y="62" text-anchor="middle" font-size="6.5" fill="#6ee7b7">normal positions</text>
+          <line x1="20"  y1="17" x2="74"  y2="17" stroke="#fbbf24" stroke-width="0.8" stroke-dasharray="2 1"/>
+        </svg>
+        <p class="text-xs text-gray-400">Softmax 无法输出 0——"多余"注意力倾倒在初始 token（content-agnostic），作为注意力泄压阀。</p>
 
-          <!-- Brace for sink -->
-          <line x1="36" y1="22" x2="98" y2="22" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3 2"/>
+        <!-- StreamingLLM window SVG -->
+        <svg viewBox="0 0 220 64" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <text x="110" y="11" text-anchor="middle" font-size="7.5" fill="#9ca3af">StreamingLLM: O(1) KV cache window</text>
+          <rect x="2"   y="16" width="32"  height="26" fill="#78350f" fill-opacity="0.8" stroke="#f59e0b" stroke-width="1.2" rx="3"/>
+          <text x="18"  y="32" text-anchor="middle" font-size="7" fill="#fbbf24">Sink</text>
+          <rect x="34"  y="16" width="110" height="26" fill="#1f2937" stroke="#374151" stroke-width="0.8" rx="3"/>
+          <text x="89"  y="32" text-anchor="middle" font-size="7" fill="#4b5563">evicted  ✗</text>
+          <rect x="144" y="16" width="74"  height="26" fill="#064e3b" fill-opacity="0.8" stroke="#10b981" stroke-width="1.2" rx="3"/>
+          <text x="181" y="32" text-anchor="middle" font-size="7" fill="#6ee7b7">recent  K_r</text>
+          <text x="18"  y="54" text-anchor="middle" font-size="6.5" fill="#fbbf24">K_s ≈ 4</text>
+          <text x="89"  y="54" text-anchor="middle" font-size="6.5" fill="#4b5563">unbounded (dropped)</text>
+          <text x="181" y="54" text-anchor="middle" font-size="6.5" fill="#6ee7b7">sliding window</text>
         </svg>
 
-        <p class="text-sm text-gray-500 leading-relaxed">Sink 与语义无关——可以是任意无信息的 token（如换行符、空格）。这是 softmax 归一化的"泄压阀"效应。</p>
-      </div>
-    </div>
+        <div class="bg-amber-950 bg-opacity-30 border border-amber-800 rounded-xl p-2">
+          <p class="text-xs text-amber-200 font-semibold">O(1) 内存 · 无限流推 · 无需重训练</p>
+          <p class="text-xs text-red-400 mt-0.5">代价：中段信息完全丢失（lost-in-the-middle 效应）</p>
+        </div>
 
-    <!-- Right: StreamingLLM + eviction policies -->
-    <div class="flex-1 flex flex-col gap-4">
-      <h3 class="text-xl font-semibold text-emerald-200">StreamingLLM：无限流式推理</h3>
-
-      <div class="bg-gray-800 rounded-2xl border border-emerald-800 p-4 flex flex-col gap-3">
-        <p class="text-base text-gray-300 leading-relaxed">只保留 <span class="text-amber-300">Sink 窗口</span>（前 K_s ≈ 4 token）+ <span class="text-emerald-300">最近窗口</span>（后 K_r token），丢弃中间 KV。实现 O(1) 内存的无限长推理，无需重训练。</p>
-
-        <!-- StreamingLLM window diagram -->
-        <svg viewBox="0 0 280 80" width="100%" xmlns="http://www.w3.org/2000/svg">
-          <!-- Full KV cache bar -->
-          <text x="0" y="14" font-size="11" fill="#9ca3af">KV cache (time →)</text>
-          <!-- Sink region -->
-          <rect x="0"  y="18" width="36" height="28" fill="#78350f" fill-opacity="0.7" stroke="#f59e0b" stroke-width="1.2" rx="3"/>
-          <text x="18" y="36" text-anchor="middle" font-size="10" fill="#fbbf24">Sink</text>
-          <!-- Evicted middle -->
-          <rect x="36" y="18" width="140" height="28" fill="#1f2937" stroke="#374151" stroke-width="1" rx="3"/>
-          <text x="106" y="36" text-anchor="middle" font-size="10" fill="#4b5563">evicted ✕</text>
-          <!-- Recent window -->
-          <rect x="176" y="18" width="104" height="28" fill="#064e3b" fill-opacity="0.7" stroke="#10b981" stroke-width="1.2" rx="3"/>
-          <text x="228" y="36" text-anchor="middle" font-size="10" fill="#6ee7b7">recent window</text>
-          <!-- Braces -->
-          <text x="18"  y="57" text-anchor="middle" font-size="10" fill="#fbbf24">K_s≈4</text>
-          <text x="228" y="57" text-anchor="middle" font-size="10" fill="#6ee7b7">K_r tokens</text>
-          <text x="106" y="57" text-anchor="middle" font-size="10" fill="#4b5563">unbounded</text>
-        </svg>
-      </div>
-
-      <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex flex-col gap-2">
-        <h3 class="text-xl font-semibold text-indigo-200">KV 驱逐策略对比</h3>
-        <table class="w-full text-sm">
+        <!-- Eviction policy comparison table -->
+        <table class="w-full text-xs mt-auto">
           <thead>
             <tr class="border-b border-gray-600">
-              <th class="py-1 text-left text-gray-400">方法</th>
-              <th class="py-1 text-left text-gray-400">选择依据</th>
-              <th class="py-1 text-left text-gray-400">粒度</th>
+              <th class="py-0.5 text-left text-gray-500">Method</th>
+              <th class="py-0.5 text-left text-gray-500">Selection criterion</th>
+              <th class="py-0.5 text-right text-gray-500">Granularity</th>
             </tr>
           </thead>
           <tbody>
             <tr class="border-b border-gray-700">
-              <td class="py-1 text-yellow-300">H2O</td>
-              <td class="py-1 text-gray-300">累积注意力分数（重击者）</td>
-              <td class="py-1 text-gray-400">per-head</td>
+              <td class="py-0.5 text-yellow-300">H2O</td>
+              <td class="py-0.5 text-gray-300">cumulative attn score</td>
+              <td class="py-0.5 text-right text-gray-400">per-head</td>
             </tr>
             <tr class="border-b border-gray-700">
-              <td class="py-1 text-purple-300">SnapKV</td>
-              <td class="py-1 text-gray-300">聚类池化注意力</td>
-              <td class="py-1 text-gray-400">per-layer</td>
+              <td class="py-0.5 text-purple-300">SnapKV</td>
+              <td class="py-0.5 text-gray-300">cluster-pooled attn</td>
+              <td class="py-0.5 text-right text-gray-400">per-layer</td>
             </tr>
             <tr>
-              <td class="py-1 text-amber-300">StreamingLLM</td>
-              <td class="py-1 text-gray-300">固定 Sink + 最近性</td>
-              <td class="py-1 text-gray-400">global</td>
+              <td class="py-0.5 text-amber-300">StreamingLLM</td>
+              <td class="py-0.5 text-gray-300">recency + fixed sink</td>
+              <td class="py-0.5 text-right text-gray-400">global</td>
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
-        <p class="text-sm text-gray-400">代价：<span class="text-red-400">中段信息丢失</span>——与"lost-in-the-middle"现象叠加，是长上下文实际利用率低的系统性根源之一。</p>
       </div>
     </div>
 

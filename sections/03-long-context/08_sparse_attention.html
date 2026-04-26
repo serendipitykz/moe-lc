@@ -1,195 +1,187 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。
-----------
-我们快速过一下稀疏注意力的历史，因为它是理解 FlashAttention 为何取胜的重要背景。
+<aside class="notes">NSA 和 MoBA 是 2025 年稀疏注意力的新范式：不再手工设计稀疏规则，而是让模型端到端学习"哪里值得精确关注"。NSA 三路分支各司其职；MoBA 借鉴 MoE 的 top-k 门控。两者分别代表 token 级和 block 级的动态稀疏。
+---
+我们快速回顾一下 2020 年那批稀疏注意力工作的共同局限：Longformer、BigBird、Sliding Window 都是手工设计稀疏规则——不管输入是什么，注意力模式是固定的。2022 年 FlashAttention 出现后，精确注意力的 IO 问题得到了解决，静态稀疏注意力基本被淘汰。
 
-在 FlashAttention 出现之前，主流应对 O(L²) 的方案是稀疏注意力——通过限制每个 token 能注意的范围，把复杂度从 O(L²) 降到 O(L·w)。
+但到了 2025 年，稀疏注意力以完全不同的面貌回归了——这次是**动态的、可学习的**。
 
-**Longformer** [Beltagy et al., 2020]：每个 token 只注意 ±w/2 个邻居（局部窗口），加上少数全局 token（如 [CLS]）可以双向注意所有位置。注意力矩阵是"带状 + 稀疏全局"的模式。
+**NSA（Native Sparse Attention）**，DeepSeek-AI + PKU，2025 年 2 月。
 
-**BigBird** [Zaheer et al., 2020]：在 Longformer 基础上加入随机注意力点，理论上证明了这种模式在 O(L) 注意力下是图灵完备的。
+NSA 的核心是三路并行分支，最后通过可学习门控 g_t^c 融合输出：
 
-**Sliding Window**（Mistral 7B）：每个 token 只注意最近 4096 个 token，配合 GQA 实现 32K 上下文，简单高效。
+第一支路 Compression：把输入序列按 l=32 token 为一组，用 MLP 把每组压缩成单个 token 后做注意力。粗粒度全局摘要。
 
-但它们都有一个共同问题：**牺牲精度**，工程上还需要自定义 CUDA kernel。FlashAttention 出现后，精确注意力不再是瓶颈，这条路就基本被淘汰了。Sliding Window 在 Mistral、Gemma 等效率优先的模型中还有使用，但它实际上是在限制模型能看到的历史长度。</aside>
+第二支路 Selection：在 block 级别评分，选 top-16 块（每块 64 token），做精细注意力。精确检索最重要区域。
 
-  <h2 class="text-5xl font-bold mb-2 text-emerald-300">稀疏注意力模式</h2>
-  <p class="text-xl text-gray-400 mb-3">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>
+第三支路 Sliding Window：窗口 w=512，保留局部近邻依赖。
+
+三路加权融合：o_t* = Σ_c g_t^c · Attn(q_t, K_t^c, V_t^c)。GQA 兼容，Triton kernel 实现，可端到端训练，无需人工调参。
+
+实测：64K 上下文下 9 倍 prefill 加速、11.6 倍解码加速；7/9 通用任务优于全注意力基线。
+
+**MoBA（Mixture of Block Attention）**，Moonshot AI + 清华大学，2025 年 2 月。
+
+MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为等大块，用当前 query 对每块的 key 做均值池化后打分，选 top-k 块做精细注意力，同时始终保留当前块（完全对应 shared expert 的设计）。
+
+门控公式：s_i = q · mean_pool(K[block_i])。这个操作非常轻量，不需要额外的参数。
+
+在 32K 序列上，MoBA 的稀疏度达到 95.31%；128K 上的 RULER benchmark 得分 0.782，而全注意力是 0.785，差距极小。1M 上下文 prefill 加速 6.5 倍。训练时用 90% MoBA + 10% 全注意力混合，保留全局理解能力。
+
+这两个工作的出现，把稀疏注意力的范式从"静态手工设计"推进到了"动态端到端学习"。这是 2025 年长上下文领域最重要的趋势之一。</aside>
+
+  <h2 class="text-4xl font-bold mb-1 text-emerald-300">现代稀疏注意力：NSA 与 MoBA</h2>
+  <p class="text-lg text-gray-400 mb-3">动态可学习稀疏——从静态手工规则到端到端路由（2025）</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
-    <!-- Card 1: Longformer -->
-    <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
-      <h3 class="text-xl font-bold text-emerald-300">Longformer <cite class="text-gray-500 text-sm not-italic">[Beltagy et al., 2020]</cite></h3>
-      <p class="text-base text-gray-400">局部窗口 + 全局 token</p>
+    <!-- Left: NSA -->
+    <div class="flex-[5] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-cyan-800 p-4 flex flex-col gap-3 h-full">
+        <h3 class="text-base font-semibold text-cyan-200">NSA <span class="text-gray-400 text-sm font-normal">DeepSeek-AI + PKU, Feb 2025</span></h3>
+        <p class="text-sm text-gray-300">三路并行注意力 + 可学习门控融合，GQA 兼容 Triton kernel，端到端可训练</p>
 
-      <p class="text-base text-gray-300 leading-relaxed">每个 token 仅注意 ±w/2 个相邻 token（局部）；特殊全局 token（如 <code>[CLS]</code>）双向注意所有位置。</p>
+        <!-- NSA 3-branch SVG (all text in English) -->
+        <svg viewBox="0 0 260 180" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Input token -->
+          <rect x="80" y="2" width="100" height="18" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.2"/>
+          <text x="130" y="14" text-anchor="middle" font-size="8" fill="#93c5fd">query token  q_t</text>
 
-      <div class="text-center text-sm">
-        \[O(L \cdot w) + O(L \cdot n_g)\]
-        <p class="text-xs text-gray-500 mt-1">w = 窗口宽，\(n_g\) = 全局 token 数</p>
-      </div>
+          <!-- Branch lines to 3 boxes -->
+          <line x1="100" y1="20" x2="38"  y2="44" stroke="#6b7280" stroke-width="1"/>
+          <line x1="130" y1="20" x2="130" y2="44" stroke="#6b7280" stroke-width="1"/>
+          <line x1="160" y1="20" x2="222" y2="44" stroke="#6b7280" stroke-width="1"/>
 
-      <!-- Attention pattern SVG: band + first col -->
-      <svg viewBox="0 0 130 148" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="band-local" x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
-            <rect width="26" height="26" fill="#064e3b"/>
-          </pattern>
-        </defs>
-        <!-- Background: all zeros (dark) -->
-        <rect x="0" y="0" width="130" height="130" fill="#111827" rx="4"/>
-        <!-- Local band (w=3): diagonal ±1 cells, size 5x5 grid, cell=26 -->
-        <!-- Row 0 -->
-        <rect x="0"  y="0"  width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="26" y="0"  width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <!-- Row 1 -->
-        <rect x="0"  y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="26" y="26" width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="52" y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <!-- Row 2 -->
-        <rect x="26" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="52" y="52" width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="78" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <!-- Row 3 -->
-        <rect x="52" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="78" y="78" width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="104" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <!-- Row 4 -->
-        <rect x="78"  y="104" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="104" y="104" width="26" height="26" fill="#047857" opacity="0.9"/>
+          <!-- Branch 1: Compression -->
+          <rect x="4"   y="44" width="68" height="40" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="1.2"/>
+          <text x="38"  y="57" text-anchor="middle" font-size="7.5" fill="#6ee7b7" font-weight="bold">Compression</text>
+          <text x="38"  y="68" text-anchor="middle" font-size="6.5" fill="#9ca3af">MLP per chunk</text>
+          <text x="38"  y="78" text-anchor="middle" font-size="6.5" fill="#9ca3af">l=32 tokens → 1</text>
 
-        <!-- Global token: first col + first row highlighted amber -->
-        <rect x="0" y="0"   width="26" height="130" fill="#f59e0b" opacity="0.35"/>
-        <rect x="0" y="0"   width="130" height="26" fill="#f59e0b" opacity="0.20"/>
+          <!-- Branch 2: Selection -->
+          <rect x="96"  y="44" width="68" height="40" rx="3" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="130" y="57" text-anchor="middle" font-size="7.5" fill="#a5b4fc" font-weight="bold">Selection</text>
+          <text x="130" y="68" text-anchor="middle" font-size="6.5" fill="#9ca3af">top-16 blocks</text>
+          <text x="130" y="78" text-anchor="middle" font-size="6.5" fill="#9ca3af">64 tokens / block</text>
 
-        <!-- Grid lines -->
-        <line x1="26"  y1="0" x2="26"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="52"  y1="0" x2="52"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="78"  y1="0" x2="78"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="104" y1="0" x2="104" y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="26"  x2="130" y2="26"  stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="52"  x2="130" y2="52"  stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
+          <!-- Branch 3: Sliding Window -->
+          <rect x="188" y="44" width="68" height="40" rx="3" fill="#451a03" stroke="#f97316" stroke-width="1.2"/>
+          <text x="222" y="57" text-anchor="middle" font-size="7.5" fill="#fdba74" font-weight="bold">Sliding Window</text>
+          <text x="222" y="68" text-anchor="middle" font-size="6.5" fill="#9ca3af">local context</text>
+          <text x="222" y="78" text-anchor="middle" font-size="6.5" fill="#9ca3af">w = 512</text>
 
-        <!-- Legend (inside extended viewBox height=148) -->
-        <rect x="0" y="132" width="8" height="8" fill="#047857"/>
-        <text x="10" y="141" font-size="10" fill="#6ee7b7">local window</text>
-        <rect x="65" y="132" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
-        <text x="75" y="141" font-size="10" fill="#fbbf24">global token</text>
-      </svg>
-    </div>
+          <!-- Gate labels -->
+          <line x1="38"  y1="84" x2="38"  y2="104" stroke="#6b7280" stroke-width="0.8"/>
+          <line x1="130" y1="84" x2="130" y2="104" stroke="#6b7280" stroke-width="0.8"/>
+          <line x1="222" y1="84" x2="222" y2="104" stroke="#6b7280" stroke-width="0.8"/>
+          <text x="38"  y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^c</text>
+          <text x="130" y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^s</text>
+          <text x="222" y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^w</text>
 
-    <!-- Card 2: BigBird -->
-    <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
-      <h3 class="text-xl font-bold text-emerald-300">BigBird <cite class="text-gray-500 text-sm not-italic">[Zaheer et al., 2020]</cite></h3>
-      <p class="text-base text-gray-400">局部窗口 + 全局 token + 随机注意力</p>
+          <!-- Merge lines to fusion box -->
+          <line x1="38"  y1="104" x2="105" y2="124" stroke="#6b7280" stroke-width="0.8"/>
+          <line x1="130" y1="104" x2="130" y2="124" stroke="#6b7280" stroke-width="0.8"/>
+          <line x1="222" y1="104" x2="155" y2="124" stroke="#6b7280" stroke-width="0.8"/>
 
-      <p class="text-base text-gray-300 leading-relaxed">在 Longformer 基础上增加每行若干随机注意力点，覆盖长程依赖。理论证明：该组合在 O(L) 注意力下图灵完备。</p>
+          <!-- Gated fusion -->
+          <rect x="75" y="124" width="110" height="22" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1.2"/>
+          <text x="130" y="139" text-anchor="middle" font-size="8" fill="#fbbf24" font-weight="bold">gated fusion  o_t*</text>
 
-      <div class="text-center text-sm">
-        \[O\!\left(L(w + n_g + r)\right) = O(L)\]
-        <p class="text-xs text-gray-500 mt-1">r = 每行随机注意力点数（通常 r ≈ 3）</p>
-      </div>
-
-      <!-- Attention pattern SVG: band + global + random dots -->
-      <svg viewBox="0 0 130 148" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0" y="0" width="130" height="130" fill="#111827" rx="4"/>
-        <!-- Local band -->
-        <rect x="0"  y="0"  width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="26" y="0"  width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="0"  y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="26" y="26" width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="52" y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="26" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="52" y="52" width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="78" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="52" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="78" y="78" width="26" height="26" fill="#047857" opacity="0.9"/>
-        <rect x="104" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="78"  y="104" width="26" height="26" fill="#065f46" opacity="0.9"/>
-        <rect x="104" y="104" width="26" height="26" fill="#047857" opacity="0.9"/>
-        <!-- Global col + row -->
-        <rect x="0" y="0"  width="26" height="130" fill="#f59e0b" opacity="0.30"/>
-        <rect x="0" y="0"  width="130" height="26" fill="#f59e0b" opacity="0.15"/>
-        <!-- Random dots (indigo) -->
-        <rect x="104" y="26"  width="26" height="26" fill="#818cf8" opacity="0.8"/>
-        <rect x="78"  y="0"   width="26" height="26" fill="#818cf8" opacity="0.8"/>
-        <rect x="0"   y="78"  width="26" height="26" fill="#818cf8" opacity="0.8"/>
-        <rect x="52"  y="104" width="26" height="26" fill="#818cf8" opacity="0.8"/>
-        <!-- Grid -->
-        <line x1="26"  y1="0" x2="26"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="52"  y1="0" x2="52"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="78"  y1="0" x2="78"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="104" y1="0" x2="104" y2="130" stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="26"  x2="130" y2="26"  stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="52"  x2="130" y2="52"  stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
-        <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
-        <!-- Legend (inside extended viewBox height=148) -->
-        <rect x="0"  y="132" width="8" height="8" fill="#047857"/>
-        <text x="10" y="141" font-size="9" fill="#6ee7b7">local</text>
-        <rect x="40" y="132" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
-        <text x="50" y="141" font-size="9" fill="#fbbf24">global</text>
-        <rect x="78" y="132" width="8" height="8" fill="#818cf8"/>
-        <text x="88" y="141" font-size="9" fill="#a5b4fc">random</text>
-      </svg>
-    </div>
-
-    <!-- Card 3: Sliding Window + Summary -->
-    <div class="flex-1 flex flex-col gap-4">
-      <div class="bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3">
-        <h3 class="text-xl font-bold text-emerald-300">Sliding Window</h3>
-        <p class="text-base text-gray-400">Mistral 7B [Jiang et al., 2023]</p>
-        <p class="text-base text-gray-300 leading-relaxed">每 token 仅注意最近 w = 4096 个 token，无全局 token。结合 GQA（8 组）和 RoPE，实现 32K 上下文。</p>
-        <div class="text-center text-sm">
-          \[O(L \cdot w),\quad w = 4096\]
-        </div>
-
-        <!-- Simple visual: causal sliding window w=3, 5x5 grid, 26x26 cells -->
-        <svg viewBox="0 0 130 130" width="80%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width="130" height="130" fill="#111827" rx="4"/>
-          <!-- Row 0: col 0 -->
-          <rect x="0"  y="0"   width="26" height="26" fill="#047857" opacity="0.9"/>
-          <!-- Row 1: col 0,1 -->
-          <rect x="0"  y="26"  width="26" height="26" fill="#065f46" opacity="0.9"/>
-          <rect x="26" y="26"  width="26" height="26" fill="#047857" opacity="0.9"/>
-          <!-- Row 2: col 0,1,2 -->
-          <rect x="0"  y="52"  width="26" height="26" fill="#064e3b" opacity="0.9"/>
-          <rect x="26" y="52"  width="26" height="26" fill="#065f46" opacity="0.9"/>
-          <rect x="52" y="52"  width="26" height="26" fill="#047857" opacity="0.9"/>
-          <!-- Row 3: col 1,2,3 -->
-          <rect x="26" y="78"  width="26" height="26" fill="#064e3b" opacity="0.9"/>
-          <rect x="52" y="78"  width="26" height="26" fill="#065f46" opacity="0.9"/>
-          <rect x="78" y="78"  width="26" height="26" fill="#047857" opacity="0.9"/>
-          <!-- Row 4: col 2,3,4 -->
-          <rect x="52" y="104" width="26" height="26" fill="#064e3b" opacity="0.9"/>
-          <rect x="78" y="104" width="26" height="26" fill="#065f46" opacity="0.9"/>
-          <rect x="104" y="104" width="26" height="26" fill="#047857" opacity="0.9"/>
-          <!-- Grid lines -->
-          <line x1="26"  y1="0" x2="26"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="52"  y1="0" x2="52"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="78"  y1="0" x2="78"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="104" y1="0" x2="104" y2="130" stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="26"  x2="130" y2="26"  stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="52"  x2="130" y2="52"  stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
-          <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
+          <!-- Formula -->
+          <text x="130" y="158" text-anchor="middle" font-size="7" fill="#d1d5db">o_t* = Σ_c  g_t^c · Attn( q_t, K_t^c, V_t^c )</text>
+          <text x="130" y="170" text-anchor="middle" font-size="6.5" fill="#6b7280">gates learned end-to-end · no manual sparsity patterns</text>
         </svg>
-      </div>
 
-      <div class="bg-gray-800 rounded-2xl border border-yellow-800 p-4 flex flex-col gap-2">
-        <h3 class="text-xl font-semibold text-yellow-300">稀疏 vs 精确注意力</h3>
-        <div class="text-sm text-gray-300 leading-relaxed space-y-1">
-          <p><span class="text-red-400">稀疏注意力</span>：近似，牺牲长程依赖；工程复杂，需自定义 CUDA kernel。</p>
-          <p><span class="text-emerald-400">FlashAttention</span>：<strong>精确</strong>，仅减少 IO；对模型行为无影响，已成现代标配。</p>
-        </div>
-        <div class="mt-1 border-t border-gray-700 pt-2 text-sm text-gray-500">
-          稀疏模式在 2022 年后逐渐被 FlashAttention 取代，但 Sliding Window 仍见于 Mistral/Gemma 等高效模型。
+        <!-- Benchmark cards -->
+        <div class="grid grid-cols-2 gap-2 mt-auto">
+          <div class="bg-cyan-950 bg-opacity-40 border border-cyan-800 rounded-xl p-2">
+            <p class="text-xs text-cyan-300 font-semibold">速度 @64K context</p>
+            <p class="text-sm text-white font-mono">9× prefill · 11.6× decode</p>
+          </div>
+          <div class="bg-cyan-950 bg-opacity-40 border border-cyan-800 rounded-xl p-2">
+            <p class="text-xs text-cyan-300 font-semibold">通用任务质量</p>
+            <p class="text-sm text-white">7 / 9 超全注意力基线</p>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Right: MoBA -->
+    <div class="flex-[5] flex flex-col gap-3">
+      <div class="bg-gray-800 rounded-2xl border border-violet-800 p-4 flex flex-col gap-3 h-full">
+        <h3 class="text-base font-semibold text-violet-200">MoBA <span class="text-gray-400 text-sm font-normal">Moonshot AI + Tsinghua, Feb 2025</span></h3>
+        <p class="text-sm text-gray-300">Block 级门控路由——top-k 块选择 + 当前块恒选（直接对应 MoE shared expert）</p>
+
+        <!-- MoBA block routing SVG -->
+        <svg viewBox="0 0 260 175" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Sequence blocks row -->
+          <text x="130" y="12" text-anchor="middle" font-size="7.5" fill="#9ca3af">input sequence divided into fixed-size blocks</text>
+
+          <!-- Blocks (selected in violet, unselected in dark, current in amber) -->
+          <rect x="4"   y="18" width="36" height="28" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.8"/>
+          <text x="22"  y="35" text-anchor="middle" font-size="7" fill="#c4b5fd">B₁ ✓</text>
+
+          <rect x="44"  y="18" width="36" height="28" rx="3" fill="#1f2937" stroke="#374151" stroke-width="1"/>
+          <text x="62"  y="35" text-anchor="middle" font-size="7" fill="#4b5563">B₂</text>
+
+          <rect x="84"  y="18" width="36" height="28" rx="3" fill="#1f2937" stroke="#374151" stroke-width="1"/>
+          <text x="102" y="35" text-anchor="middle" font-size="7" fill="#4b5563">B₃</text>
+
+          <rect x="124" y="18" width="36" height="28" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.8"/>
+          <text x="142" y="35" text-anchor="middle" font-size="7" fill="#c4b5fd">B₄ ✓</text>
+
+          <rect x="164" y="18" width="36" height="28" rx="3" fill="#1f2937" stroke="#374151" stroke-width="1"/>
+          <text x="182" y="35" text-anchor="middle" font-size="7" fill="#4b5563">B₅</text>
+
+          <!-- Current block (always active, amber) -->
+          <rect x="204" y="14" width="52" height="36" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="2"/>
+          <text x="230" y="31" text-anchor="middle" font-size="7" fill="#fbbf24" font-weight="bold">B_cur</text>
+          <text x="230" y="43" text-anchor="middle" font-size="6.5" fill="#f59e0b">always active</text>
+
+          <!-- Query token -->
+          <rect x="100" y="68" width="60" height="18" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+          <text x="130" y="80" text-anchor="middle" font-size="7.5" fill="#93c5fd">query  q</text>
+
+          <!-- Routing arrows from query to blocks -->
+          <line x1="115" y1="68" x2="22"  y2="46" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3 2"/>
+          <line x1="130" y1="68" x2="142" y2="46" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3 2"/>
+          <line x1="145" y1="68" x2="230" y2="50" stroke="#f59e0b" stroke-width="1.2"/>
+
+          <!-- Gate formula -->
+          <text x="130" y="104" text-anchor="middle" font-size="8" fill="#c4b5fd">s_i  =  q · mean_pool( K[block_i] )</text>
+          <text x="130" y="116" text-anchor="middle" font-size="7" fill="#9ca3af">route to top-k blocks + always include B_cur</text>
+
+          <!-- Stats boxes -->
+          <rect x="4"   y="126" width="122" height="44" rx="4" fill="#1e1b4b" stroke="#6366f1" stroke-width="1"/>
+          <text x="65"  y="141" text-anchor="middle" font-size="7.5" fill="#a5b4fc">Sparsity @32K: 95.31%</text>
+          <text x="65"  y="154" text-anchor="middle" font-size="7.5" fill="#a5b4fc">RULER @128K: 0.782</text>
+          <text x="65"  y="165" text-anchor="middle" font-size="6.5" fill="#6b7280">full attn baseline: 0.785</text>
+
+          <rect x="134" y="126" width="122" height="44" rx="4" fill="#1c1917" stroke="#f59e0b" stroke-width="1"/>
+          <text x="195" y="141" text-anchor="middle" font-size="7.5" fill="#fbbf24">Prefill @1M: 6.5× faster</text>
+          <text x="195" y="154" text-anchor="middle" font-size="7.5" fill="#fbbf24">Train: 90% MoBA + 10% Full</text>
+          <text x="195" y="165" text-anchor="middle" font-size="6.5" fill="#6b7280">retains global reasoning</text>
+        </svg>
+
+        <!-- MoE analogy -->
+        <div class="bg-violet-950 bg-opacity-30 border border-violet-800 rounded-xl p-3 mt-auto">
+          <p class="text-sm text-violet-200 font-semibold mb-1">MoE 类比</p>
+          <div class="grid grid-cols-2 gap-x-4 text-sm">
+            <span class="text-violet-300">top-k 块路由</span><span class="text-gray-300">← routed experts</span>
+            <span class="text-amber-300">当前块恒激活</span><span class="text-gray-300">← shared expert</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Evolution timeline bar -->
+  <div class="mt-3 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 flex items-center gap-3 text-sm">
+    <span class="text-gray-500 shrink-0">演进：</span>
+    <span class="text-red-400">2020 静态结构稀疏（Longformer · BigBird）</span>
+    <span class="text-gray-600">→</span>
+    <span class="text-yellow-400">2022 FlashAttention 精确 IO 高效</span>
+    <span class="text-gray-600">→</span>
+    <span class="text-emerald-400 font-semibold">2025 动态可学习稀疏（NSA · MoBA）</span>
   </div>
 </div>
