@@ -52,7 +52,7 @@ class ALiBiScene(Scene):
         self.wait(0.4)
 
         # ── Helper: 4x4 matrix mob ───────────────────────────────────────────
-        CELL = 0.90
+        CELL = 0.65
         GAP  = 0.06
 
         def make_matrix(values_fn, label_str, label_color, pos):
@@ -87,23 +87,23 @@ class ALiBiScene(Scene):
 
         # ── QK^T matrix ──────────────────────────────────────────────────────
         mat_qkt, lbl_qkt = make_matrix(qkt_fn, "QK^T", WHITE,
-                                       LEFT * 3.8 + DOWN * 0.5)
+                                       LEFT * 3.6 + DOWN * 0.5)
         self.play(FadeIn(mat_qkt), Write(lbl_qkt))
         self.wait(0.5)
 
         # ── Bias matrix ──────────────────────────────────────────────────────
         minus = Text("-", font_size=38, color=WHITE)
-        minus.move_to(LEFT * 1.6 + DOWN * 0.5)
+        minus.move_to(LEFT * 1.8 + DOWN * 0.5)
 
         mat_bias, lbl_bias = make_matrix(bias_fn, "m|i-j|", RED_DIM,
-                                         LEFT * 0.1 + DOWN * 0.5)
+                                         DOWN * 0.5)
         self.play(Write(minus))
         self.play(FadeIn(mat_bias), Write(lbl_bias))
         self.wait(0.6)
 
         # ── Result matrix ────────────────────────────────────────────────────
         eq = Text("=", font_size=38, color=WHITE)
-        eq.move_to(RIGHT * 2.05 + DOWN * 0.5)
+        eq.move_to(RIGHT * 1.8 + DOWN * 0.5)
 
         mat_score, lbl_score = make_matrix(score_fn, "score", EMERALD,
                                            RIGHT * 3.6 + DOWN * 0.5)
