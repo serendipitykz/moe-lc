@@ -1,0 +1,171 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。</aside>
+
+  <h2 class="text-5xl font-bold mb-2 text-emerald-300">稀疏注意力模式</h2>
+  <p class="text-xl text-gray-400 mb-6">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>
+
+  <div class="flex gap-6 flex-1 min-h-0">
+
+    <!-- Card 1: Longformer -->
+    <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
+      <h3 class="text-xl font-bold text-emerald-300">Longformer <cite class="text-gray-500 text-sm not-italic">[Beltagy et al., 2020]</cite></h3>
+      <p class="text-sm text-gray-400">局部窗口 + 全局 token</p>
+
+      <p class="text-sm text-gray-300 leading-relaxed">每个 token 仅注意 ±w/2 个相邻 token（局部）；特殊全局 token（如 <code>[CLS]</code>）双向注意所有位置。</p>
+
+      <div class="text-center text-sm">
+        \[O(L \cdot w) + O(L \cdot n_g)\]
+        <p class="text-xs text-gray-500 mt-1">w = 窗口宽，\(n_g\) = 全局 token 数</p>
+      </div>
+
+      <!-- Attention pattern SVG: band + first col -->
+      <svg viewBox="0 0 130 130" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="band-local" x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
+            <rect width="26" height="26" fill="#064e3b"/>
+          </pattern>
+        </defs>
+        <!-- Background: all zeros (dark) -->
+        <rect x="0" y="0" width="130" height="130" fill="#111827" rx="4"/>
+        <!-- Local band (w=3): diagonal ±1 cells, size 5x5 grid, cell=26 -->
+        <!-- Row 0 -->
+        <rect x="0"  y="0"  width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="26" y="0"  width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <!-- Row 1 -->
+        <rect x="0"  y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="26" y="26" width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="52" y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <!-- Row 2 -->
+        <rect x="26" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="52" y="52" width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="78" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <!-- Row 3 -->
+        <rect x="52" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="78" y="78" width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="104" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <!-- Row 4 -->
+        <rect x="78"  y="104" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="104" y="104" width="26" height="26" fill="#047857" opacity="0.9"/>
+
+        <!-- Global token: first col + first row highlighted amber -->
+        <rect x="0" y="0"   width="26" height="130" fill="#f59e0b" opacity="0.35"/>
+        <rect x="0" y="0"   width="130" height="26" fill="#f59e0b" opacity="0.20"/>
+
+        <!-- Grid lines -->
+        <line x1="26"  y1="0" x2="26"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="52"  y1="0" x2="52"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="78"  y1="0" x2="78"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="104" y1="0" x2="104" y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="26"  x2="130" y2="26"  stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="52"  x2="130" y2="52"  stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
+
+        <!-- Legend -->
+        <rect x="0" y="131" width="8" height="8" fill="#047857"/>
+        <text x="10" y="140" font-size="10" fill="#6ee7b7">局部窗口</text>
+        <rect x="65" y="131" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
+        <text x="75" y="140" font-size="10" fill="#fbbf24">全局 token</text>
+      </svg>
+    </div>
+
+    <!-- Card 2: BigBird -->
+    <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
+      <h3 class="text-xl font-bold text-emerald-300">BigBird <cite class="text-gray-500 text-sm not-italic">[Zaheer et al., 2020]</cite></h3>
+      <p class="text-sm text-gray-400">局部窗口 + 全局 token + 随机注意力</p>
+
+      <p class="text-sm text-gray-300 leading-relaxed">在 Longformer 基础上增加每行若干随机注意力点，覆盖长程依赖。理论证明：该组合在 O(L) 注意力下图灵完备。</p>
+
+      <div class="text-center text-sm">
+        \[O\!\left(L(w + n_g + r)\right) = O(L)\]
+        <p class="text-xs text-gray-500 mt-1">r = 每行随机注意力点数（通常 r ≈ 3）</p>
+      </div>
+
+      <!-- Attention pattern SVG: band + global + random dots -->
+      <svg viewBox="0 0 130 130" width="100%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="130" height="130" fill="#111827" rx="4"/>
+        <!-- Local band -->
+        <rect x="0"  y="0"  width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="26" y="0"  width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="0"  y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="26" y="26" width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="52" y="26" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="26" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="52" y="52" width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="78" y="52" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="52" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="78" y="78" width="26" height="26" fill="#047857" opacity="0.9"/>
+        <rect x="104" y="78" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="78"  y="104" width="26" height="26" fill="#065f46" opacity="0.9"/>
+        <rect x="104" y="104" width="26" height="26" fill="#047857" opacity="0.9"/>
+        <!-- Global col + row -->
+        <rect x="0" y="0"  width="26" height="130" fill="#f59e0b" opacity="0.30"/>
+        <rect x="0" y="0"  width="130" height="26" fill="#f59e0b" opacity="0.15"/>
+        <!-- Random dots (indigo) -->
+        <rect x="104" y="26"  width="26" height="26" fill="#818cf8" opacity="0.8"/>
+        <rect x="78"  y="0"   width="26" height="26" fill="#818cf8" opacity="0.8"/>
+        <rect x="0"   y="78"  width="26" height="26" fill="#818cf8" opacity="0.8"/>
+        <rect x="52"  y="104" width="26" height="26" fill="#818cf8" opacity="0.8"/>
+        <!-- Grid -->
+        <line x1="26"  y1="0" x2="26"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="52"  y1="0" x2="52"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="78"  y1="0" x2="78"  y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="104" y1="0" x2="104" y2="130" stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="26"  x2="130" y2="26"  stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="52"  x2="130" y2="52"  stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="78"  x2="130" y2="78"  stroke="#1f2937" stroke-width="0.8"/>
+        <line x1="0" y1="104" x2="130" y2="104" stroke="#1f2937" stroke-width="0.8"/>
+        <!-- Legend -->
+        <rect x="0"  y="131" width="8" height="8" fill="#047857"/>
+        <text x="10" y="140" font-size="9" fill="#6ee7b7">局部</text>
+        <rect x="40" y="131" width="8" height="8" fill="#f59e0b" opacity="0.5"/>
+        <text x="50" y="140" font-size="9" fill="#fbbf24">全局</text>
+        <rect x="78" y="131" width="8" height="8" fill="#818cf8"/>
+        <text x="88" y="140" font-size="9" fill="#a5b4fc">随机</text>
+      </svg>
+    </div>
+
+    <!-- Card 3: Sliding Window + Summary -->
+    <div class="flex-1 flex flex-col gap-4">
+      <div class="bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3">
+        <h3 class="text-xl font-bold text-emerald-300">Sliding Window</h3>
+        <p class="text-sm text-gray-400">Mistral 7B [Jiang et al., 2023]</p>
+        <p class="text-sm text-gray-300 leading-relaxed">每 token 仅注意最近 w = 4096 个 token，无全局 token。结合 GQA（8 组）和 RoPE，实现 32K 上下文。</p>
+        <div class="text-center text-sm">
+          \[O(L \cdot w),\quad w = 4096\]
+        </div>
+
+        <!-- Simple visual: band only, causal -->
+        <svg viewBox="0 0 130 80" width="80%" class="mx-auto" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="130" height="80" fill="#111827" rx="4"/>
+          <!-- Lower-triangular band (causal) -->
+          <rect x="0"  y="0"  width="26" height="16" fill="#047857" opacity="0.9"/>
+          <rect x="0"  y="16" width="52" height="16" fill="#047857" opacity="0.9"/>
+          <rect x="26" y="32" width="52" height="16" fill="#047857" opacity="0.9"/>
+          <rect x="52" y="48" width="52" height="16" fill="#047857" opacity="0.9"/>
+          <rect x="78" y="64" width="52" height="16" fill="#047857" opacity="0.9"/>
+          <line x1="26"  y1="0" x2="26"  y2="80" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="52"  y1="0" x2="52"  y2="80" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="78"  y1="0" x2="78"  y2="80" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="104" y1="0" x2="104" y2="80" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="16" x2="130" y2="16" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="32" x2="130" y2="32" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="48" x2="130" y2="48" stroke="#1f2937" stroke-width="0.8"/>
+          <line x1="0" y1="64" x2="130" y2="64" stroke="#1f2937" stroke-width="0.8"/>
+        </svg>
+      </div>
+
+      <div class="bg-gray-800 rounded-2xl border border-yellow-800 p-4 flex flex-col gap-2">
+        <h3 class="text-base font-semibold text-yellow-300">稀疏 vs 精确注意力</h3>
+        <div class="text-xs text-gray-300 leading-relaxed space-y-1">
+          <p><span class="text-red-400">稀疏注意力</span>：近似，牺牲长程依赖；工程复杂，需自定义 CUDA kernel。</p>
+          <p><span class="text-emerald-400">FlashAttention</span>：<strong>精确</strong>，仅减少 IO；对模型行为无影响，已成现代标配。</p>
+        </div>
+        <div class="mt-1 border-t border-gray-700 pt-2 text-xs text-gray-500">
+          稀疏模式在 2022 年后逐渐被 FlashAttention 取代，但 Sliding Window 仍见于 Mistral/Gemma 等高效模型。
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

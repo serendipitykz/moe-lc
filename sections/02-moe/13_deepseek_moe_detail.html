@@ -1,0 +1,126 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">DeepSeekMoE 解决了标准 MoE 中专家"知识混杂"的问题。强调两点创新：细粒度让专家分工更精确；共享专家承担通用知识让路由专家更专。可用"全科医生 vs 各科专科医生"类比。</aside>
+
+  <h2 class="text-5xl font-bold mb-2 text-indigo-300">DeepSeekMoE：细粒度专家与共享专家</h2>
+  <p class="text-xl text-gray-400 mb-6">解决标准 MoE 的"知识混杂"问题——让每位专家更专</p>
+
+  <div class="flex gap-6 flex-1 min-h-0">
+
+    <!-- Left card: problem + innovation 1 -->
+    <div class="flex-1 flex flex-col gap-4">
+
+      <div class="bg-gray-800 rounded-2xl border border-red-900 p-4">
+        <h3 class="text-lg font-semibold text-red-300 mb-2">问题：粗粒度专家的知识混杂</h3>
+        <p class="text-sm text-gray-300 leading-relaxed">标准 MoE 中每个专家 = 一整个 FFN（dim = \(d_{ff}\)）。Token 路由稀疏，但每个专家仍需覆盖大量通用知识，导致专业化程度低。</p>
+      </div>
+
+      <div class="bg-gray-800 rounded-2xl border border-indigo-700 p-4 flex-1 flex flex-col gap-3">
+        <h3 class="text-lg font-semibold text-indigo-200">创新 1：细粒度专家分割</h3>
+        <p class="text-sm text-gray-300">将每个专家 FFN 拆分为 <span class="text-yellow-300">m</span> 个更小专家（中间维度缩小 m 倍），总专家数扩大 m 倍，激活数同比扩大。</p>
+        <div class="flex justify-center gap-8 py-2">
+          <!-- Before -->
+          <div class="flex flex-col items-center gap-1">
+            <p class="text-xs text-gray-500 mb-1">标准 MoE</p>
+            <div class="flex gap-1">
+              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₀</div>
+              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₁</div>
+              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₂</div>
+              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₃</div>
+            </div>
+            <p class="text-xs text-gray-500">4 experts, dim=d<sub>ff</sub></p>
+          </div>
+          <div class="flex items-center text-2xl text-gray-400">→</div>
+          <!-- After -->
+          <div class="flex flex-col items-center gap-1">
+            <p class="text-xs text-gray-500 mb-1">细粒度 (m=2)</p>
+            <div class="flex gap-1 flex-wrap justify-center" style="max-width:96px">
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₀</div>
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₁</div>
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₂</div>
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₃</div>
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₄</div>
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₅</div>
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₆</div>
+              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₇</div>
+            </div>
+            <p class="text-xs text-gray-500">8 experts, dim=d<sub>ff</sub>/2</p>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500">相同激活 FLOPs，但更细的专家粒度使知识边界更清晰。</p>
+      </div>
+    </div>
+
+    <!-- Middle card: innovation 2 + architecture SVG -->
+    <div class="flex-1 flex flex-col gap-4">
+      <div class="bg-gray-800 rounded-2xl border border-amber-800 p-4 flex-1 flex flex-col gap-3">
+        <h3 class="text-lg font-semibold text-amber-300">创新 2：共享专家隔离</h3>
+        <p class="text-sm text-gray-300">保留 <span class="text-amber-300">\(K_s\)</span> 个专家始终激活（共享专家），承担所有 token 共同需要的通用知识，让路由专家专注于专业化知识。</p>
+
+        <svg viewBox="0 0 280 175" width="100%" class="mt-1" xmlns="http://www.w3.org/2000/svg">
+          <!-- Token input -->
+          <rect x="110" y="5" width="60" height="24" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="140" y="21" text-anchor="middle" font-size="12" fill="#a5b4fc">token u_t</text>
+
+          <!-- Arrow down to split -->
+          <line x1="140" y1="29" x2="140" y2="45" stroke="#6b7280" stroke-width="1.5"/>
+          <line x1="140" y1="45" x2="50"  y2="55" stroke="#fbbf24" stroke-width="1.2"/>
+          <line x1="140" y1="45" x2="230" y2="55" stroke="#6ee7b7" stroke-width="1.2"/>
+
+          <!-- Shared experts (always active) -->
+          <rect x="10"  y="55" width="80" height="50" rx="5" fill="#78350f" fill-opacity="0.4" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="50" y="74"  text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">共享专家</text>
+          <text x="50" y="89"  text-anchor="middle" font-size="10" fill="#fbbf24">K_s 个，常激活</text>
+          <text x="50" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">通用知识</text>
+
+          <!-- Routed experts -->
+          <rect x="155" y="55" width="115" height="50" rx="5" fill="#064e3b" fill-opacity="0.5" stroke="#10b981" stroke-width="1.5"/>
+          <text x="213" y="74"  text-anchor="middle" font-size="11" fill="#6ee7b7" font-weight="bold">路由专家</text>
+          <text x="213" y="89"  text-anchor="middle" font-size="10" fill="#6ee7b7">Top-K_r of N_r</text>
+          <text x="213" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">专业知识</text>
+
+          <!-- Arrows to combine -->
+          <line x1="50"  y1="105" x2="110" y2="130" stroke="#fbbf24" stroke-width="1.2"/>
+          <line x1="213" y1="105" x2="170" y2="130" stroke="#6ee7b7" stroke-width="1.2"/>
+
+          <!-- Combine box -->
+          <rect x="85" y="130" width="110" height="28" rx="4" fill="#1f2937" stroke="#374151" stroke-width="1"/>
+          <text x="140" y="148" text-anchor="middle" font-size="11" fill="#d1d5db">h_t = u_t + Σshared + Σrouted</text>
+
+          <!-- Labels -->
+          <text x="50"  y="50" text-anchor="middle" font-size="10" fill="#fbbf24">始终</text>
+          <text x="213" y="50" text-anchor="middle" font-size="10" fill="#6ee7b7">按路由</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Right: formula + DeepSeek-V2 numbers -->
+    <div class="w-64 flex flex-col gap-4">
+      <div class="bg-gray-800 rounded-2xl border border-gray-600 p-4 flex flex-col gap-3">
+        <h3 class="text-lg font-semibold text-indigo-200">输出公式</h3>
+        <div class="text-sm text-center leading-relaxed">
+          \[h_t = u_t + \sum_{i=1}^{K_s} \text{FFN}_i^{s}(u_t)\]
+          \[+ \sum_{i \in \text{Top-}K_r} g_{i,t}\,\text{FFN}_i^{r}(u_t)\]
+        </div>
+        <p class="text-xs text-gray-500 text-center">\(g_{i,t} = \text{Softmax}(s_{i,t})\)，仅对选中专家归一化</p>
+      </div>
+
+      <div class="bg-gray-800 rounded-2xl border border-purple-800 p-4 flex flex-col gap-2">
+        <h3 class="text-lg font-semibold text-purple-300">DeepSeek-V2 配置</h3>
+        <div class="grid grid-cols-2 gap-y-1 text-sm">
+          <span class="text-gray-400">\(N_r\)（路由专家）</span><span class="text-yellow-300 text-right">160</span>
+          <span class="text-gray-400">\(K_r\)（激活数）</span><span class="text-yellow-300 text-right">6</span>
+          <span class="text-gray-400">\(K_s\)（共享专家）</span><span class="text-amber-300 text-right">2</span>
+          <span class="text-gray-400">\(d_{model}\)</span><span class="text-gray-200 text-right">5120</span>
+          <span class="text-gray-400">层数</span><span class="text-gray-200 text-right">60</span>
+          <span class="text-gray-400">总参数</span><span class="text-emerald-300 text-right">236B</span>
+          <span class="text-gray-400">激活参数</span><span class="text-emerald-300 text-right">21B</span>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
+        <p class="text-xs text-gray-400">激活比率：21 / 236 ≈ <span class="text-emerald-300">8.9%</span>——使用不到 1/10 的参数完成推理。</p>
+      </div>
+    </div>
+
+  </div>
+</div>

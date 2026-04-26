@@ -1,0 +1,128 @@
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<aside class="notes">强调 EP 是 MoE 独有的并行维度——只有引入专家才需要 all-to-all。核心点：两次 all-to-all（dispatch + combine）是 EP 的通信代价；实际系统将 EP × TP × PP × DP 四维组合。</aside>
+
+  <h2 class="text-5xl font-bold mb-2 text-indigo-300">专家并行（EP）与分布式训练</h2>
+  <p class="text-xl text-gray-400 mb-6">MoE 专属的并行维度：将不同专家分布到不同 GPU 组</p>
+
+  <div class="flex gap-8 flex-1 min-h-0">
+
+    <!-- Left: All-to-All SVG -->
+    <div class="flex-1 flex flex-col gap-3">
+      <h3 class="text-xl font-semibold text-indigo-200">All-to-All 调度流程（EP = 4）</h3>
+      <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex items-center justify-center">
+        <svg viewBox="0 0 420 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Token batch row -->
+          <text x="210" y="15" text-anchor="middle" font-size="13" fill="#9ca3af">Token batch  (B tokens, 每个 token 有 top-k=2 目标专家)</text>
+          <rect x="20"  y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="43"  y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₀</text>
+          <rect x="72"  y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="95"  y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₁</text>
+          <rect x="124" y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="147" y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₂</text>
+          <rect x="176" y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="199" y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₃</text>
+          <rect x="228" y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="251" y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₄</text>
+          <rect x="280" y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="303" y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₅</text>
+          <rect x="332" y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <text x="355" y="37" text-anchor="middle" font-size="12" fill="#a5b4fc">t₆</text>
+
+          <!-- Dispatch label -->
+          <text x="210" y="59" text-anchor="middle" font-size="12" fill="#fbbf24">① All-to-All Dispatch ↓</text>
+
+          <!-- GPU boxes -->
+          <rect x="20"  y="68" width="82" height="64" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="61"  y="84" text-anchor="middle" font-size="12" fill="#93c5fd" font-weight="bold">GPU 0</text>
+          <text x="61"  y="100" text-anchor="middle" font-size="11" fill="#6ee7b7">E₀ · E₁</text>
+          <text x="61"  y="116" text-anchor="middle" font-size="10" fill="#9ca3af">t₀, t₂</text>
+
+          <rect x="114" y="68" width="82" height="64" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="155" y="84" text-anchor="middle" font-size="12" fill="#93c5fd" font-weight="bold">GPU 1</text>
+          <text x="155" y="100" text-anchor="middle" font-size="11" fill="#6ee7b7">E₂ · E₃</text>
+          <text x="155" y="116" text-anchor="middle" font-size="10" fill="#9ca3af">t₁, t₅</text>
+
+          <rect x="208" y="68" width="82" height="64" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="249" y="84" text-anchor="middle" font-size="12" fill="#93c5fd" font-weight="bold">GPU 2</text>
+          <text x="249" y="100" text-anchor="middle" font-size="11" fill="#6ee7b7">E₄ · E₅</text>
+          <text x="249" y="116" text-anchor="middle" font-size="10" fill="#9ca3af">t₃, t₄</text>
+
+          <rect x="302" y="68" width="82" height="64" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="343" y="84" text-anchor="middle" font-size="12" fill="#93c5fd" font-weight="bold">GPU 3</text>
+          <text x="343" y="100" text-anchor="middle" font-size="11" fill="#6ee7b7">E₆ · E₇</text>
+          <text x="343" y="116" text-anchor="middle" font-size="10" fill="#9ca3af">t₆</text>
+
+          <!-- Dispatch arrows (a few representative) -->
+          <line x1="43"  y1="44" x2="61"  y2="68" stroke="#6ee7b7" stroke-width="1.2" stroke-dasharray="4 2"/>
+          <line x1="147" y1="44" x2="61"  y2="68" stroke="#6ee7b7" stroke-width="1.2" stroke-dasharray="4 2"/>
+          <line x1="95"  y1="44" x2="155" y2="68" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="4 2"/>
+          <line x1="303" y1="44" x2="155" y2="68" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="4 2"/>
+          <line x1="199" y1="44" x2="249" y2="68" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4 2"/>
+          <line x1="251" y1="44" x2="249" y2="68" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4 2"/>
+          <line x1="355" y1="44" x2="343" y2="68" stroke="#f472b6" stroke-width="1.2" stroke-dasharray="4 2"/>
+
+          <!-- Combine label -->
+          <text x="210" y="153" text-anchor="middle" font-size="12" fill="#fbbf24">② All-to-All Combine ↑  (结果返回原始 GPU)</text>
+
+          <!-- Communication cost box -->
+          <rect x="20" y="164" width="380" height="58" rx="6" fill="#111827" stroke="#374151" stroke-width="1.2"/>
+          <text x="210" y="184" text-anchor="middle" font-size="12" fill="#9ca3af">每个方向通信量 (per MoE layer)：</text>
+          <text x="210" y="208" text-anchor="middle" font-size="14" fill="#fbbf24">k × B × d_model  (元素数)</text>
+          <text x="210" y="225" text-anchor="middle" font-size="11" fill="#6b7280">两次 all-to-all 共 2 倍；k = top-K 专家数，B = batch size</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Right: parallelism table + capacity -->
+    <div class="w-72 flex flex-col gap-4">
+      <h3 class="text-xl font-semibold text-indigo-200">四维并行对比</h3>
+      <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-600 bg-gray-700 bg-opacity-40">
+              <th class="px-3 py-2 text-left text-gray-400">策略</th>
+              <th class="px-3 py-2 text-left text-gray-400">拆分</th>
+              <th class="px-3 py-2 text-left text-gray-400">通信</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-gray-700">
+              <td class="px-3 py-2 text-blue-300 font-mono">DP</td>
+              <td class="px-3 py-2 text-gray-300">batch</td>
+              <td class="px-3 py-2 text-gray-400 text-xs">all-reduce</td>
+            </tr>
+            <tr class="border-b border-gray-700">
+              <td class="px-3 py-2 text-purple-300 font-mono">TP</td>
+              <td class="px-3 py-2 text-gray-300">权重列</td>
+              <td class="px-3 py-2 text-gray-400 text-xs">all-reduce</td>
+            </tr>
+            <tr class="border-b border-gray-700">
+              <td class="px-3 py-2 text-pink-300 font-mono">PP</td>
+              <td class="px-3 py-2 text-gray-300">层 (流水)</td>
+              <td class="px-3 py-2 text-gray-400 text-xs">P2P</td>
+            </tr>
+            <tr>
+              <td class="px-3 py-2 text-emerald-300 font-mono">EP</td>
+              <td class="px-3 py-2 text-gray-300">专家</td>
+              <td class="px-3 py-2 text-yellow-300 text-xs font-semibold">all-to-all</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex flex-col gap-3">
+        <h4 class="text-base font-semibold text-indigo-200">Token 容量（防溢出）</h4>
+        <div class="text-center">
+          \[C = \left\lceil \frac{B}{N_{exp}} \right\rceil \times CF\]
+        </div>
+        <p class="text-xs text-gray-400">CF = 容量因子；训练期 1.0–1.25，推理期 2.0。超出 C 的 token 被丢弃（pass-through），是 MoE 训练的工程细节。</p>
+      </div>
+
+      <div class="bg-indigo-900 bg-opacity-25 rounded-xl border border-indigo-700 p-3">
+        <p class="text-sm text-indigo-200 font-semibold mb-1">DeepSeek-V2 实践</p>
+        <p class="text-sm text-gray-300">EP = 32，\(N_{exp}\) = 160，与 TP/PP/DP 四维组合训练。</p>
+      </div>
+    </div>
+
+  </div>
+</div>
