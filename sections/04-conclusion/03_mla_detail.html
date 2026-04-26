@@ -8,13 +8,13 @@
   <div class="flex gap-8 flex-1 min-h-0">
 
     <!-- Left explanation card (40%) -->
-    <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 overflow-auto" style="width:38%">
-      <h3 class="text-2xl font-bold text-purple-300 mb-6">核心思路</h3>
+    <div class="bg-gray-800 rounded-2xl p-5 border border-gray-700 overflow-y-auto" style="width:38%">
+      <h3 class="text-xl font-bold text-purple-300 mb-4">核心思路</h3>
 
-      <div class="space-y-5">
+      <div class="space-y-3">
         <div>
-          <p class="text-sm font-mono text-gray-500 uppercase mb-1">问题</p>
-          <p class="text-lg text-gray-400 leading-relaxed">
+          <p class="text-xs font-mono text-gray-500 uppercase mb-1">问题</p>
+          <p class="text-base text-gray-400 leading-relaxed">
             标准 MHA 每层每 token 需缓存
             \(2 \times H \times d_{\text{head}}\) 维向量，
             L=128K 时显存开销极大
@@ -22,8 +22,8 @@
         </div>
 
         <div>
-          <p class="text-sm font-mono text-gray-500 uppercase mb-1">方法</p>
-          <p class="text-lg text-gray-400 leading-relaxed">
+          <p class="text-xs font-mono text-gray-500 uppercase mb-1">方法</p>
+          <p class="text-base text-gray-400 leading-relaxed">
             将 KV 投影到<span class="text-emerald-300 font-semibold">低维潜在空间</span>，
             推理时从潜在向量恢复完整 KV
           </p>
@@ -39,8 +39,8 @@
         </div>
 
         <div>
-          <p class="text-sm font-mono text-gray-500 uppercase mb-1">Q 端压缩</p>
-          <p class="text-lg text-gray-400 leading-relaxed">
+          <p class="text-xs font-mono text-gray-500 uppercase mb-1">Q 端压缩</p>
+          <p class="text-base text-gray-400 leading-relaxed">
             同样对 Q 进行低秩压缩，使用
             <span class="text-indigo-300 font-semibold">Decoupled RoPE</span>
             处理位置编码，避免位置信息与内容混叠

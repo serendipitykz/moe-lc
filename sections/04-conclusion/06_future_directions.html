@@ -26,38 +26,67 @@
             <cite class="text-gray-500 text-base not-italic">[Raposo et al., 2024]</cite> 在固定 FLOPs 预算下超越 isoFLOP 基线
           </p>
         </div>
-        <!-- Mini SVG: token paths through layers -->
-        <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:200px;height:270px">
-          <!-- Layer boxes -->
-          <rect x="40" y="5" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="19" text-anchor="middle" fill="#c7d2fe" font-size="11">L1</text>
-          <rect x="40" y="40" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="54" text-anchor="middle" fill="#c7d2fe" font-size="11">L2</text>
-          <rect x="40" y="75" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="89" text-anchor="middle" fill="#c7d2fe" font-size="11">L3</text>
-          <rect x="40" y="110" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="124" text-anchor="middle" fill="#c7d2fe" font-size="11">L4</text>
+        <!-- SVG: tok A processes all layers; tok B skips L2 & L3 -->
+        <svg viewBox="0 0 220 188" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:198px;height:169px">
+          <defs>
+            <marker id="mka" markerWidth="6" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <polygon points="0 0, 6 2.5, 0 5" fill="#a5b4fc"/>
+            </marker>
+            <marker id="mkb" markerWidth="6" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <polygon points="0 0, 6 2.5, 0 5" fill="#34d399"/>
+            </marker>
+          </defs>
 
-          <!-- Token A: goes through all layers -->
-          <line x1="18" y1="0" x2="18" y2="5" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="25" x2="18" y2="40" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="60" x2="18" y2="75" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="95" x2="18" y2="110" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="130" x2="18" y2="145" stroke="#a5b4fc" stroke-width="2"/>
-          <circle cx="18" cy="15" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <circle cx="18" cy="50" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <circle cx="18" cy="85" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <circle cx="18" cy="120" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <text x="6" y="150" text-anchor="middle" fill="#a5b4fc" font-size="10">tok A</text>
+          <!-- Column headers -->
+          <text x="50" y="13" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">tok A</text>
+          <text x="148" y="13" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="bold">tok B</text>
 
-          <!-- Token B: skips L2, L3 -->
-          <line x1="102" y1="0" x2="102" y2="5" stroke="#34d399" stroke-width="2"/>
-          <line x1="102" y1="25" x2="102" y2="110" stroke="#34d399" stroke-width="2" stroke-dasharray="3,3"/>
-          <line x1="102" y1="130" x2="102" y2="145" stroke="#34d399" stroke-width="2"/>
-          <circle cx="102" cy="15" r="5" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
-          <circle cx="102" cy="120" r="5" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
-          <text x="110" y="63" text-anchor="end" fill="#6ee7b7" font-size="10">skip</text>
-          <text x="114" y="150" text-anchor="middle" fill="#6ee7b7" font-size="10">tok B</text>
+          <!-- L1: both process -->
+          <rect x="5"   y="18" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="35" text-anchor="middle" fill="#c7d2fe" font-size="11">L1</text>
+          <rect x="103" y="18" width="90" height="26" rx="4" fill="#065f46" fill-opacity="0.85" stroke="#34d399" stroke-width="1.5"/>
+          <text x="148" y="35" text-anchor="middle" fill="#a7f3d0" font-size="11">L1</text>
+
+          <!-- A: L1→L2 -->
+          <line x1="50" y1="44" x2="50" y2="55" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#mka)"/>
+
+          <!-- B bypass: curves right of L2/L3, arrives at L4 -->
+          <path d="M 193 44 Q 216 95 193 133" stroke="#34d399" stroke-width="2" fill="none" stroke-dasharray="4,3" marker-end="url(#mkb)"/>
+          <text x="210" y="98" text-anchor="middle" fill="#6ee7b7" font-size="9.5" font-style="italic">skip</text>
+
+          <!-- L2: A processes, B skipped -->
+          <rect x="5"   y="55" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="72" text-anchor="middle" fill="#c7d2fe" font-size="11">L2</text>
+          <rect x="103" y="55" width="90" height="26" rx="4" fill="#111827" fill-opacity="0.65" stroke="#374151" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="148" y="72" text-anchor="middle" fill="#4b5563" font-size="11">L2</text>
+          <line x1="114" y1="59" x2="182" y2="77" stroke="#374151" stroke-width="1.2"/>
+          <line x1="182" y1="59" x2="114" y2="77" stroke="#374151" stroke-width="1.2"/>
+
+          <!-- A: L2→L3 -->
+          <line x1="50" y1="81" x2="50" y2="92" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#mka)"/>
+
+          <!-- L3: A processes, B skipped -->
+          <rect x="5"   y="92" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="109" text-anchor="middle" fill="#c7d2fe" font-size="11">L3</text>
+          <rect x="103" y="92" width="90" height="26" rx="4" fill="#111827" fill-opacity="0.65" stroke="#374151" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="148" y="109" text-anchor="middle" fill="#4b5563" font-size="11">L3</text>
+          <line x1="114" y1="96" x2="182" y2="114" stroke="#374151" stroke-width="1.2"/>
+          <line x1="182" y1="96" x2="114" y2="114" stroke="#374151" stroke-width="1.2"/>
+
+          <!-- A: L3→L4 -->
+          <line x1="50" y1="118" x2="50" y2="129" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#mka)"/>
+
+          <!-- L4: both process -->
+          <rect x="5"   y="129" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="146" text-anchor="middle" fill="#c7d2fe" font-size="11">L4</text>
+          <rect x="103" y="129" width="90" height="26" rx="4" fill="#065f46" fill-opacity="0.85" stroke="#34d399" stroke-width="1.5"/>
+          <text x="148" y="146" text-anchor="middle" fill="#a7f3d0" font-size="11">L4</text>
+
+          <!-- Outputs -->
+          <line x1="50"  y1="155" x2="50"  y2="163" stroke="#a5b4fc" stroke-width="1.2"/>
+          <text x="50"   y="174" text-anchor="middle" fill="#818cf8" font-size="9">output</text>
+          <line x1="148" y1="155" x2="148" y2="163" stroke="#34d399" stroke-width="1.2"/>
+          <text x="148"  y="174" text-anchor="middle" fill="#6ee7b7" font-size="9">output</text>
         </svg>
       </div>
     </div>

@@ -66,23 +66,44 @@
       <span class="text-purple-300 font-bold">核心范式</span>
     </p>
 
-    <!-- Simple SVG: rocket/arrow pointing up-right, indigo→emerald gradient -->
-    <svg viewBox="0 0 160 60" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:60px">
+    <!-- SVG: MoE + 长上下文 converging into a shared future -->
+    <svg viewBox="0 0 300 90" xmlns="http://www.w3.org/2000/svg" style="width:300px;height:90px">
       <defs>
-        <linearGradient id="rocket-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#6366f1"/>
+        <linearGradient id="g-moe" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+          <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient>
+        <linearGradient id="g-lc" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+          <stop offset="0%" stop-color="#059669" stop-opacity="0.25"/>
           <stop offset="100%" stop-color="#34d399"/>
         </linearGradient>
+        <linearGradient id="g-out" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+          <stop offset="0%" stop-color="#a855f7"/>
+          <stop offset="100%" stop-color="#f0abfc" stop-opacity="0.85"/>
+        </linearGradient>
+        <filter id="fg" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
       </defs>
-      <!-- Arrow shaft -->
-      <line x1="20" y1="50" x2="130" y2="14" stroke="url(#rocket-grad)" stroke-width="4" stroke-linecap="round"/>
-      <!-- Arrow head -->
-      <polygon points="130,14 110,16 125,28" fill="url(#rocket-grad)"/>
-      <!-- Small circles along the path (exhaust trail) -->
-      <circle cx="35" cy="45" r="3" fill="#6366f1" fill-opacity="0.7"/>
-      <circle cx="60" cy="37" r="2.5" fill="#7c3aed" fill-opacity="0.6"/>
-      <circle cx="85" cy="28" r="2" fill="#059669" fill-opacity="0.6"/>
-      <circle cx="108" cy="20" r="2" fill="#34d399" fill-opacity="0.7"/>
+      <!-- MoE curve (indigo) converging right -->
+      <path d="M 4 24 Q 120 24 162 45" stroke="url(#g-moe)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Long-context curve (emerald) converging right -->
+      <path d="M 4 66 Q 120 66 162 45" stroke="url(#g-lc)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Labels -->
+      <text x="6" y="20" fill="#a5b4fc" font-size="12" font-family="sans-serif" font-weight="bold">MoE</text>
+      <text x="6" y="72" fill="#6ee7b7" font-size="12" font-family="sans-serif" font-weight="bold">长上下文</text>
+      <!-- Convergence glow -->
+      <circle cx="162" cy="45" r="14" fill="#7c3aed" fill-opacity="0.18" filter="url(#fg)"/>
+      <circle cx="162" cy="45" r="7"  fill="#a855f7" fill-opacity="0.45"/>
+      <circle cx="162" cy="45" r="3"  fill="#e879f9"/>
+      <!-- Output arrow -->
+      <line x1="176" y1="45" x2="278" y2="45" stroke="url(#g-out)" stroke-width="4" stroke-linecap="round"/>
+      <polygon points="280,45 265,37 265,53" fill="#f0abfc"/>
+      <!-- Tick marks on output line -->
+      <line x1="204" y1="37" x2="204" y2="53" stroke="#c084fc" stroke-width="1.5" stroke-opacity="0.55"/>
+      <line x1="234" y1="37" x2="234" y2="53" stroke="#c084fc" stroke-width="1.5" stroke-opacity="0.45"/>
+      <line x1="260" y1="37" x2="260" y2="53" stroke="#f0abfc" stroke-width="1.5" stroke-opacity="0.65"/>
     </svg>
   </div>
 

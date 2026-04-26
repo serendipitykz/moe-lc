@@ -2460,47 +2460,47 @@
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE × 长上下文：协同与挑战</h2>
 
-  <div class="flex gap-8 flex-1 min-h-0">
+  <div class="flex gap-5 flex-1 min-h-0">
 
     <!-- Left column: MoE helps LC -->
-    <div class="flex-1 flex flex-col gap-6">
-      <div class="bg-gray-800 rounded-2xl p-8 border border-indigo-700 flex-1">
-        <h3 class="text-2xl font-bold text-indigo-300 mb-5">MoE 如何助力长上下文</h3>
-        <ul class="space-y-4">
+    <div class="flex-1 flex flex-col gap-4">
+      <div class="bg-gray-800 rounded-2xl p-6 border border-indigo-700 flex-1">
+        <h3 class="text-xl font-bold text-indigo-300 mb-3">MoE 如何助力长上下文</h3>
+        <ul class="space-y-3">
           <li class="flex items-start gap-3">
             <span class="mt-1 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
-            <p class="text-xl leading-relaxed text-gray-200">
+            <p class="text-lg leading-relaxed text-gray-200">
               稀疏激活使每 token 的 FLOPs 降低至
               \(\frac{k}{N_{\text{exp}}}\)，为更长序列提供额外的<span class="text-indigo-300 font-semibold">计算预算空间</span><cite class="text-gray-500 text-base not-italic ml-1">[Jiang et al., 2024]</cite>
             </p>
           </li>
           <li class="flex items-start gap-3">
             <span class="mt-1 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
-            <p class="text-xl leading-relaxed text-gray-200">
+            <p class="text-lg leading-relaxed text-gray-200">
               专家可<span class="text-indigo-300 font-semibold">自然分工</span>：部分专家专注于局部语义，部分专注于远程依赖
             </p>
           </li>
           <li class="flex items-start gap-3">
             <span class="mt-1 w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
-            <p class="text-xl leading-relaxed text-gray-200">
+            <p class="text-lg leading-relaxed text-gray-200">
               MoE 的参数效率使同等算力下模型容量更大，更能<span class="text-indigo-300 font-semibold">记住长文档知识</span><cite class="text-gray-500 text-base not-italic ml-1">[DeepSeek-AI, 2024]</cite>
             </p>
           </li>
         </ul>
       </div>
 
-      <div class="bg-gray-800 rounded-2xl p-8 border border-emerald-700 flex-1">
-        <h3 class="text-2xl font-bold text-emerald-300 mb-5">长上下文如何强化 MoE</h3>
-        <ul class="space-y-4">
+      <div class="bg-gray-800 rounded-2xl p-6 border border-emerald-700 flex-1">
+        <h3 class="text-xl font-bold text-emerald-300 mb-3">长上下文如何强化 MoE</h3>
+        <ul class="space-y-3">
           <li class="flex items-start gap-3">
             <span class="mt-1 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
-            <p class="text-xl leading-relaxed text-gray-200">
+            <p class="text-lg leading-relaxed text-gray-200">
               更长上下文让路由有更多 token 可分配，理论上每个专家都能获得<span class="text-emerald-300 font-semibold">充足训练信号</span>
             </p>
           </li>
           <li class="flex items-start gap-3">
             <span class="mt-1 w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
-            <p class="text-xl leading-relaxed text-gray-200">
+            <p class="text-lg leading-relaxed text-gray-200">
               长文档推理任务天然适合<span class="text-emerald-300 font-semibold">领域专家专业化</span>（不同段落激活不同专家）
             </p>
           </li>
@@ -2688,13 +2688,13 @@
   <div class="flex gap-8 flex-1 min-h-0">
 
     <!-- Left explanation card (40%) -->
-    <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 overflow-auto" style="width:38%">
-      <h3 class="text-2xl font-bold text-purple-300 mb-6">核心思路</h3>
+    <div class="bg-gray-800 rounded-2xl p-5 border border-gray-700 overflow-y-auto" style="width:38%">
+      <h3 class="text-xl font-bold text-purple-300 mb-4">核心思路</h3>
 
-      <div class="space-y-5">
+      <div class="space-y-3">
         <div>
-          <p class="text-sm font-mono text-gray-500 uppercase mb-1">问题</p>
-          <p class="text-lg text-gray-400 leading-relaxed">
+          <p class="text-xs font-mono text-gray-500 uppercase mb-1">问题</p>
+          <p class="text-base text-gray-400 leading-relaxed">
             标准 MHA 每层每 token 需缓存
             \(2 \times H \times d_{\text{head}}\) 维向量，
             L=128K 时显存开销极大
@@ -2702,8 +2702,8 @@
         </div>
 
         <div>
-          <p class="text-sm font-mono text-gray-500 uppercase mb-1">方法</p>
-          <p class="text-lg text-gray-400 leading-relaxed">
+          <p class="text-xs font-mono text-gray-500 uppercase mb-1">方法</p>
+          <p class="text-base text-gray-400 leading-relaxed">
             将 KV 投影到<span class="text-emerald-300 font-semibold">低维潜在空间</span>，
             推理时从潜在向量恢复完整 KV
           </p>
@@ -2719,8 +2719,8 @@
         </div>
 
         <div>
-          <p class="text-sm font-mono text-gray-500 uppercase mb-1">Q 端压缩</p>
-          <p class="text-lg text-gray-400 leading-relaxed">
+          <p class="text-xs font-mono text-gray-500 uppercase mb-1">Q 端压缩</p>
+          <p class="text-base text-gray-400 leading-relaxed">
             同样对 Q 进行低秩压缩，使用
             <span class="text-indigo-300 font-semibold">Decoupled RoPE</span>
             处理位置编码，避免位置信息与内容混叠
@@ -3157,38 +3157,67 @@
             <cite class="text-gray-500 text-base not-italic">[Raposo et al., 2024]</cite> 在固定 FLOPs 预算下超越 isoFLOP 基线
           </p>
         </div>
-        <!-- Mini SVG: token paths through layers -->
-        <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:200px;height:270px">
-          <!-- Layer boxes -->
-          <rect x="40" y="5" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="19" text-anchor="middle" fill="#c7d2fe" font-size="11">L1</text>
-          <rect x="40" y="40" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="54" text-anchor="middle" fill="#c7d2fe" font-size="11">L2</text>
-          <rect x="40" y="75" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="89" text-anchor="middle" fill="#c7d2fe" font-size="11">L3</text>
-          <rect x="40" y="110" width="40" height="20" rx="4" fill="#4338ca" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.5"/>
-          <text x="60" y="124" text-anchor="middle" fill="#c7d2fe" font-size="11">L4</text>
+        <!-- SVG: tok A processes all layers; tok B skips L2 & L3 -->
+        <svg viewBox="0 0 220 188" xmlns="http://www.w3.org/2000/svg" class="flex-shrink-0" style="width:198px;height:169px">
+          <defs>
+            <marker id="mka" markerWidth="6" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <polygon points="0 0, 6 2.5, 0 5" fill="#a5b4fc"/>
+            </marker>
+            <marker id="mkb" markerWidth="6" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <polygon points="0 0, 6 2.5, 0 5" fill="#34d399"/>
+            </marker>
+          </defs>
 
-          <!-- Token A: goes through all layers -->
-          <line x1="18" y1="0" x2="18" y2="5" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="25" x2="18" y2="40" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="60" x2="18" y2="75" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="95" x2="18" y2="110" stroke="#a5b4fc" stroke-width="2"/>
-          <line x1="18" y1="130" x2="18" y2="145" stroke="#a5b4fc" stroke-width="2"/>
-          <circle cx="18" cy="15" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <circle cx="18" cy="50" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <circle cx="18" cy="85" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <circle cx="18" cy="120" r="5" fill="#6366f1" stroke="#a5b4fc" stroke-width="1.5"/>
-          <text x="6" y="150" text-anchor="middle" fill="#a5b4fc" font-size="10">tok A</text>
+          <!-- Column headers -->
+          <text x="50" y="13" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">tok A</text>
+          <text x="148" y="13" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="bold">tok B</text>
 
-          <!-- Token B: skips L2, L3 -->
-          <line x1="102" y1="0" x2="102" y2="5" stroke="#34d399" stroke-width="2"/>
-          <line x1="102" y1="25" x2="102" y2="110" stroke="#34d399" stroke-width="2" stroke-dasharray="3,3"/>
-          <line x1="102" y1="130" x2="102" y2="145" stroke="#34d399" stroke-width="2"/>
-          <circle cx="102" cy="15" r="5" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
-          <circle cx="102" cy="120" r="5" fill="#059669" stroke="#34d399" stroke-width="1.5"/>
-          <text x="110" y="63" text-anchor="end" fill="#6ee7b7" font-size="10">skip</text>
-          <text x="114" y="150" text-anchor="middle" fill="#6ee7b7" font-size="10">tok B</text>
+          <!-- L1: both process -->
+          <rect x="5"   y="18" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="35" text-anchor="middle" fill="#c7d2fe" font-size="11">L1</text>
+          <rect x="103" y="18" width="90" height="26" rx="4" fill="#065f46" fill-opacity="0.85" stroke="#34d399" stroke-width="1.5"/>
+          <text x="148" y="35" text-anchor="middle" fill="#a7f3d0" font-size="11">L1</text>
+
+          <!-- A: L1→L2 -->
+          <line x1="50" y1="44" x2="50" y2="55" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#mka)"/>
+
+          <!-- B bypass: curves right of L2/L3, arrives at L4 -->
+          <path d="M 193 44 Q 216 95 193 133" stroke="#34d399" stroke-width="2" fill="none" stroke-dasharray="4,3" marker-end="url(#mkb)"/>
+          <text x="210" y="98" text-anchor="middle" fill="#6ee7b7" font-size="9.5" font-style="italic">skip</text>
+
+          <!-- L2: A processes, B skipped -->
+          <rect x="5"   y="55" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="72" text-anchor="middle" fill="#c7d2fe" font-size="11">L2</text>
+          <rect x="103" y="55" width="90" height="26" rx="4" fill="#111827" fill-opacity="0.65" stroke="#374151" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="148" y="72" text-anchor="middle" fill="#4b5563" font-size="11">L2</text>
+          <line x1="114" y1="59" x2="182" y2="77" stroke="#374151" stroke-width="1.2"/>
+          <line x1="182" y1="59" x2="114" y2="77" stroke="#374151" stroke-width="1.2"/>
+
+          <!-- A: L2→L3 -->
+          <line x1="50" y1="81" x2="50" y2="92" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#mka)"/>
+
+          <!-- L3: A processes, B skipped -->
+          <rect x="5"   y="92" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="109" text-anchor="middle" fill="#c7d2fe" font-size="11">L3</text>
+          <rect x="103" y="92" width="90" height="26" rx="4" fill="#111827" fill-opacity="0.65" stroke="#374151" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="148" y="109" text-anchor="middle" fill="#4b5563" font-size="11">L3</text>
+          <line x1="114" y1="96" x2="182" y2="114" stroke="#374151" stroke-width="1.2"/>
+          <line x1="182" y1="96" x2="114" y2="114" stroke="#374151" stroke-width="1.2"/>
+
+          <!-- A: L3→L4 -->
+          <line x1="50" y1="118" x2="50" y2="129" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#mka)"/>
+
+          <!-- L4: both process -->
+          <rect x="5"   y="129" width="90" height="26" rx="4" fill="#3730a3" fill-opacity="0.85" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="50"  y="146" text-anchor="middle" fill="#c7d2fe" font-size="11">L4</text>
+          <rect x="103" y="129" width="90" height="26" rx="4" fill="#065f46" fill-opacity="0.85" stroke="#34d399" stroke-width="1.5"/>
+          <text x="148" y="146" text-anchor="middle" fill="#a7f3d0" font-size="11">L4</text>
+
+          <!-- Outputs -->
+          <line x1="50"  y1="155" x2="50"  y2="163" stroke="#a5b4fc" stroke-width="1.2"/>
+          <text x="50"   y="174" text-anchor="middle" fill="#818cf8" font-size="9">output</text>
+          <line x1="148" y1="155" x2="148" y2="163" stroke="#34d399" stroke-width="1.2"/>
+          <text x="148"  y="174" text-anchor="middle" fill="#6ee7b7" font-size="9">output</text>
         </svg>
       </div>
     </div>
@@ -3510,23 +3539,44 @@
       <span class="text-purple-300 font-bold">核心范式</span>
     </p>
 
-    <!-- Simple SVG: rocket/arrow pointing up-right, indigo→emerald gradient -->
-    <svg viewBox="0 0 160 60" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:60px">
+    <!-- SVG: MoE + 长上下文 converging into a shared future -->
+    <svg viewBox="0 0 300 90" xmlns="http://www.w3.org/2000/svg" style="width:300px;height:90px">
       <defs>
-        <linearGradient id="rocket-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#6366f1"/>
+        <linearGradient id="g-moe" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+          <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient>
+        <linearGradient id="g-lc" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+          <stop offset="0%" stop-color="#059669" stop-opacity="0.25"/>
           <stop offset="100%" stop-color="#34d399"/>
         </linearGradient>
+        <linearGradient id="g-out" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+          <stop offset="0%" stop-color="#a855f7"/>
+          <stop offset="100%" stop-color="#f0abfc" stop-opacity="0.85"/>
+        </linearGradient>
+        <filter id="fg" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
       </defs>
-      <!-- Arrow shaft -->
-      <line x1="20" y1="50" x2="130" y2="14" stroke="url(#rocket-grad)" stroke-width="4" stroke-linecap="round"/>
-      <!-- Arrow head -->
-      <polygon points="130,14 110,16 125,28" fill="url(#rocket-grad)"/>
-      <!-- Small circles along the path (exhaust trail) -->
-      <circle cx="35" cy="45" r="3" fill="#6366f1" fill-opacity="0.7"/>
-      <circle cx="60" cy="37" r="2.5" fill="#7c3aed" fill-opacity="0.6"/>
-      <circle cx="85" cy="28" r="2" fill="#059669" fill-opacity="0.6"/>
-      <circle cx="108" cy="20" r="2" fill="#34d399" fill-opacity="0.7"/>
+      <!-- MoE curve (indigo) converging right -->
+      <path d="M 4 24 Q 120 24 162 45" stroke="url(#g-moe)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Long-context curve (emerald) converging right -->
+      <path d="M 4 66 Q 120 66 162 45" stroke="url(#g-lc)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Labels -->
+      <text x="6" y="20" fill="#a5b4fc" font-size="12" font-family="sans-serif" font-weight="bold">MoE</text>
+      <text x="6" y="72" fill="#6ee7b7" font-size="12" font-family="sans-serif" font-weight="bold">长上下文</text>
+      <!-- Convergence glow -->
+      <circle cx="162" cy="45" r="14" fill="#7c3aed" fill-opacity="0.18" filter="url(#fg)"/>
+      <circle cx="162" cy="45" r="7"  fill="#a855f7" fill-opacity="0.45"/>
+      <circle cx="162" cy="45" r="3"  fill="#e879f9"/>
+      <!-- Output arrow -->
+      <line x1="176" y1="45" x2="278" y2="45" stroke="url(#g-out)" stroke-width="4" stroke-linecap="round"/>
+      <polygon points="280,45 265,37 265,53" fill="#f0abfc"/>
+      <!-- Tick marks on output line -->
+      <line x1="204" y1="37" x2="204" y2="53" stroke="#c084fc" stroke-width="1.5" stroke-opacity="0.55"/>
+      <line x1="234" y1="37" x2="234" y2="53" stroke="#c084fc" stroke-width="1.5" stroke-opacity="0.45"/>
+      <line x1="260" y1="37" x2="260" y2="53" stroke="#f0abfc" stroke-width="1.5" stroke-opacity="0.65"/>
     </svg>
   </div>
 
@@ -3620,6 +3670,57 @@
   </div>
 
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">31 / 31</span>
+</div>
+
+<!-- Slide: 参考文献 -->
+<div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-16 py-12">
+<aside class="notes">参考文献页，无需逐条朗读。提示听众可扫描 QR 码或访问讲义获取链接。</aside>
+
+  <h2 class="text-4xl font-bold mb-6 text-purple-300">参考文献</h2>
+
+  <div class="grid grid-cols-3 gap-x-8 gap-y-1 text-sm text-gray-400 leading-relaxed flex-1 min-h-0 overflow-hidden">
+
+    <!-- Column 1: MoE & Sparse Models -->
+    <div>
+      <p class="text-xs font-mono text-indigo-400 uppercase tracking-widest mb-3">MoE &amp; 稀疏模型</p>
+      <p class="mb-2"><span class="text-gray-500">[1]</span> Jacobs et al. <em>Adaptive Mixtures of Local Experts.</em> Neural Computation, 1991.</p>
+      <p class="mb-2"><span class="text-gray-500">[2]</span> Shazeer et al. <em>Outrageously Large Neural Networks: The Sparsely-Gated MoE Layer.</em> ICLR 2017.</p>
+      <p class="mb-2"><span class="text-gray-500">[3]</span> Fedus et al. <em>Switch Transformers: Scaling to Trillion Parameter Models.</em> JMLR 2022.</p>
+      <p class="mb-2"><span class="text-gray-500">[4]</span> Du et al. <em>GLaM: Efficient Scaling of Language Models with MoE.</em> ICML 2022.</p>
+      <p class="mb-2"><span class="text-gray-500">[5]</span> Zoph et al. <em>ST-MoE: Designing Stable and Transferable Sparse Expert Models.</em> arXiv 2022.</p>
+      <p class="mb-2"><span class="text-gray-500">[6]</span> Zuo et al. <em>Taming Sparsely Activated Transformer with Stochastic Experts.</em> ICLR 2022.</p>
+      <p class="mb-2"><span class="text-gray-500">[7]</span> Jiang et al. <em>Mixtral of Experts.</em> arXiv 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[8]</span> Mistral AI. <em>Mixtral 8×22B Technical Report.</em> 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[9]</span> DeepSeek-AI. <em>DeepSeek-V2: A Strong, Economical, and Efficient MoE Language Model.</em> arXiv 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[10]</span> Qwen Team. <em>Qwen1.5-MoE Technical Report.</em> 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[11]</span> Puigcerver et al. <em>From Sparse to Soft Mixtures of Experts.</em> ICLR 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[12]</span> Raposo et al. <em>Mixture of Depths: Dynamically Allocating Compute in Transformer Models.</em> arXiv 2024.</p>
+    </div>
+
+    <!-- Column 2: Long Context & Attention -->
+    <div>
+      <p class="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-3">长上下文 &amp; Attention</p>
+      <p class="mb-2"><span class="text-gray-500">[13]</span> Brown et al. <em>Language Models are Few-Shot Learners</em> (GPT-3). NeurIPS 2020.</p>
+      <p class="mb-2"><span class="text-gray-500">[14]</span> Su et al. <em>RoFormer: Enhanced Transformer with Rotary Position Embedding.</em> Neurocomputing 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[15]</span> Press et al. <em>Train Short, Test Long: Attention with Linear Biases</em> (ALiBi). ICLR 2022.</p>
+      <p class="mb-2"><span class="text-gray-500">[16]</span> Dao et al. <em>FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.</em> NeurIPS 2022.</p>
+      <p class="mb-2"><span class="text-gray-500">[17]</span> Dao. <em>FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning.</em> ICLR 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[18]</span> Peng et al. <em>YaRN: Efficient Context Window Extension of Large Language Models.</em> arXiv 2023.</p>
+      <p class="mb-2"><span class="text-gray-500">[19]</span> Liu et al. <em>Ring Attention with Blockwise Transformers for Near-Infinite Context.</em> arXiv 2023.</p>
+      <p class="mb-2"><span class="text-gray-500">[20]</span> Kwon et al. <em>Efficient Memory Management for LLM Serving with PagedAttention</em> (vLLM). SOSP 2023.</p>
+    </div>
+
+    <!-- Column 3: Benchmarks & Large Models -->
+    <div>
+      <p class="text-xs font-mono text-amber-400 uppercase tracking-widest mb-3">评测 &amp; 大模型</p>
+      <p class="mb-2"><span class="text-gray-500">[21]</span> Liu et al. <em>Lost in the Middle: How Language Models Use Long Contexts.</em> TACL 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[22]</span> Hsieh et al. <em>RULER: What's the Real Context Size of Your Long-Context Language Models?</em> arXiv 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[23]</span> Meta AI. <em>Llama 3 Technical Report.</em> 2024.</p>
+      <p class="mb-2"><span class="text-gray-500">[24]</span> Google DeepMind. <em>Gemini 1.5: Unlocking Multimodal Understanding Across Millions of Tokens of Context.</em> arXiv 2024.</p>
+    </div>
+
+  </div>
+
 </div>
   </div>
 
