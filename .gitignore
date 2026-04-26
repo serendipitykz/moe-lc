@@ -4,3 +4,7 @@
 .claude/
 venv/
 tmp/
+node_modules/
+scripts/
+generated_slides_draft.md
+plan_draft.md
