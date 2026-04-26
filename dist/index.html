@@ -1556,6 +1556,7 @@
       <h3 class="text-xl font-semibold text-indigo-200">All-to-All 调度流程（EP = 4）</h3>
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex items-center justify-center">
         <svg viewBox="0 0 420 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(63, 36) scale(0.7)">
           <!-- Token batch row -->
           <text x="210" y="15" text-anchor="middle" font-size="13" fill="#9ca3af">Token batch  (B tokens, each with top-k=2 target experts)</text>
           <rect x="20"  y="22" width="46" height="22" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
@@ -1614,6 +1615,7 @@
           <text x="210" y="184" text-anchor="middle" font-size="12" fill="#9ca3af">Volume per direction (per MoE layer):</text>
           <text x="210" y="208" text-anchor="middle" font-size="14" fill="#fbbf24">k × B × d_model  elements</text>
           <text x="210" y="225" text-anchor="middle" font-size="11" fill="#6b7280">2 all-to-all per layer total;  k = top-K experts,  B = batch size</text>
+          </g>
         </svg>
       </div>
     </div>
