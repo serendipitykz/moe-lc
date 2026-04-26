@@ -1543,17 +1543,17 @@
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">14 / 31</span>
 </div>
 
-<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
 <aside class="notes">强调 EP 是 MoE 独有的并行维度——只有引入专家才需要 all-to-all。核心点：两次 all-to-all（dispatch + combine）是 EP 的通信代价；实际系统将 EP × TP × PP × DP 四维组合。</aside>
 
-  <h2 class="text-4xl font-bold mb-1 text-indigo-300">专家并行（EP）与分布式训练</h2>
+  <h2 class="text-5xl font-bold mb-1 text-indigo-300">专家并行（EP）与分布式训练</h2>
   <p class="text-lg text-gray-400 mb-4">MoE 专属的并行维度：将不同专家分布到不同 GPU 组</p>
 
   <div class="flex gap-8 flex-1 min-h-0">
 
     <!-- Left: All-to-All SVG -->
     <div class="flex-1 flex flex-col gap-3">
-      <h3 class="text-base font-semibold text-indigo-200">All-to-All 调度流程（EP = 4）</h3>
+      <h3 class="text-xl font-semibold text-indigo-200">All-to-All 调度流程（EP = 4）</h3>
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex items-center justify-center">
         <svg viewBox="0 0 420 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <!-- Token batch row -->
@@ -1620,7 +1620,7 @@
 
     <!-- Right: parallelism table + capacity -->
     <div class="w-72 flex flex-col gap-4">
-      <h3 class="text-base font-semibold text-indigo-200">四维并行对比</h3>
+      <h3 class="text-xl font-semibold text-indigo-200">四维并行对比</h3>
       <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
         <table class="w-full text-sm">
           <thead>
@@ -1656,27 +1656,27 @@
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex flex-col gap-3">
-        <h4 class="text-sm font-semibold text-indigo-200">Token 容量（防溢出）</h4>
+        <h4 class="text-base font-semibold text-indigo-200">Token 容量（防溢出）</h4>
         <div class="text-center">
           \[C = \left\lceil \frac{B}{N_{exp}} \right\rceil \times CF\]
         </div>
-        <p class="text-xs text-gray-400">CF = 容量因子；训练期 1.0–1.25，推理期 2.0。超出 C 的 token 被丢弃（pass-through），是 MoE 训练的工程细节。</p>
+        <p class="text-sm text-gray-400">CF = 容量因子；训练期 1.0–1.25，推理期 2.0。超出 C 的 token 被丢弃（pass-through），是 MoE 训练的工程细节。</p>
       </div>
 
       <div class="bg-indigo-900 bg-opacity-25 rounded-xl border border-indigo-700 p-3">
         <p class="text-sm text-indigo-200 font-semibold mb-1">DeepSeek-V2 实践</p>
-        <p class="text-sm text-gray-300">EP = 32，\(N_{exp}\) = 160，与 TP/PP/DP 四维组合训练。</p>
+        <p class="text-base text-gray-300">EP = 32，\(N_{exp}\) = 160，与 TP/PP/DP 四维组合训练。</p>
       </div>
     </div>
 
   </div>
 </div>
 
-<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
 <aside class="notes">DeepSeekMoE 解决了标准 MoE 中专家"知识混杂"的问题。强调两点创新：细粒度让专家分工更精确；共享专家承担通用知识让路由专家更专。可用"全科医生 vs 各科专科医生"类比。</aside>
 
-  <h2 class="text-4xl font-bold mb-1 text-indigo-300">DeepSeekMoE：细粒度专家与共享专家</h2>
-  <p class="text-lg text-gray-400 mb-4">解决标准 MoE 的"知识混杂"问题——让每位专家更专</p>
+  <h2 class="text-5xl font-bold mb-1 text-indigo-300">DeepSeekMoE：细粒度专家与共享专家</h2>
+  <p class="text-lg text-gray-400 mb-2">解决标准 MoE 的"知识混杂"问题——让每位专家更专</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
@@ -1684,13 +1684,13 @@
     <div class="flex-1 flex flex-col gap-4">
 
       <div class="bg-gray-800 rounded-2xl border border-red-900 p-4">
-        <h3 class="text-base font-semibold text-red-300 mb-1">问题：粗粒度专家的知识混杂</h3>
-        <p class="text-xs text-gray-300 leading-relaxed">标准 MoE 中每个专家 = 一整个 FFN（dim = \(d_{ff}\)）。Token 路由稀疏，但每个专家仍需覆盖大量通用知识，导致专业化程度低。</p>
+        <h3 class="text-lg font-semibold text-red-300 mb-1">问题：粗粒度专家的知识混杂</h3>
+        <p class="text-sm text-gray-300 leading-relaxed">标准 MoE 中每个专家 = 一整个 FFN（dim = \(d_{ff}\)）。Token 路由稀疏，但每个专家仍需覆盖大量通用知识，导致专业化程度低。</p>
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-indigo-700 p-4 flex-1 flex flex-col gap-3">
-        <h3 class="text-base font-semibold text-indigo-200">创新 1：细粒度专家分割</h3>
-        <p class="text-xs text-gray-300">将每个专家 FFN 拆分为 <span class="text-yellow-300">m</span> 个更小专家（中间维度缩小 m 倍），总专家数扩大 m 倍，激活数同比扩大。</p>
+        <h3 class="text-lg font-semibold text-indigo-200">创新 1：细粒度专家分割</h3>
+        <p class="text-sm text-gray-300">将每个专家 FFN 拆分为 <span class="text-yellow-300">m</span> 个更小专家（中间维度缩小 m 倍），总专家数扩大 m 倍，激活数同比扩大。</p>
         <div class="flex justify-center gap-8 py-2">
           <!-- Before -->
           <div class="flex flex-col items-center gap-1">
@@ -1720,15 +1720,15 @@
             <p class="text-xs text-gray-500">8 experts, dim=d<sub>ff</sub>/2</p>
           </div>
         </div>
-        <p class="text-xs text-gray-500">相同激活 FLOPs，但更细的专家粒度使知识边界更清晰。</p>
+        <p class="text-sm text-gray-500">相同激活 FLOPs，但更细的专家粒度使知识边界更清晰。</p>
       </div>
     </div>
 
     <!-- Middle card: innovation 2 + architecture SVG -->
     <div class="flex-1 flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-amber-800 p-4 flex-1 flex flex-col gap-3">
-        <h3 class="text-base font-semibold text-amber-300">创新 2：共享专家隔离</h3>
-        <p class="text-xs text-gray-300">保留 <span class="text-amber-300">\(K_s\)</span> 个专家始终激活（共享专家），承担所有 token 共同需要的通用知识，让路由专家专注于专业化知识。</p>
+        <h3 class="text-lg font-semibold text-amber-300">创新 2：共享专家隔离</h3>
+        <p class="text-sm text-gray-300">保留 <span class="text-amber-300">\(K_s\)</span> 个专家始终激活（共享专家），承担所有 token 共同需要的通用知识，让路由专家专注于专业化知识。</p>
 
         <svg viewBox="0 0 280 175" width="100%" class="mt-1" xmlns="http://www.w3.org/2000/svg">
           <!-- Token input -->
@@ -1770,17 +1770,17 @@
     <!-- Right: formula + DeepSeek-V2 numbers -->
     <div class="w-64 flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-gray-600 p-4 flex flex-col gap-3">
-        <h3 class="text-base font-semibold text-indigo-200">输出公式</h3>
+        <h3 class="text-lg font-semibold text-indigo-200">输出公式</h3>
         <div class="text-xs text-center leading-relaxed">
           \[h_t = u_t + \sum_{i=1}^{K_s} \text{FFN}_i^{s}(u_t)\]
           \[+ \sum_{i \in \text{Top-}K_r} g_{i,t}\,\text{FFN}_i^{r}(u_t)\]
         </div>
-        <p class="text-xs text-gray-500 text-center">\(g_{i,t} = \text{Softmax}(s_{i,t})\)，仅对选中专家归一化</p>
+        <p class="text-sm text-gray-500 text-center">\(g_{i,t} = \text{Softmax}(s_{i,t})\)，仅对选中专家归一化</p>
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-purple-800 p-4 flex flex-col gap-2">
-        <h3 class="text-base font-semibold text-purple-300">DeepSeek-V2 配置</h3>
-        <div class="grid grid-cols-2 gap-y-0.5 text-xs">
+        <h3 class="text-lg font-semibold text-purple-300">DeepSeek-V2 配置</h3>
+        <div class="grid grid-cols-2 gap-y-0.5 text-sm">
           <span class="text-gray-400">\(N_r\)（路由专家）</span><span class="text-yellow-300 text-right">160</span>
           <span class="text-gray-400">\(K_r\)（激活数）</span><span class="text-yellow-300 text-right">6</span>
           <span class="text-gray-400">\(K_s\)（共享专家）</span><span class="text-amber-300 text-right">2</span>
@@ -1792,7 +1792,7 @@
       </div>
 
       <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
-        <p class="text-xs text-gray-400">激活比率：21 / 236 ≈ <span class="text-emerald-300">8.9%</span>——使用不到 1/10 的参数完成推理。</p>
+        <p class="text-sm text-gray-400">激活比率：21 / 236 ≈ <span class="text-emerald-300">8.9%</span>——使用不到 1/10 的参数完成推理。</p>
       </div>
     </div>
 
@@ -2714,20 +2714,20 @@
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">21 / 31</span>
 </div>
 
-<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
 <aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">稀疏注意力模式</h2>
-  <p class="text-xl text-gray-400 mb-6">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>
+  <p class="text-xl text-gray-400 mb-3">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
     <!-- Card 1: Longformer -->
     <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
       <h3 class="text-xl font-bold text-emerald-300">Longformer <cite class="text-gray-500 text-sm not-italic">[Beltagy et al., 2020]</cite></h3>
-      <p class="text-sm text-gray-400">局部窗口 + 全局 token</p>
+      <p class="text-base text-gray-400">局部窗口 + 全局 token</p>
 
-      <p class="text-sm text-gray-300 leading-relaxed">每个 token 仅注意 ±w/2 个相邻 token（局部）；特殊全局 token（如 <code>[CLS]</code>）双向注意所有位置。</p>
+      <p class="text-base text-gray-300 leading-relaxed">每个 token 仅注意 ±w/2 个相邻 token（局部）；特殊全局 token（如 <code>[CLS]</code>）双向注意所有位置。</p>
 
       <div class="text-center text-sm">
         \[O(L \cdot w) + O(L \cdot n_g)\]
@@ -2788,9 +2788,9 @@
     <!-- Card 2: BigBird -->
     <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
       <h3 class="text-xl font-bold text-emerald-300">BigBird <cite class="text-gray-500 text-sm not-italic">[Zaheer et al., 2020]</cite></h3>
-      <p class="text-sm text-gray-400">局部窗口 + 全局 token + 随机注意力</p>
+      <p class="text-base text-gray-400">局部窗口 + 全局 token + 随机注意力</p>
 
-      <p class="text-sm text-gray-300 leading-relaxed">在 Longformer 基础上增加每行若干随机注意力点，覆盖长程依赖。理论证明：该组合在 O(L) 注意力下图灵完备。</p>
+      <p class="text-base text-gray-300 leading-relaxed">在 Longformer 基础上增加每行若干随机注意力点，覆盖长程依赖。理论证明：该组合在 O(L) 注意力下图灵完备。</p>
 
       <div class="text-center text-sm">
         \[O\!\left(L(w + n_g + r)\right) = O(L)\]
@@ -2845,8 +2845,8 @@
     <div class="flex-1 flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3">
         <h3 class="text-xl font-bold text-emerald-300">Sliding Window</h3>
-        <p class="text-sm text-gray-400">Mistral 7B [Jiang et al., 2023]</p>
-        <p class="text-sm text-gray-300 leading-relaxed">每 token 仅注意最近 w = 4096 个 token，无全局 token。结合 GQA（8 组）和 RoPE，实现 32K 上下文。</p>
+        <p class="text-base text-gray-400">Mistral 7B [Jiang et al., 2023]</p>
+        <p class="text-base text-gray-300 leading-relaxed">每 token 仅注意最近 w = 4096 个 token，无全局 token。结合 GQA（8 组）和 RoPE，实现 32K 上下文。</p>
         <div class="text-center text-sm">
           \[O(L \cdot w),\quad w = 4096\]
         </div>
@@ -2884,12 +2884,12 @@
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-yellow-800 p-4 flex flex-col gap-2">
-        <h3 class="text-base font-semibold text-yellow-300">稀疏 vs 精确注意力</h3>
-        <div class="text-xs text-gray-300 leading-relaxed space-y-1">
+        <h3 class="text-xl font-semibold text-yellow-300">稀疏 vs 精确注意力</h3>
+        <div class="text-sm text-gray-300 leading-relaxed space-y-1">
           <p><span class="text-red-400">稀疏注意力</span>：近似，牺牲长程依赖；工程复杂，需自定义 CUDA kernel。</p>
           <p><span class="text-emerald-400">FlashAttention</span>：<strong>精确</strong>，仅减少 IO；对模型行为无影响，已成现代标配。</p>
         </div>
-        <div class="mt-1 border-t border-gray-700 pt-2 text-xs text-gray-500">
+        <div class="mt-1 border-t border-gray-700 pt-2 text-sm text-gray-500">
           稀疏模式在 2022 年后逐渐被 FlashAttention 取代，但 Sliding Window 仍见于 Mistral/Gemma 等高效模型。
         </div>
       </div>
@@ -2898,11 +2898,11 @@
   </div>
 </div>
 
-<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
 <aside class="notes">Attention Sink 是 2023 年一个意外发现——模型不是在真正"理解"前几个 token，而是把无处可放的注意力权重"倒"在那里。StreamingLLM 利用这一发现实现无限流式推理。KV 内存公式让听众直观感受 128K 上下文的代价。</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">KV Cache 管理与 Attention Sink</h2>
-  <p class="text-xl text-gray-400 mb-6">内存瓶颈、注意力汇聚现象与流式推理策略</p>
+  <p class="text-xl text-gray-400 mb-3">内存瓶颈、注意力汇聚现象与流式推理策略</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
@@ -2913,9 +2913,9 @@
         <div class="text-center text-sm">
           \[\text{Mem} = 2 \times P \times H_{kv} \times d_{head} \times L \times \text{bytes}\]
         </div>
-        <p class="text-xs text-gray-500 text-center">2 = K+V，P = 层数，FP16 = 2 bytes/元素</p>
+        <p class="text-sm text-gray-500 text-center">2 = K+V，P = 层数，FP16 = 2 bytes/元素</p>
         <div class="rounded-xl overflow-hidden border border-gray-600">
-          <table class="w-full text-xs">
+          <table class="w-full text-sm">
             <thead>
               <tr class="bg-gray-700 bg-opacity-50">
                 <th class="px-2 py-1 text-left text-gray-400">模型</th>
@@ -2942,12 +2942,12 @@
             </tbody>
           </table>
         </div>
-        <p class="text-xs text-gray-500">DeepSeek-V2 的 MLA 将 KV 压缩至潜在维度 512（原 5120），实现 <span class="text-emerald-400">5–13×</span> 压缩比。</p>
+        <p class="text-sm text-gray-500">DeepSeek-V2 的 MLA 将 KV 压缩至潜在维度 512（原 5120），实现 <span class="text-emerald-400">5–13×</span> 压缩比。</p>
       </div>
 
       <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
-        <p class="text-sm text-gray-300 font-semibold mb-1">KV 量化</p>
-        <p class="text-xs text-gray-400">INT8 → 2× 压缩，INT4 → 4× 压缩。离群值需特殊处理（分组量化或混合精度）。</p>
+        <p class="text-base text-gray-300 font-semibold mb-1">KV 量化</p>
+        <p class="text-sm text-gray-400">INT8 → 2× 压缩，INT4 → 4× 压缩。离群值需特殊处理（分组量化或混合精度）。</p>
       </div>
     </div>
 
@@ -2956,7 +2956,7 @@
       <h3 class="text-xl font-semibold text-emerald-200">Attention Sink 现象 <cite class="text-gray-500 text-sm not-italic">[Xiao et al., 2023]</cite></h3>
 
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex flex-col gap-3">
-        <p class="text-sm text-gray-300 leading-relaxed">无论输入内容如何，前几个 token（位置 0–3）的注意力权重异常高——模型将"多余"的注意力倾倒在此，因为 softmax 无法输出 0。</p>
+        <p class="text-base text-gray-300 leading-relaxed">无论输入内容如何，前几个 token（位置 0–3）的注意力权重异常高——模型将"多余"的注意力倾倒在此，因为 softmax 无法输出 0。</p>
 
         <!-- Bar chart of attention scores across positions -->
         <svg viewBox="0 0 320 160" width="100%" xmlns="http://www.w3.org/2000/svg">
@@ -2996,7 +2996,7 @@
           <line x1="36" y1="22" x2="98" y2="22" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3 2"/>
         </svg>
 
-        <p class="text-xs text-gray-500 leading-relaxed">Sink 与语义无关——可以是任意无信息的 token（如换行符、空格）。这是 softmax 归一化的"泄压阀"效应。</p>
+        <p class="text-sm text-gray-500 leading-relaxed">Sink 与语义无关——可以是任意无信息的 token（如换行符、空格）。这是 softmax 归一化的"泄压阀"效应。</p>
       </div>
     </div>
 
@@ -3005,7 +3005,7 @@
       <h3 class="text-xl font-semibold text-emerald-200">StreamingLLM：无限流式推理</h3>
 
       <div class="bg-gray-800 rounded-2xl border border-emerald-800 p-4 flex flex-col gap-3">
-        <p class="text-sm text-gray-300 leading-relaxed">只保留 <span class="text-amber-300">Sink 窗口</span>（前 K_s ≈ 4 token）+ <span class="text-emerald-300">最近窗口</span>（后 K_r token），丢弃中间 KV。实现 O(1) 内存的无限长推理，无需重训练。</p>
+        <p class="text-base text-gray-300 leading-relaxed">只保留 <span class="text-amber-300">Sink 窗口</span>（前 K_s ≈ 4 token）+ <span class="text-emerald-300">最近窗口</span>（后 K_r token），丢弃中间 KV。实现 O(1) 内存的无限长推理，无需重训练。</p>
 
         <!-- StreamingLLM window diagram -->
         <svg viewBox="0 0 280 80" width="100%" xmlns="http://www.w3.org/2000/svg">
@@ -3028,8 +3028,8 @@
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex flex-col gap-2">
-        <h3 class="text-base font-semibold text-indigo-200">KV 驱逐策略对比</h3>
-        <table class="w-full text-xs">
+        <h3 class="text-xl font-semibold text-indigo-200">KV 驱逐策略对比</h3>
+        <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-gray-600">
               <th class="py-1 text-left text-gray-400">方法</th>
@@ -3058,7 +3058,7 @@
       </div>
 
       <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
-        <p class="text-xs text-gray-400">代价：<span class="text-red-400">中段信息丢失</span>——与"lost-in-the-middle"现象叠加，是长上下文实际利用率低的系统性根源之一。</p>
+        <p class="text-sm text-gray-400">代价：<span class="text-red-400">中段信息丢失</span>——与"lost-in-the-middle"现象叠加，是长上下文实际利用率低的系统性根源之一。</p>
       </div>
     </div>
 

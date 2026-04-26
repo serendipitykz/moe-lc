@@ -1,8 +1,8 @@
-<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
 <aside class="notes">Attention Sink 是 2023 年一个意外发现——模型不是在真正"理解"前几个 token，而是把无处可放的注意力权重"倒"在那里。StreamingLLM 利用这一发现实现无限流式推理。KV 内存公式让听众直观感受 128K 上下文的代价。</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">KV Cache 管理与 Attention Sink</h2>
-  <p class="text-xl text-gray-400 mb-6">内存瓶颈、注意力汇聚现象与流式推理策略</p>
+  <p class="text-xl text-gray-400 mb-3">内存瓶颈、注意力汇聚现象与流式推理策略</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
@@ -13,9 +13,9 @@
         <div class="text-center text-sm">
           \[\text{Mem} = 2 \times P \times H_{kv} \times d_{head} \times L \times \text{bytes}\]
         </div>
-        <p class="text-xs text-gray-500 text-center">2 = K+V，P = 层数，FP16 = 2 bytes/元素</p>
+        <p class="text-sm text-gray-500 text-center">2 = K+V，P = 层数，FP16 = 2 bytes/元素</p>
         <div class="rounded-xl overflow-hidden border border-gray-600">
-          <table class="w-full text-xs">
+          <table class="w-full text-sm">
             <thead>
               <tr class="bg-gray-700 bg-opacity-50">
                 <th class="px-2 py-1 text-left text-gray-400">模型</th>
@@ -42,12 +42,12 @@
             </tbody>
           </table>
         </div>
-        <p class="text-xs text-gray-500">DeepSeek-V2 的 MLA 将 KV 压缩至潜在维度 512（原 5120），实现 <span class="text-emerald-400">5–13×</span> 压缩比。</p>
+        <p class="text-sm text-gray-500">DeepSeek-V2 的 MLA 将 KV 压缩至潜在维度 512（原 5120），实现 <span class="text-emerald-400">5–13×</span> 压缩比。</p>
       </div>
 
       <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
-        <p class="text-sm text-gray-300 font-semibold mb-1">KV 量化</p>
-        <p class="text-xs text-gray-400">INT8 → 2× 压缩，INT4 → 4× 压缩。离群值需特殊处理（分组量化或混合精度）。</p>
+        <p class="text-base text-gray-300 font-semibold mb-1">KV 量化</p>
+        <p class="text-sm text-gray-400">INT8 → 2× 压缩，INT4 → 4× 压缩。离群值需特殊处理（分组量化或混合精度）。</p>
       </div>
     </div>
 
@@ -56,7 +56,7 @@
       <h3 class="text-xl font-semibold text-emerald-200">Attention Sink 现象 <cite class="text-gray-500 text-sm not-italic">[Xiao et al., 2023]</cite></h3>
 
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex flex-col gap-3">
-        <p class="text-sm text-gray-300 leading-relaxed">无论输入内容如何，前几个 token（位置 0–3）的注意力权重异常高——模型将"多余"的注意力倾倒在此，因为 softmax 无法输出 0。</p>
+        <p class="text-base text-gray-300 leading-relaxed">无论输入内容如何，前几个 token（位置 0–3）的注意力权重异常高——模型将"多余"的注意力倾倒在此，因为 softmax 无法输出 0。</p>
 
         <!-- Bar chart of attention scores across positions -->
         <svg viewBox="0 0 320 160" width="100%" xmlns="http://www.w3.org/2000/svg">
@@ -96,7 +96,7 @@
           <line x1="36" y1="22" x2="98" y2="22" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3 2"/>
         </svg>
 
-        <p class="text-xs text-gray-500 leading-relaxed">Sink 与语义无关——可以是任意无信息的 token（如换行符、空格）。这是 softmax 归一化的"泄压阀"效应。</p>
+        <p class="text-sm text-gray-500 leading-relaxed">Sink 与语义无关——可以是任意无信息的 token（如换行符、空格）。这是 softmax 归一化的"泄压阀"效应。</p>
       </div>
     </div>
 
@@ -105,7 +105,7 @@
       <h3 class="text-xl font-semibold text-emerald-200">StreamingLLM：无限流式推理</h3>
 
       <div class="bg-gray-800 rounded-2xl border border-emerald-800 p-4 flex flex-col gap-3">
-        <p class="text-sm text-gray-300 leading-relaxed">只保留 <span class="text-amber-300">Sink 窗口</span>（前 K_s ≈ 4 token）+ <span class="text-emerald-300">最近窗口</span>（后 K_r token），丢弃中间 KV。实现 O(1) 内存的无限长推理，无需重训练。</p>
+        <p class="text-base text-gray-300 leading-relaxed">只保留 <span class="text-amber-300">Sink 窗口</span>（前 K_s ≈ 4 token）+ <span class="text-emerald-300">最近窗口</span>（后 K_r token），丢弃中间 KV。实现 O(1) 内存的无限长推理，无需重训练。</p>
 
         <!-- StreamingLLM window diagram -->
         <svg viewBox="0 0 280 80" width="100%" xmlns="http://www.w3.org/2000/svg">
@@ -128,8 +128,8 @@
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex flex-col gap-2">
-        <h3 class="text-base font-semibold text-indigo-200">KV 驱逐策略对比</h3>
-        <table class="w-full text-xs">
+        <h3 class="text-xl font-semibold text-indigo-200">KV 驱逐策略对比</h3>
+        <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-gray-600">
               <th class="py-1 text-left text-gray-400">方法</th>
@@ -158,7 +158,7 @@
       </div>
 
       <div class="bg-gray-800 rounded-xl border border-gray-700 p-3">
-        <p class="text-xs text-gray-400">代价：<span class="text-red-400">中段信息丢失</span>——与"lost-in-the-middle"现象叠加，是长上下文实际利用率低的系统性根源之一。</p>
+        <p class="text-sm text-gray-400">代价：<span class="text-red-400">中段信息丢失</span>——与"lost-in-the-middle"现象叠加，是长上下文实际利用率低的系统性根源之一。</p>
       </div>
     </div>
 

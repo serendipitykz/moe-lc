@@ -1,17 +1,17 @@
-<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
+<div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
 <aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">稀疏注意力模式</h2>
-  <p class="text-xl text-gray-400 mb-6">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>
+  <p class="text-xl text-gray-400 mb-3">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
     <!-- Card 1: Longformer -->
     <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
       <h3 class="text-xl font-bold text-emerald-300">Longformer <cite class="text-gray-500 text-sm not-italic">[Beltagy et al., 2020]</cite></h3>
-      <p class="text-sm text-gray-400">局部窗口 + 全局 token</p>
+      <p class="text-base text-gray-400">局部窗口 + 全局 token</p>
 
-      <p class="text-sm text-gray-300 leading-relaxed">每个 token 仅注意 ±w/2 个相邻 token（局部）；特殊全局 token（如 <code>[CLS]</code>）双向注意所有位置。</p>
+      <p class="text-base text-gray-300 leading-relaxed">每个 token 仅注意 ±w/2 个相邻 token（局部）；特殊全局 token（如 <code>[CLS]</code>）双向注意所有位置。</p>
 
       <div class="text-center text-sm">
         \[O(L \cdot w) + O(L \cdot n_g)\]
@@ -72,9 +72,9 @@
     <!-- Card 2: BigBird -->
     <div class="flex-1 bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3 overflow-hidden">
       <h3 class="text-xl font-bold text-emerald-300">BigBird <cite class="text-gray-500 text-sm not-italic">[Zaheer et al., 2020]</cite></h3>
-      <p class="text-sm text-gray-400">局部窗口 + 全局 token + 随机注意力</p>
+      <p class="text-base text-gray-400">局部窗口 + 全局 token + 随机注意力</p>
 
-      <p class="text-sm text-gray-300 leading-relaxed">在 Longformer 基础上增加每行若干随机注意力点，覆盖长程依赖。理论证明：该组合在 O(L) 注意力下图灵完备。</p>
+      <p class="text-base text-gray-300 leading-relaxed">在 Longformer 基础上增加每行若干随机注意力点，覆盖长程依赖。理论证明：该组合在 O(L) 注意力下图灵完备。</p>
 
       <div class="text-center text-sm">
         \[O\!\left(L(w + n_g + r)\right) = O(L)\]
@@ -129,8 +129,8 @@
     <div class="flex-1 flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-5 flex flex-col gap-3">
         <h3 class="text-xl font-bold text-emerald-300">Sliding Window</h3>
-        <p class="text-sm text-gray-400">Mistral 7B [Jiang et al., 2023]</p>
-        <p class="text-sm text-gray-300 leading-relaxed">每 token 仅注意最近 w = 4096 个 token，无全局 token。结合 GQA（8 组）和 RoPE，实现 32K 上下文。</p>
+        <p class="text-base text-gray-400">Mistral 7B [Jiang et al., 2023]</p>
+        <p class="text-base text-gray-300 leading-relaxed">每 token 仅注意最近 w = 4096 个 token，无全局 token。结合 GQA（8 组）和 RoPE，实现 32K 上下文。</p>
         <div class="text-center text-sm">
           \[O(L \cdot w),\quad w = 4096\]
         </div>
@@ -168,12 +168,12 @@
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-yellow-800 p-4 flex flex-col gap-2">
-        <h3 class="text-base font-semibold text-yellow-300">稀疏 vs 精确注意力</h3>
-        <div class="text-xs text-gray-300 leading-relaxed space-y-1">
+        <h3 class="text-xl font-semibold text-yellow-300">稀疏 vs 精确注意力</h3>
+        <div class="text-sm text-gray-300 leading-relaxed space-y-1">
           <p><span class="text-red-400">稀疏注意力</span>：近似，牺牲长程依赖；工程复杂，需自定义 CUDA kernel。</p>
           <p><span class="text-emerald-400">FlashAttention</span>：<strong>精确</strong>，仅减少 IO；对模型行为无影响，已成现代标配。</p>
         </div>
-        <div class="mt-1 border-t border-gray-700 pt-2 text-xs text-gray-500">
+        <div class="mt-1 border-t border-gray-700 pt-2 text-sm text-gray-500">
           稀疏模式在 2022 年后逐渐被 FlashAttention 取代，但 Sliding Window 仍见于 Mistral/Gemma 等高效模型。
         </div>
       </div>
