@@ -3135,13 +3135,6 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
           <text x="195" y="165" text-anchor="middle" font-size="6.5" fill="#6b7280">retains global reasoning</text>
         </svg>
 
-        <!-- Demo link -->
-        <a href="demos/moba_routing.html" target="_blank"
-           onclick="this.href='demos/moba_routing.html?from='+encodeURIComponent(location.href)"
-           class="mt-1 flex items-center justify-center gap-2 text-sm font-medium text-violet-300 bg-gray-900 border border-violet-800 rounded-lg py-2 hover:bg-violet-900 hover:border-violet-500 transition-colors">
-          ▶ 动画演示 — Block Routing
-        </a>
-
         <!-- MoE analogy -->
         <div class="bg-violet-950 bg-opacity-30 border border-violet-800 rounded-xl p-3 mt-auto">
           <p class="text-sm text-violet-200 font-semibold mb-1">MoE 类比</p>
@@ -3164,6 +3157,11 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
     <span class="text-gray-600">→</span>
     <span class="text-emerald-400 font-semibold">2025 动态可学习稀疏（NSA · MoBA）</span>
   </div>
+  <a href="demos/moba_routing.html" target="_blank"
+     onclick="this.href='demos/moba_routing.html?from='+encodeURIComponent(location.href)"
+     class="absolute bottom-4 left-20 flex items-center gap-2 text-sm font-medium text-violet-300 bg-gray-900 border border-violet-800 rounded-lg px-4 py-1.5 hover:bg-violet-900 hover:border-violet-500 transition-colors">
+    ▶ 动画演示 — Block Routing
+  </a>
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
@@ -3389,12 +3387,6 @@ MLA 的解法是架构级低秩压缩。标准 MHA 要缓存每层每头的完�
           <p class="text-xs text-red-400 mt-0.5">代价：中段信息完全丢失（lost-in-the-middle 效应）</p>
         </div>
 
-        <a href="demos/kv_eviction.html" target="_blank"
-           onclick="this.href='demos/kv_eviction.html?from='+encodeURIComponent(location.href)"
-           class="flex items-center justify-center gap-2 text-sm font-medium text-amber-300 bg-gray-900 border border-amber-800 rounded-lg py-2 hover:bg-amber-900 hover:border-amber-500 transition-colors">
-          ▶ 动画演示 — KV Eviction
-        </a>
-
         <!-- Eviction policy comparison table -->
         <table class="w-full text-xs mt-auto">
           <thead>
@@ -3426,6 +3418,11 @@ MLA 的解法是架构级低秩压缩。标准 MHA 要缓存每层每头的完�
     </div>
 
   </div>
+  <a href="demos/kv_eviction.html" target="_blank"
+     onclick="this.href='demos/kv_eviction.html?from='+encodeURIComponent(location.href)"
+     class="absolute bottom-4 left-20 flex items-center gap-2 text-sm font-medium text-amber-300 bg-gray-900 border border-amber-800 rounded-lg px-4 py-1.5 hover:bg-amber-900 hover:border-amber-500 transition-colors">
+    ▶ 动画演示 — KV Eviction
+  </a>
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
@@ -3502,12 +3499,6 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
           <p class="text-sm font-semibold text-red-400 mb-1">局限：近似精度损失</p>
           <p class="text-sm text-gray-400">φ 函数无法重现 Softmax 的"尖峰"注意力——精确 NIAH 检索性能下降明显。需与 Softmax 层混合使用。</p>
         </div>
-
-        <a href="demos/linear_attention.html" target="_blank"
-           onclick="this.href='demos/linear_attention.html?from='+encodeURIComponent(location.href)"
-           class="flex items-center justify-center gap-2 text-sm font-medium text-cyan-300 bg-gray-900 border border-cyan-800 rounded-lg py-2 hover:bg-cyan-900 hover:border-cyan-500 transition-colors">
-          ▶ 动画演示 — Accumulator vs Matrix
-        </a>
       </div>
     </div>
 
@@ -3564,6 +3555,11 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
     </div>
 
   </div>
+  <a href="demos/linear_attention.html" target="_blank"
+     onclick="this.href='demos/linear_attention.html?from='+encodeURIComponent(location.href)"
+     class="absolute bottom-4 left-20 flex items-center gap-2 text-sm font-medium text-cyan-300 bg-gray-900 border border-cyan-800 rounded-lg px-4 py-1.5 hover:bg-cyan-900 hover:border-cyan-500 transition-colors">
+    ▶ 动画演示 — Accumulator vs Matrix
+  </a>
   <span class="absolute bottom-4 right-10 text-base text-gray-500 font-mono">22 / 33</span>
 </div>
 
@@ -3728,14 +3724,11 @@ SuffixDecoding 完全不需要 draft 模型，也不需要额外的 KV Cache—�
 
   </div>
 
-  <!-- Demo link spanning the bottom -->
-  <div class="absolute bottom-10 left-20 right-20 flex justify-center">
-    <a href="demos/speculative_decoding.html" target="_blank"
-       onclick="this.href='demos/speculative_decoding.html?from='+encodeURIComponent(location.href)"
-       class="flex items-center justify-center gap-2 text-sm font-medium text-indigo-300 bg-gray-900 border border-indigo-800 rounded-lg px-6 py-2 hover:bg-indigo-900 hover:border-indigo-500 transition-colors">
-      ▶ 动画演示 — Speculative Decoding Accept/Reject
-    </a>
-  </div>
+  <a href="demos/speculative_decoding.html" target="_blank"
+     onclick="this.href='demos/speculative_decoding.html?from='+encodeURIComponent(location.href)"
+     class="absolute bottom-4 left-20 flex items-center gap-2 text-sm font-medium text-indigo-300 bg-gray-900 border border-indigo-800 rounded-lg px-4 py-1.5 hover:bg-indigo-900 hover:border-indigo-500 transition-colors">
+    ▶ 动画演示 — Speculative Decoding Accept/Reject
+  </a>
   <span class="absolute bottom-4 right-10 text-base text-gray-500 font-mono">23 / 33</span>
 </div>
 

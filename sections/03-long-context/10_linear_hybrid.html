@@ -72,12 +72,6 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
           <p class="text-sm font-semibold text-red-400 mb-1">局限：近似精度损失</p>
           <p class="text-sm text-gray-400">φ 函数无法重现 Softmax 的"尖峰"注意力——精确 NIAH 检索性能下降明显。需与 Softmax 层混合使用。</p>
         </div>
-
-        <a href="demos/linear_attention.html" target="_blank"
-           onclick="this.href='demos/linear_attention.html?from='+encodeURIComponent(location.href)"
-           class="flex items-center justify-center gap-2 text-sm font-medium text-cyan-300 bg-gray-900 border border-cyan-800 rounded-lg py-2 hover:bg-cyan-900 hover:border-cyan-500 transition-colors">
-          ▶ 动画演示 — Accumulator vs Matrix
-        </a>
       </div>
     </div>
 
@@ -134,5 +128,10 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
     </div>
 
   </div>
+  <a href="demos/linear_attention.html" target="_blank"
+     onclick="this.href='demos/linear_attention.html?from='+encodeURIComponent(location.href)"
+     class="absolute bottom-4 left-20 flex items-center gap-2 text-sm font-medium text-cyan-300 bg-gray-900 border border-cyan-800 rounded-lg px-4 py-1.5 hover:bg-cyan-900 hover:border-cyan-500 transition-colors">
+    ▶ 动画演示 — Accumulator vs Matrix
+  </a>
   <span class="absolute bottom-4 right-10 text-base text-gray-500 font-mono">18 / 26</span>
 </div>
