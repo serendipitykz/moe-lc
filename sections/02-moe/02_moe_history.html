@@ -1,5 +1,17 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">强调 MoE 并非新概念（1991年就有），但直到 2021 年才被工业界真正驯服。2023 年开源化是让普通研究者能用上 MoE 的转折点。</aside>
+<aside class="notes">强调 MoE 并非新概念（1991年就有），但直到 2021 年才被工业界真正驯服。2023 年开源化是让普通研究者能用上 MoE 的转折点。
+----------
+MoE 的历史其实很长。
+
+1991 年，Jacobs、Jordan 和 Hinton 就在神经网络里提出了"混合专家"的概念，奠定了条件计算的理论基础。但那时候规模太小，影响有限。
+
+真正的突破点是 2017 年。Shazeer 等人在 Google Brain 把稀疏 MoE 引入到 LSTM 的规模化训练中，证明了这条路线在大规模场景下的可行性。
+
+2021 到 2022 年是工业化爆发期。Switch Transformer 用 k=1 的极简路由把规模推到了万亿参数；GLaM 以 96.6B 的激活参数在零样本能力上匹敌 GPT-3，而推理成本低得多。
+
+2023 到 2024 年，MoE 真正走入开发者社区。Mixtral 8×7B 开源发布，以 12.9B 激活参数超越了 LLaMA 2 70B，是开源社区的里程碑。DeepSeek-V2 则在此基础上引入了更细粒度的专家设计，把这条路线推向新高度。
+
+所以 MoE 不是一个新概念，它是经过三十年演化、现在终于在 Transformer 规模上找到了主场的技术。</aside>
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 的演进历史</h2>
 
   <!-- Timeline SVG -->

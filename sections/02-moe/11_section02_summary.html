@@ -1,5 +1,19 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">小结时回到核心公式。快速重申四个要点，为下一节长上下文做过渡："我们解决了宽度效率，接下来看序列长度问题"。</aside>
+<aside class="notes">小结时回到核心公式。快速重申四个要点，为下一节长上下文做过渡："我们解决了宽度效率，接下来看序列长度问题"。
+----------
+快速回顾一下 MoE 这一节的核心要点。
+
+第一，**稀疏激活**：k/N_exp 的激活比率是 MoE 的效率来源，参数量和计算量被解耦；
+
+第二，**路由机制**：Top-K + 噪声扰动 + 辅助损失，共同维持负载均衡；
+
+第三，**容量限制**：Token dropping 是 MoE 的重要工程细节，capacity_factor 需要仔细调整；
+
+第四，**专家专业化**：自发涌现的分工是 MoE 效果的重要来源，但需要防止过度坍缩。
+
+核心公式：y = Σ_{i ∈ T_k} g_i(x) · FFN_i(x)，这一行就是 MoE 的本质。
+
+接下来我们看两个深潜话题：专家并行和 DeepSeekMoE 的架构创新。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">MoE 核心要点回顾</h2>
 
   <!-- 2x2 grid of takeaway cards -->

@@ -1,5 +1,19 @@
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">强调 FlashAttention 是工程优化而非算法创新——精确度不变，仅减少 IO。SRAM vs HBM 的类比：SRAM 是口袋，HBM 是仓库，尽量别去仓库取货。</aside>
+<aside class="notes">强调 FlashAttention 是工程优化而非算法创新——精确度不变，仅减少 IO。SRAM vs HBM 的类比：SRAM 是口袋，HBM 是仓库，尽量别去仓库取货。
+----------
+FlashAttention [Dao et al., 2022] 是近几年 LLM 基础设施领域最重要的工程突破之一。
+
+一个很重要的观察：**注意力计算的瓶颈不是 FLOPs，而是内存 IO**。GPU 的 SRAM（片上缓存）带宽很高，但容量很小；HBM（显存）容量大，但带宽慢很多。标准 Attention 的实现需要把 L×L 的注意力矩阵写入 HBM，然后再读回来做 Softmax，这个来回的 IO 才是耗时的大头。
+
+FlashAttention 的解决方案是两步：
+
+**Tiling（分块计算）**：把 Q、K、V 分成小块，每块能放进 SRAM。在 SRAM 里完成一个块的注意力计算，直接累加到输出，不把中间的 L×L 矩阵写出去。用增量式的 Softmax 归一化（用 log-sum-exp 的技巧保证数值等价）。
+
+**Recomputation（重计算）**：反向传播时不存储完整的注意力矩阵，而是在需要时重新计算。牺牲一点算力，换来大量显存节省。
+
+效果：显存从 O(L²) 降至 O(L)，速度提升 2-4×（FA-1），FA-2 在此基础上再提升约 2×，FA-3 专为 Hopper 架构优化，还能再提升 50%。
+
+最重要的一点：**FlashAttention 是精确算法**，模型的数学行为和标准 Attention 完全一致，不是近似。这是它取代稀疏注意力成为标配的根本原因。</aside>
 
   <h2 class="text-5xl font-bold mb-6 text-emerald-300">FlashAttention：IO 感知的精确注意力</h2>
 

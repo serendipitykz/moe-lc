@@ -1,5 +1,13 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">用同等激活参数对比让 MoE 的"效率优势"一目了然。重点是 DeepSeek-V2：只用 21B 激活参数，却达到了远大于 Llama-3 70B（70B 激活）的能力区间。</aside>
+<aside class="notes">用同等激活参数对比让 MoE 的"效率优势"一目了然。重点是 DeepSeek-V2：只用 21B 激活参数，却达到了远大于 Llama-3 70B（70B 激活）的能力区间。
+----------
+这张表直接说明问题。
+
+等效激活参数下，MoE 的 MMLU 和 HumanEval 成绩和同等推理成本的稠密模型相当甚至更强，但它背后有多得多的总参数量作支撑。
+
+DeepSeek-V2 用 21B 激活参数，在 MMLU 上达到 78%，接近 Llama 3 70B 的 82%，但推理成本只是 70B 稠密模型的三分之一不到。
+
+这就是 MoE 的价值主张：**相似的推理成本，更强的知识容量，更好的质量**。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-purple-300">MoE vs 稠密：综合基准对比</h2>
   <p class="text-xl text-gray-400 mb-6">等效激活参数下，MoE 的能力与效率优势</p>

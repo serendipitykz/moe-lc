@@ -1,5 +1,17 @@
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">O(L²) 是本节最重要的公式。用"座位表"类比：N个人两两打招呼 = N² 次握手。FlashAttention 不减少握手次数，但让握手效率翻倍。</aside>
+<aside class="notes">O(L²) 是本节最重要的公式。用"座位表"类比：N个人两两打招呼 = N² 次握手。FlashAttention 不减少握手次数，但让握手效率翻倍。
+----------
+问题的根源非常明确：标准 Self-Attention 的**时间和空间复杂度都是 O(L²)**。L 从 4K 翻到 128K，L² 就翻了 1024 倍。这在显存上直接体现为不可承受的开销。
+
+这张表列出了各种应对方案：
+
+Full Attention 是基线，O(L²) 时间，O(L²) 空间；
+FlashAttention 通过 IO 感知的实现，时间还是 O(L²)，但空间降到 O(L)，而且精确——这是目前最重要的工程突破，我们接下来细讲；
+稀疏注意力通过限制每个 token 只看附近的 token，时间和空间都降到 O(L√L)，但是近似的；
+线性注意力通过内积分解，把复杂度降到 O(L)，但表达力有损失；
+Mamba 等状态空间模型是另一条路线，完全不做 Attention，作为参照，本讲不展开。
+
+当前主流选择是 FlashAttention——它在不改变模型行为的前提下极大提升了效率，几乎所有现代 LLM 都在使用。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">注意力机制的二次方瓶颈</h2>
 

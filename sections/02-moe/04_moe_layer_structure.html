@@ -1,5 +1,17 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">这张是架构细节。强调 MoE 层只是把 FFN 换成"专家组"，Attention 层保持不变。N_exp 和 k 的选择是核心超参。</aside>
+<aside class="notes">这张是架构细节。强调 MoE 层只是把 FFN 换成"专家组"，Attention 层保持不变。N_exp 和 k 的选择是核心超参。
+----------
+现在我们看一下 MoE 在 Transformer 里的具体位置。
+
+标准 Transformer 的结构大家都熟悉：Multi-Head Attention，然后是 Add & Norm，然后是 FFN，再 Add & Norm，堆叠。
+
+MoE 的做法就是：**把 FFN 那一层替换为 MoE Layer**。注意，只是 FFN 被替换，Attention 部分完全不变。
+
+MoE Layer 内部包含两件事：第一，一个门控网络，它是一个简单的线性层加 Softmax，输出每个专家的路由分数；第二，N 个并列的专家 FFN，每个专家的结构和标准 FFN 一样，都有两个矩阵和一个激活函数。
+
+参数量对比一下：稠密模型每层 FFN 是 2 × d_model × d_ff；MoE 每层是 N_exp × 2 × d_model × d_ff，参数量线性增长；但每个 token 的激活量还是 k × 2 × d_model × d_ff，k 远小于 N_exp。
+
+这就是 MoE 能在不增加推理成本的前提下扩大模型容量的核心机制。</aside>
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 层结构详解</h2>
 
   <!-- Central large SVG -->

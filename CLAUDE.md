@@ -56,7 +56,22 @@ dist/index.html    ← final output (regenerate with: python3 build.py)
             → Auditor (final consistency pass)
   ```
 
-## 6. Theory Background Reference
+## 7. Demo Page Back-Navigation
+
+All `▶ 动画演示` links in slides use `target="_blank"`. Each link **must** encode the caller's URL via `onclick`:
+
+```html
+<a href="demos/foo.html" target="_blank"
+   onclick="this.href='demos/foo.html?from='+encodeURIComponent(location.href)">
+  ▶ 动画演示
+</a>
+```
+
+Every demo page (`demos/*.html`) **must** implement a back button that:
+1. **Primary**: `window.opener.focus(); window.close();` — returns to the exact slide tab automatically.
+2. **Fallback**: reads `new URLSearchParams(location.search).get('from')` and navigates there if `window.opener` is unavailable.
+
+This mechanism is fully automatic — no slide number needs to be hardcoded in demo pages.
 
 ### 6.1 MoE: Expert Parallelism (EP)
 

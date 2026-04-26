@@ -1,5 +1,21 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">Attention Sink 是 2023 年一个意外发现——模型不是在真正"理解"前几个 token，而是把无处可放的注意力权重"倒"在那里。StreamingLLM 利用这一发现实现无限流式推理。KV 内存公式让听众直观感受 128K 上下文的代价。</aside>
+<aside class="notes">Attention Sink 是 2023 年一个意外发现——模型不是在真正"理解"前几个 token，而是把无处可放的注意力权重"倒"在那里。StreamingLLM 利用这一发现实现无限流式推理。KV 内存公式让听众直观感受 128K 上下文的代价。
+----------
+最后讲 KV Cache 管理，以及一个有趣的发现——Attention Sink。
+
+首先看数字：大语言模型的 KV Cache 有多占显存？看这张表：LLaMA-3 70B 在 128K 上下文下，KV Cache 需要约 40 GB；Mixtral 8×7B 需要约 16 GB；而 DeepSeek-V2 用了 MLA，只需约 6 GB。数量级的差距，来自 MLA 对 KV 向量的低秩压缩，后面我们会详细讲。
+
+**Attention Sink 现象** [Xiao et al., 2023] 是个意外发现：无论输入什么内容，前几个 token（位置 0 到 3）的注意力权重始终异常高。这些 token 本身没有特别的语义，可能只是换行符或空格，但模型把大量"多余"的注意力权重倾倒在那里。
+
+为什么？因为 Softmax 无法输出 0，如果模型不确定该关注哪里，就把多余的权重"倒"在这几个初始 token 上作为"泄压阀"。这就是所谓的 attention sink。
+
+**StreamingLLM** [Xiao et al., 2023] 利用这个发现设计了一个极简的无限流式推理方案：只保留 Sink 窗口（前 4 个 token 的 KV）+ 最近窗口（最后 K_r 个 token 的 KV），中间的全部丢弃。这样 KV Cache 的大小是 O(1)，可以支持无限长序列的流式推理，而且无需重新训练。
+
+代价是明显的：中段信息完全丢失，和 "Lost in the Middle" 效应叠加，是长上下文实际利用率低的系统性根源之一。
+
+---
+
+## 第四部分：协同、挑战与展望（约 20 分钟）</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">KV Cache 管理与 Attention Sink</h2>
   <p class="text-xl text-gray-400 mb-3">内存瓶颈、注意力汇聚现象与流式推理策略</p>

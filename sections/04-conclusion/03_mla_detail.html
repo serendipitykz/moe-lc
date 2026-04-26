@@ -1,6 +1,19 @@
 <!-- Slide 21: MLA 架构详解 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">这是偏深入的细节幻灯片，可根据时间决定深度。核心信息：c_KV 的维度远小于 KV 本身，但效果等价。</aside>
+<aside class="notes">这是偏深入的细节幻灯片，可根据时间决定深度。核心信息：c_KV 的维度远小于 KV 本身，但效果等价。
+----------
+我们快速深入 MLA 的实现细节。
+
+核心步骤：
+1. 给定 token 的隐状态 h_t，先用一个下投影矩阵 W^{DKV} 把它压缩成低维潜在向量 c_KV，维度 d_c；
+2. 推理时只缓存 c_KV，维度 512 vs. 原来的 H × d_head = 128 × 128 = 16384，压缩比约 32×；
+3. 需要时，用上投影矩阵 W^{UKV} 把 c_KV 还原为完整的 K/V。
+
+Q 端也有类似的低秩压缩，同时引入 Decoupled RoPE 来处理位置编码，避免位置信息和内容信息在压缩过程中混叠。
+
+实测效果：标准 MHA 每 token 每层约 2.25 MB，MLA 约 0.18 MB，减少约 12 倍。这使得 DeepSeek-V2 在 128K 上下文下的 KV Cache 仅约 6 GB，而同样配置的 LLaMA 70B 需要约 40 GB。
+
+MLA 是一个很优雅的想法——在不改变注意力数学的前提下，通过低秩结构大幅压缩存储，非常适合长上下文场景。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-purple-300">MLA 架构详解</h2>
   <p class="text-xl text-gray-400 mb-6">上一张幻灯片介绍了 MLA（Multi-head Latent Attention）的作用；本页深入其低秩 KV 压缩的具体实现。</p>

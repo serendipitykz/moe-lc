@@ -1,5 +1,13 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">RLHF/SFT 对 MoE 模型的挑战经常被忽略。MoE 在预训练阶段优势明显，但微调时"专家遗忘"和"路由漂移"是已知痛点。提醒听众：部署一个 MoE 不只是训一个 Base 模型。</aside>
+<aside class="notes">RLHF/SFT 对 MoE 模型的挑战经常被忽略。MoE 在预训练阶段优势明显，但微调时"专家遗忘"和"路由漂移"是已知痛点。提醒听众：部署一个 MoE 不只是训一个 Base 模型。
+----------
+MoE 模型做 SFT 和 RLHF 有几个额外挑战值得注意。
+
+**路由漂移**：微调数据分布和预训练差异很大，路由器可能重新学习激活模式，破坏预训练中形成的专家专业化，导致部分专家灾难性遗忘。
+
+**微调数据稀疏**：SFT 数据通常只有几百万到几千万条，对于 N_exp=160 个专家来说，每个专家能见到的训练信号极其有限，容易欠拟合。
+
+应对策略：微调时冻结路由器权重，只更新专家 FFN；用 Expert-wise LoRA，每个专家独立的低秩适配；学习率比稠密模型低 2-5 倍；或者用 Expert Averaging 先把 MoE 合并成稠密模型再做 SFT，部署更简单。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-purple-300">对齐微调：MoE 的特殊挑战</h2>
   <p class="text-xl text-gray-400 mb-6">SFT / RLHF 阶段与稠密模型的关键差异</p>

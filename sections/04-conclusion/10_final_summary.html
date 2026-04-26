@@ -1,6 +1,25 @@
 <!-- Slide 26: 全文总结 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">总结时回到三个关键 insight。最后的 call to action 停留 5-10 秒，让听众思考"协同设计"的意义后再进入问答。</aside>
+<aside class="notes">总结时回到三个关键 insight。最后的 call to action 停留 5-10 秒，让听众思考"协同设计"的意义后再进入问答。
+----------
+好，最后做个收尾。
+
+今天我们覆盖了三个层次。
+
+**效率 ≠ 牺牲能力**：k/N_exp 的稀疏激活，使得 MoE 在远低于稠密模型推理成本的前提下，能够承载更大的参数总量，达到相近甚至更好的能力。稀疏性是可扩展性的关键。
+
+**IO 是真正的瓶颈**：FlashAttention 证明了一件事——计算量（FLOPs）有时不是问题，内存访问模式才是。优化硬件-算法的接口，往往比减少计算量本身更有效。
+
+**协同优于叠加**：MoE 和长上下文不是两件独立的事拼在一起；DeepSeek-V2 的 MLA 就是联合优化的典范——它同时解决了 Attention 的 KV Cache 瓶颈和 MoE 的参数效率问题，效果远超各自为政。
+
+MoE 与长上下文的协同设计，将是下一代高效大语言模型的核心范式。
+
+谢谢大家。我们来留几分钟的时间做问答。
+
+
+---
+
+## 附录幻灯片（如有问答则展示）</aside>
 
   <h2 class="text-5xl font-bold mb-10 text-purple-300">总结</h2>
 

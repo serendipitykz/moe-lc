@@ -1,5 +1,15 @@
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">三种方案对比，不需要精讲每个公式。重点是"RoPE 现在最流行，YaRN 是快速扩展的实用方案"。</aside>
+<aside class="notes">三种方案对比，不需要精讲每个公式。重点是"RoPE 现在最流行，YaRN 是快速扩展的实用方案"。
+----------
+在讲 FlashAttention 之前，我们先处理长上下文的第一个基础问题：**位置编码在超出训练长度时怎么办？**
+
+三种主流方案：
+
+**RoPE**（旋转位置编码）是目前最广泛使用的方案，LLaMA、Mixtral、DeepSeek 都用它。核心思想是把位置 m 编码为一个旋转矩阵 R_m，对 Q/K 向量做旋转，使得 q_m 和 k_n 的点积只依赖相对距离 m-n，天然捕获相对位置信息。但 RoPE 的问题是外推性差——超出训练长度时，旋转角会进入"从未见过"的值域，模型表现急剧下降。
+
+**ALiBi**（注意力线性偏置）的思路更简单：不用位置向量，直接在 attention logit 上加一个线性惩罚：score_ij = q_i k_j^T - m · |i - j|，距离越远惩罚越大。这个方案外推性很好，因为逻辑很简单——就算距离没见过，线性惩罚也会给一个合理的值。但它需要从头训练，不能直接用在已有的 RoPE 模型上。
+
+**YaRN** 是目前扩展 RoPE 最常用的方案。它的核心洞察是：RoPE 的不同维度对应不同的旋转频率，高频维度感知局部相对位置，低频维度感知长程依赖。YaRN 用一个 ramp 函数对不同维度区别处理：高频维度做插值（压缩到训练过的范围），低频维度外推（不缩放）。Scale factor 约为 8，可以将 4K 训练的模型扩展到 128K，**仅需约 400 步的长文档微调**，成本极低。这也是 tech_spec.json 里记录的参数。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">位置编码与长度外推</h2>
 
@@ -9,55 +19,7 @@
 
   <div class="grid grid-cols-3 gap-6 flex-1 min-h-0">
 
-    <!-- Card 1: RoPE -->
-    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-3 overflow-hidden">
-      <h3 class="text-2xl text-emerald-300 font-bold">RoPE<cite class="text-gray-500 text-base not-italic ml-1">[Su et al., 2024]</cite></h3>
-      <p class="text-base text-gray-400">旋转位置编码</p>
-
-      <p class="text-lg text-gray-200 leading-relaxed">
-        将 token 位置编码为向量旋转角度：
-      </p>
-      <div class="text-center text-base">
-        \[\theta_i = 10000^{-2i/d}\]
-      </div>
-      <p class="text-lg text-gray-200 leading-relaxed">
-        点积天然体现相对位置：\(\langle R_m q,\, R_n k \rangle\) 仅依赖 \(m - n\)
-      </p>
-      <p class="text-lg text-gray-300">
-        默认外推性差；Position Interpolation (PI) 通过缩放 \(\theta\) 扩展范围。
-      </p>
-      <p class="text-base text-gray-400">Used in: LLaMA, Mixtral, DeepSeek</p>
-
-      <!-- SVG: two vectors on unit circle -->
-      <svg viewBox="0 0 160 120" width="100%" height="200" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
-        <circle cx="80" cy="65" r="44" stroke="#374151" stroke-width="1" fill="none"/>
-        <line x1="80" y1="65" x2="80" y2="21" stroke="#4b5563" stroke-width="1" stroke-dasharray="3 2"/>
-        <!-- Vector q (position m) -->
-        <line x1="80" y1="65" x2="116" y2="40" stroke="#6ee7b7" stroke-width="2" marker-end="url(#arr-rope-03)"/>
-        <text x="120" y="38" font-size="14" fill="#6ee7b7">q</text>
-        <!-- Vector k (position n) -->
-        <line x1="80" y1="65" x2="52" y2="30" stroke="#a5f3fc" stroke-width="2" marker-end="url(#arr-rope-k-03)"/>
-        <text x="38" y="28" font-size="14" fill="#a5f3fc">k</text>
-        <!-- Arc showing rotation angle m-n -->
-        <path d="M 97 44 A 20 20 0 0 0 68 32" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4 2"/>
-        <text x="72" y="20" font-size="13" fill="#fbbf24">m-n</text>
-        <defs>
-          <marker id="arr-rope-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-            <polygon points="0 0, 7 2.5, 0 5" fill="#6ee7b7"/>
-          </marker>
-          <marker id="arr-rope-k-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-            <polygon points="0 0, 7 2.5, 0 5" fill="#a5f3fc"/>
-          </marker>
-        </defs>
-        <text x="80" y="110" text-anchor="middle" font-size="13" fill="#6b7280">单位圆上的旋转</text>
-      </svg>
-      <a href="demos/rope.html" target="_blank"
-         class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-emerald-300 bg-gray-900 border border-emerald-800 rounded-lg py-2 hover:bg-emerald-900 hover:border-emerald-600 transition-colors">
-        ▶ 动画演示
-      </a>
-    </div>
-
-    <!-- Card 2: ALiBi -->
+    <!-- Card 1: ALiBi -->
     <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-3 overflow-hidden">
       <h3 class="text-2xl text-emerald-300 font-bold">ALiBi<cite class="text-gray-500 text-base not-italic ml-1">[Press et al., 2022]</cite></h3>
       <p class="text-base text-gray-400">Attention with Linear Biases</p>
@@ -112,7 +74,57 @@
         <text x="136" y="69" font-size="13" fill="#fbbf24">最高分</text>
       </svg>
       <a href="demos/alibi.html" target="_blank"
+         onclick="this.href='demos/alibi.html?from='+encodeURIComponent(location.href)"
          class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-indigo-300 bg-gray-900 border border-indigo-800 rounded-lg py-2 hover:bg-indigo-900 hover:border-indigo-600 transition-colors">
+        ▶ 动画演示
+      </a>
+    </div>
+
+    <!-- Card 2: RoPE -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-3 overflow-hidden">
+      <h3 class="text-2xl text-emerald-300 font-bold">RoPE<cite class="text-gray-500 text-base not-italic ml-1">[Su et al., 2024]</cite></h3>
+      <p class="text-base text-gray-400">旋转位置编码</p>
+
+      <p class="text-lg text-gray-200 leading-relaxed">
+        将 token 位置编码为向量旋转角度：
+      </p>
+      <div class="text-center text-base">
+        \[\theta_i = 10000^{-2i/d}\]
+      </div>
+      <p class="text-lg text-gray-200 leading-relaxed">
+        点积天然体现相对位置：\(\langle R_m q,\, R_n k \rangle\) 仅依赖 \(m - n\)
+      </p>
+      <p class="text-lg text-gray-300">
+        默认外推性差；Position Interpolation (PI) 通过缩放 \(\theta\) 扩展范围。
+      </p>
+      <p class="text-base text-gray-400">Used in: LLaMA, Mixtral, DeepSeek</p>
+
+      <!-- SVG: two vectors on unit circle -->
+      <svg viewBox="0 0 160 120" width="100%" height="200" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+        <circle cx="80" cy="65" r="44" stroke="#374151" stroke-width="1" fill="none"/>
+        <line x1="80" y1="65" x2="80" y2="21" stroke="#4b5563" stroke-width="1" stroke-dasharray="3 2"/>
+        <!-- Vector q (position m) -->
+        <line x1="80" y1="65" x2="116" y2="40" stroke="#6ee7b7" stroke-width="2" marker-end="url(#arr-rope-03)"/>
+        <text x="120" y="38" font-size="14" fill="#6ee7b7">q</text>
+        <!-- Vector k (position n) -->
+        <line x1="80" y1="65" x2="52" y2="30" stroke="#a5f3fc" stroke-width="2" marker-end="url(#arr-rope-k-03)"/>
+        <text x="38" y="28" font-size="14" fill="#a5f3fc">k</text>
+        <!-- Arc showing rotation angle m-n -->
+        <path d="M 97 44 A 20 20 0 0 0 68 32" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4 2"/>
+        <text x="72" y="20" font-size="13" fill="#fbbf24">m-n</text>
+        <defs>
+          <marker id="arr-rope-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#6ee7b7"/>
+          </marker>
+          <marker id="arr-rope-k-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#a5f3fc"/>
+          </marker>
+        </defs>
+        <text x="80" y="110" text-anchor="middle" font-size="13" fill="#6b7280">单位圆上的旋转</text>
+      </svg>
+      <a href="demos/rope.html" target="_blank"
+         onclick="this.href='demos/rope.html?from='+encodeURIComponent(location.href)"
+         class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-emerald-300 bg-gray-900 border border-emerald-800 rounded-lg py-2 hover:bg-emerald-900 hover:border-emerald-600 transition-colors">
         ▶ 动画演示
       </a>
     </div>
@@ -162,6 +174,7 @@
         <line x1="82" y1="66" x2="148" y2="66" stroke="#10b981" stroke-width="2"/>
       </svg>
       <a href="demos/yarn.html" target="_blank"
+         onclick="this.href='demos/yarn.html?from='+encodeURIComponent(location.href)"
          class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-emerald-300 bg-gray-900 border border-emerald-800 rounded-lg py-2 hover:bg-emerald-900 hover:border-emerald-600 transition-colors">
         ▶ 动画演示
       </a>

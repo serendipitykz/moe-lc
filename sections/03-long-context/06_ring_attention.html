@@ -1,5 +1,15 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">Ring Attention 是长上下文的"分布式解法"。类比：一个大圆桌上 P 个人互相传菜单（K/V），每个人同时对自己面前的菜单做计算。通信和计算完全重叠，所以没有延迟代价。</aside>
+<aside class="notes">Ring Attention 是长上下文的"分布式解法"。类比：一个大圆桌上 P 个人互相传菜单（K/V），每个人同时对自己面前的菜单做计算。通信和计算完全重叠，所以没有延迟代价。
+----------
+如果序列长到连 FlashAttention + GQA 都撑不住怎么办？答案是 **Ring Attention** [Liu et al., 2023]。
+
+思路很简单：把序列切分给多张 GPU。每张 GPU 持有 L/P 的 token（Q、K、V 都切分），然后按"环形"顺序依次把 K/V 块传递给邻居，每步在本地做 FlashAttention 并把结果累积进来。经过 P 步之后，每张 GPU 都积累到了完整的注意力输出，等价于全局注意力。
+
+关键优势：通信（发送 K/V 块到下一张 GPU）和计算（对本地 K/V 块做 FlashAttention）可以**完全重叠**。通信几乎被"藏"在计算里，接近线性扩展。
+
+显存复杂度从 O(L) 降到 O(L/P)，计算从 O(L²) 降到 O(L²/P)。这使得 1M token 的序列在足够多 GPU 上成为可能。
+
+Ring Attention 和 Expert Parallelism 结合时，工程复杂度极高——两种通信模式需要精心调度，这是当前超长上下文 MoE 训练的核心挑战之一。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">Ring Attention 与序列并行</h2>
   <p class="text-xl text-gray-400 mb-6">将超长序列分布到多个 GPU，打破单卡显存上限</p>

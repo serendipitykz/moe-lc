@@ -1,5 +1,15 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">Token dropping 是 MoE 训练中被低估的实际问题。用"餐厅桌位有限，超出容量的顾客被跳过"来类比。</aside>
+<aside class="notes">Token dropping 是 MoE 训练中被低估的实际问题。用"餐厅桌位有限，超出容量的顾客被跳过"来类比。
+----------
+我们再看一个工程细节：**专家容量（Expert Capacity）**。
+
+在分布式训练中，每个设备上每次处理的 token 数有上限，这个上限叫容量 C。公式是 C = ⌈ B / N_exp ⌉ × capacity_factor，其中 B 是批次的 token 总数，capacity_factor 是安全系数，训练时通常设 1.0 到 1.25，推理时设 2.0。
+
+如果某个专家在一个 batch 里分到的 token 超过了容量 C，多出来的 token 就会被**直接跳过**，不经过任何专家处理，直接传到下一层。这叫 token dropping 或 pass-through。
+
+这是个设计取舍：capacity_factor 小，节省显存和通信带宽，但会丢失信息；capacity_factor 大，更安全，但产生更多 padding 开销。
+
+后来提出的 Expert Choice 路由反转了这个逻辑：让专家主动选择它想处理的 token，而不是 token 被动等待分配，可以更好地利用容量。但这会破坏 token 之间的因果关系，在 decoder-only 模型中需要额外处理。</aside>
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">专家容量与 Token 丢弃</h2>
 
   <!-- Top formula card -->

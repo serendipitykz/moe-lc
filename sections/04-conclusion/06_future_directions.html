@@ -1,6 +1,16 @@
 <!-- Slide 24: 未来研究方向 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">Mixture of Depths 是最有潜力的方向之一，简短介绍即可。重点是让听众感受到这个领域还在快速发展。</aside>
+<aside class="notes">Mixture of Depths 是最有潜力的方向之一，简短介绍即可。重点是让听众感受到这个领域还在快速发展。
+----------
+最后看几个令人兴奋的未来方向。
+
+**Mixture of Depths**（MoD）[Raposo et al., 2024]：MoE 在"宽度"方向稀疏化（选哪些专家），MoD 在"深度"方向稀疏化（选哪些层）。某些 token 可以跳过不需要的层，每个 token 自适应选择自己需要的计算深度。在固定 FLOPs 预算下，MoD 超越了等 FLOPs 的基线，说明深度稀疏化和宽度稀疏化是互补的。
+
+**Soft MoE** [Puigcerver et al., 2023]：传统 TopK 路由不可微，梯度估计有噪声。Soft MoE 让每个"计算槽"由所有 token 的加权混合形成，完全可微，梯度流动顺畅，训练稳定性显著提升。代价是 token 边界模糊，不适合需要 token 级别追踪的任务。
+
+**多模态 MoE**：视觉、语言、代码各自有专门的领域知识，MoE 的专家分工和模态分工天然对齐。图像 patch 和文本 token 路由到不同专家，可以实现模态间的自然隔离。MoE 可能是统一多模态模型的最自然的架构选择。
+
+**硬件协同设计**：当前 all-to-all 通信是 EP 的核心瓶颈。下一代 NVLink 和 CXL 高带宽互联会让更大的专家数成为可能。专为 MoE 设计的 HBM 层次化管理——专家参数有自己的 cache 层次——以及芯片内集成路由逻辑，可能从根本上改变 MoE 的效率格局。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">未来方向展望</h2>
 

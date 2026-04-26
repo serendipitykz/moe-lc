@@ -1,5 +1,19 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">表格可以快速扫一遍。重点对比 Switch（极简 k=1）和 DeepSeek-V2（细粒度 160 专家）两个设计哲学的差异。</aside>
+<aside class="notes">表格可以快速扫一遍。重点对比 Switch（极简 k=1）和 DeepSeek-V2（细粒度 160 专家）两个设计哲学的差异。
+----------
+我们来横向对比一下主流 MoE 模型的参数配置。
+
+Switch Transformer 是 2022 年 Google 的工作，用 k=1 的极简路由，128 个专家，总参数 7.4B，但每 token 激活只有约 0.4B。它证明了"一个 token 只路由到一个专家"这种极端稀疏的方案是可行的。
+
+GLaM 走了另一个极端，总参数高达 1.2T，64 个专家，激活参数 96.6B。它证明了 MoE 可以扩展到万亿参数级别。
+
+Mixtral 8×7B 是目前最广泛使用的开源 MoE 模型，8 个专家选 2，总参数 46.7B，激活 12.9B，支持 32K 上下文。
+
+DeepSeek-V2 是目前设计最精细的 MoE 之一，160 个专家选 6，总参数 236B，激活 21B，支持 128K 上下文。激活比率只有 8.9%，是效率的极限探索。
+
+Qwen1.5-MoE-A2.7B 走了轻量化路线，60 个专家选 4，总参数 14.3B，激活只有 2.7B，适合资源受限场景。
+
+从这张表可以看出一个趋势：专家数越来越多，激活比例越来越低，模型在不断挖掘稀疏激活的极限。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">代表性 MoE 模型</h2>
   <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-6">代表性 MoE 模型一览</p>
 

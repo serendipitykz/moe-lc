@@ -1,5 +1,15 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">这是最直观的对比。用"超市只走你要去的货架"来类比稀疏激活。重点强调：总知识不减，推理成本降低。</aside>
+<aside class="notes">这是最直观的对比。用"超市只走你要去的货架"来类比稀疏激活。重点强调：总知识不减，推理成本降低。
+----------
+我们来直观对比一下。
+
+左边是稠密模型：每个 token 进来，全部 N 个 FFN 的参数都会被激活，乘完矩阵再加权输出。
+
+右边是 MoE：token 先经过一个门控网络（Router），门控给每个专家打分，然后只选得分最高的 k 个专家处理这个 token。其余的专家，在这个 token 的前向传播里完全不参与。
+
+公式是这样的：激活 FLOPs 约等于 k/N × 稠密模型的 FLOPs。Mixtral 8×7B 的激活参数是 12.9B，总参数是 46.7B，比例约是 2/8，大约 28%。
+
+注意这里有个重要的直觉：**总参数量 ≠ 推理成本**。MoE 把这两个数彻底解耦了。一个 47B 参数的 MoE 模型，推理成本可以和一个 13B 的稠密模型相当。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">稀疏激活 vs 稠密模型</h2>
 
   <!-- Two-column SVG comparison -->

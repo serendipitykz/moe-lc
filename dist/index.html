@@ -83,7 +83,11 @@
   <!-- Slide container: .deck is required by html-ppt runtime.js -->
   <div id="slide-container" class="deck">
 <div class="slide flex flex-col items-center justify-center h-screen bg-gray-900 text-white p-16">
-<aside class="notes">开场介绍讲座题目，简要说明为什么 MoE 和长上下文是当前最热门的两个效率方向。点明两者协同是本次讲座的核心主题。</aside>
+<aside class="notes">开场介绍讲座题目，简要说明为什么 MoE 和长上下文是当前最热门的两个效率方向。点明两者协同是本次讲座的核心主题。
+----------
+大家好。今天我给大家带来的报告题目是《混合专家与长上下文——效率扩展至百万 Token》。
+
+过去两三年，大语言模型的规模膨胀速度非常惊人。但我们很快发现，单纯堆参数的路线越来越难以持续——成本指数级增长，推理延迟居高不下，单卡显存早已不够用。今天这两个小时，我们就来聊聊工业界和学术界正在用哪两条技术路线来回答这个挑战：**混合专家（MoE）** 和 **长上下文**。</aside>
   <!-- Decorative top accent bar -->
   <div class="w-24 h-1 bg-indigo-500 mb-10 rounded-full"></div>
 
@@ -108,7 +112,15 @@
 </div>
 
 <div class="slide flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">用 Mixtral 的例子直观说明"只用 2/8 专家就能跑"的神奇之处。右侧长上下文用"把整本书放进模型"来类比。</aside>
+<aside class="notes">用 Mixtral 的例子直观说明"只用 2/8 专家就能跑"的神奇之处。右侧长上下文用"把整本书放进模型"来类比。
+----------
+先看动机。
+
+MoE 的核心思路很简单：**每个 token 只激活一部分参数**。具体来说，如果你有 N 个专家，每次只选 k 个，那么每个 token 的激活 FLOPs 就只有稠密模型的 k/N。举个例子，Mixtral 8×7B 有 8 个专家，每次只选 2 个，推理成本大约等于一个 13B 的稠密模型，但它拥有 47B 参数量所积累的知识容量。参数量和计算量被"解耦"了，这是 MoE 的魔法所在。
+
+长上下文的动机同样直接：很多真实世界的任务根本无法在 4K 或 8K 的窗口里完成——一份法律合同、一个代码仓库、一篇长达几十页的学术论文，都需要模型"一口气"看完。我们希望把序列长度 L 推进到 128K 甚至 1M token。但标准注意力机制的显存复杂度是 O(L²)，这是一道必须攻克的墙。
+
+这两件事并不独立——MoE 降低了每 token 的计算开销，长上下文扩大了模型可以处理的信息范围。两者结合，才是下一代高效大模型的完整答案。</aside>
 
   <!-- Heading -->
   <h2 class="text-5xl font-bold mb-10 text-indigo-300">为什么需要 MoE + 长上下文？</h2>
@@ -161,7 +173,15 @@
 </div>
 
 <div class="slide flex flex-col justify-center h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">快速预览六个部分，让听众建立整体框架。强调"前两部分是基础，第五部分是本讲创新点"。</aside>
+<aside class="notes">快速预览六个部分，让听众建立整体框架。强调"前两部分是基础，第五部分是本讲创新点"。
+----------
+今天的结构是这样的：我们从 MoE 的背景和演进讲起，然后深入架构细节和路由机制，大约用 34 分钟。接下来 16 分钟讲长上下文技术——位置编码外推、FlashAttention、KV Cache 管理。最后 20 分钟讲两者的协同效应、DeepSeek-V2 的案例分析、开放问题和未来方向。中间穿插了两个专题深潜：专家并行和 DeepSeekMoE 的细粒度设计。
+
+好，让我们正式开始。
+
+---
+
+## 第二部分：混合专家模型（约 34 分钟）</aside>
 
   <!-- Heading -->
   <h2 class="text-5xl font-bold mb-12 text-indigo-300">内容结构</h2>
@@ -244,7 +264,15 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">用 GPT-3 的训练费用震撼开场，引出"参数越多越贵"的问题。FFN 占 2/3 计算是关键事实，为 MoE 的动机铺垫。</aside>
+<aside class="notes">用 GPT-3 的训练费用震撼开场，引出"参数越多越贵"的问题。FFN 占 2/3 计算是关键事实，为 MoE 的动机铺垫。
+----------
+先看稠密模型的问题。GPT-3 有 175 亿参数，仅仅是 FP16 推理就需要约 350GB 显存，训练费用约 460 万美元。这还是 2020 年的数字，如今的模型更大。
+
+问题出在哪里？看右边这张图：每层的计算量，FFN 占了将近 2/3，Self-Attention 只占 1/3。更重要的是，不管输入的是什么 token，**全部 FFN 参数都会被激活**。一个 token 激活的参数和一万个 token 完全相同。大量的计算是"浪费"在这个 token 根本不需要的知识路径上的。
+
+朴素的扩展路线是：参数翻倍，算力翻倍，成本翻倍。这显然不可持续。
+
+于是很自然的问题就出现了：**能不能让不同 token 只激活一部分参数？** 这就是 MoE 的出发点。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">规模化的代价</h2>
 
   <div class="flex gap-10 flex-1">
@@ -318,7 +346,19 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">强调 MoE 并非新概念（1991年就有），但直到 2021 年才被工业界真正驯服。2023 年开源化是让普通研究者能用上 MoE 的转折点。</aside>
+<aside class="notes">强调 MoE 并非新概念（1991年就有），但直到 2021 年才被工业界真正驯服。2023 年开源化是让普通研究者能用上 MoE 的转折点。
+----------
+MoE 的历史其实很长。
+
+1991 年，Jacobs、Jordan 和 Hinton 就在神经网络里提出了"混合专家"的概念，奠定了条件计算的理论基础。但那时候规模太小，影响有限。
+
+真正的突破点是 2017 年。Shazeer 等人在 Google Brain 把稀疏 MoE 引入到 LSTM 的规模化训练中，证明了这条路线在大规模场景下的可行性。
+
+2021 到 2022 年是工业化爆发期。Switch Transformer 用 k=1 的极简路由把规模推到了万亿参数；GLaM 以 96.6B 的激活参数在零样本能力上匹敌 GPT-3，而推理成本低得多。
+
+2023 到 2024 年，MoE 真正走入开发者社区。Mixtral 8×7B 开源发布，以 12.9B 激活参数超越了 LLaMA 2 70B，是开源社区的里程碑。DeepSeek-V2 则在此基础上引入了更细粒度的专家设计，把这条路线推向新高度。
+
+所以 MoE 不是一个新概念，它是经过三十年演化、现在终于在 Transformer 规模上找到了主场的技术。</aside>
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 的演进历史</h2>
 
   <!-- Timeline SVG -->
@@ -401,7 +441,17 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">这是最直观的对比。用"超市只走你要去的货架"来类比稀疏激活。重点强调：总知识不减，推理成本降低。</aside>
+<aside class="notes">这是最直观的对比。用"超市只走你要去的货架"来类比稀疏激活。重点强调：总知识不减，推理成本降低。
+----------
+我们来直观对比一下。
+
+左边是稠密模型：每个 token 进来，全部 N 个 FFN 的参数都会被激活，乘完矩阵再加权输出。
+
+右边是 MoE：token 先经过一个门控网络（Router），门控给每个专家打分，然后只选得分最高的 k 个专家处理这个 token。其余的专家，在这个 token 的前向传播里完全不参与。
+
+公式是这样的：激活 FLOPs 约等于 k/N × 稠密模型的 FLOPs。Mixtral 8×7B 的激活参数是 12.9B，总参数是 46.7B，比例约是 2/8，大约 28%。
+
+注意这里有个重要的直觉：**总参数量 ≠ 推理成本**。MoE 把这两个数彻底解耦了。一个 47B 参数的 MoE 模型，推理成本可以和一个 13B 的稠密模型相当。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">稀疏激活 vs 稠密模型</h2>
 
   <!-- Two-column SVG comparison -->
@@ -544,7 +594,19 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">这张是架构细节。强调 MoE 层只是把 FFN 换成"专家组"，Attention 层保持不变。N_exp 和 k 的选择是核心超参。</aside>
+<aside class="notes">这张是架构细节。强调 MoE 层只是把 FFN 换成"专家组"，Attention 层保持不变。N_exp 和 k 的选择是核心超参。
+----------
+现在我们看一下 MoE 在 Transformer 里的具体位置。
+
+标准 Transformer 的结构大家都熟悉：Multi-Head Attention，然后是 Add & Norm，然后是 FFN，再 Add & Norm，堆叠。
+
+MoE 的做法就是：**把 FFN 那一层替换为 MoE Layer**。注意，只是 FFN 被替换，Attention 部分完全不变。
+
+MoE Layer 内部包含两件事：第一，一个门控网络，它是一个简单的线性层加 Softmax，输出每个专家的路由分数；第二，N 个并列的专家 FFN，每个专家的结构和标准 FFN 一样，都有两个矩阵和一个激活函数。
+
+参数量对比一下：稠密模型每层 FFN 是 2 × d_model × d_ff；MoE 每层是 N_exp × 2 × d_model × d_ff，参数量线性增长；但每个 token 的激活量还是 k × 2 × d_model × d_ff，k 远小于 N_exp。
+
+这就是 MoE 能在不增加推理成本的前提下扩大模型容量的核心机制。</aside>
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 层结构详解</h2>
 
   <!-- Central large SVG -->
@@ -707,7 +769,15 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">核心机制。用"考试选题"类比：每道题（token）从题库（专家）中选最相关的 k 道来解答。强调门控网络 W_g 本身很小。</aside>
+<aside class="notes">核心机制。用"考试选题"类比：每道题（token）从题库（专家）中选最相关的 k 道来解答。强调门控网络 W_g 本身很小。
+----------
+路由机制的细节来了。
+
+门控函数 g(x) = TopK(Softmax(W_g · x), k)。W_g 是一个 d_model × N_exp 的矩阵，把输入 token x 映射到一个 N_exp 维的分数向量，过 Softmax 归一化后，取分数最高的 k 个专家。
+
+整层的输出是：y = Σ_{i ∈ T_k} g_i(x) · FFN_i(x)，其中 T_k 是被选中的 k 个专家的下标集合。每个专家输出乘以对应的门控权重，再求和。
+
+这里有一个重要的工程细节需要注意：**非激活专家在反向传播中也不更新梯度**。这意味着，如果某个专家一直得不到路由，它的权重就永远得不到更新，变成"僵尸专家"。这是 MoE 训练需要特别处理的问题，我们接下来马上讲。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">Top-K 路由机制</h2>
 
   <!-- 40/60 split -->
@@ -844,7 +914,17 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">解释为什么纯 TopK 会训练崩溃。噪声的作用类比"考试随机抽题让每个专家都被练到"。辅助损失是防止偏科的"制度设计"。</aside>
+<aside class="notes">解释为什么纯 TopK 会训练崩溃。噪声的作用类比"考试随机抽题让每个专家都被练到"。辅助损失是防止偏科的"制度设计"。
+----------
+没有干预的 Top-K 路由会陷入一个恶性循环——"赢者通吃"。
+
+想象一下：训练开始时，所有专家是随机初始化的。某几个专家偶然比其他专家更强，于是更多 token 被路由到它们，它们得到更多训练，变得更强，于是更多 token 来了……最终只有极少数专家在工作，大部分专家形同虚设。这叫做**专家崩塌（Expert Collapse）**。
+
+解决方案是 Noisy Top-K。在每个专家的门控分数上加上一个可学习的高斯噪声：H̃_i(x) = H_i(x) + ε · Softplus(W_noise · x)，ε 从标准正态分布采样。这个噪声在训练时引入随机性，让原本分数稍低的专家也有机会被选中，从而获得梯度更新。
+
+但仅靠噪声还不够稳健，所以还有一个**辅助负载均衡损失**：L_aux = α · N_exp · Σ f_i · P_i。f_i 是实际路由到专家 i 的 token 比例，P_i 是路由器对专家 i 的平均概率，α 是权衡系数，通常在 0.01 到 0.1 之间。这个损失在主任务损失之外，专门惩罚"专家使用不均匀"，把那些过度集中的流量打散。
+
+记住这个结构：**噪声 + 辅助损失，是 MoE 负载均衡的标准配置**。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">噪声 Top-K 路由</h2>
 
   <div class="flex gap-8 flex-1">
@@ -959,7 +1039,17 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">Token dropping 是 MoE 训练中被低估的实际问题。用"餐厅桌位有限，超出容量的顾客被跳过"来类比。</aside>
+<aside class="notes">Token dropping 是 MoE 训练中被低估的实际问题。用"餐厅桌位有限，超出容量的顾客被跳过"来类比。
+----------
+我们再看一个工程细节：**专家容量（Expert Capacity）**。
+
+在分布式训练中，每个设备上每次处理的 token 数有上限，这个上限叫容量 C。公式是 C = ⌈ B / N_exp ⌉ × capacity_factor，其中 B 是批次的 token 总数，capacity_factor 是安全系数，训练时通常设 1.0 到 1.25，推理时设 2.0。
+
+如果某个专家在一个 batch 里分到的 token 超过了容量 C，多出来的 token 就会被**直接跳过**，不经过任何专家处理，直接传到下一层。这叫 token dropping 或 pass-through。
+
+这是个设计取舍：capacity_factor 小，节省显存和通信带宽，但会丢失信息；capacity_factor 大，更安全，但产生更多 padding 开销。
+
+后来提出的 Expert Choice 路由反转了这个逻辑：让专家主动选择它想处理的 token，而不是 token 被动等待分配，可以更好地利用容量。但这会破坏 token 之间的因果关系，在 decoder-only 模型中需要额外处理。</aside>
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">专家容量与 Token 丢弃</h2>
 
   <!-- Top formula card -->
@@ -1109,7 +1199,15 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">这是令人惊喜的涌现现象——没人显式训练专业化，但它自发出现了。热力图可以停留片刻让听众自行解读。</aside>
+<aside class="notes">这是令人惊喜的涌现现象——没人显式训练专业化，但它自发出现了。热力图可以停留片刻让听众自行解读。
+----------
+一个有趣的现象：在训练好的 MoE 模型里，不同专家会自发形成分工。
+
+Mixtral 的实验 [Jiang et al., 2024] 分析了 token 和专家的对应关系，发现有些专家倾向于处理标点符号和连接词，有些专家偏向处理实体名词和动词，还有些专家专门处理代码或数学符号。这种分工**不是显式训练出来的**——训练目标只是预测下一个 token，分工是路由机制和语言结构共同作用下自发涌现的。
+
+这给了我们一个很重要的理论支撑：MoE 不只是"算力切分"，它实际上是在让不同专家学习语言的不同侧面，真正提升了参数的利用效率。
+
+当然，过度专业化也有害——某个专家如果只见过某类 token，泛化能力就会下降。辅助损失的另一个作用就是防止这种极端情况。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">专家专业化现象</h2>
 
   <div class="flex gap-8 flex-1">
@@ -1301,7 +1399,21 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">表格可以快速扫一遍。重点对比 Switch（极简 k=1）和 DeepSeek-V2（细粒度 160 专家）两个设计哲学的差异。</aside>
+<aside class="notes">表格可以快速扫一遍。重点对比 Switch（极简 k=1）和 DeepSeek-V2（细粒度 160 专家）两个设计哲学的差异。
+----------
+我们来横向对比一下主流 MoE 模型的参数配置。
+
+Switch Transformer 是 2022 年 Google 的工作，用 k=1 的极简路由，128 个专家，总参数 7.4B，但每 token 激活只有约 0.4B。它证明了"一个 token 只路由到一个专家"这种极端稀疏的方案是可行的。
+
+GLaM 走了另一个极端，总参数高达 1.2T，64 个专家，激活参数 96.6B。它证明了 MoE 可以扩展到万亿参数级别。
+
+Mixtral 8×7B 是目前最广泛使用的开源 MoE 模型，8 个专家选 2，总参数 46.7B，激活 12.9B，支持 32K 上下文。
+
+DeepSeek-V2 是目前设计最精细的 MoE 之一，160 个专家选 6，总参数 236B，激活 21B，支持 128K 上下文。激活比率只有 8.9%，是效率的极限探索。
+
+Qwen1.5-MoE-A2.7B 走了轻量化路线，60 个专家选 4，总参数 14.3B，激活只有 2.7B，适合资源受限场景。
+
+从这张表可以看出一个趋势：专家数越来越多，激活比例越来越低，模型在不断挖掘稀疏激活的极限。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">代表性 MoE 模型</h2>
   <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-6">代表性 MoE 模型一览</p>
 
@@ -1396,7 +1508,20 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">强调没有辅助损失时路由会"塌陷"到少数专家，导致大多数专家永远不被激活。展示公式推导辅助损失如何把 f_i 拉向均匀分布。Z-loss 是 ST-MoE 引入的额外稳定项。</aside>
+<aside class="notes">强调没有辅助损失时路由会"塌陷"到少数专家，导致大多数专家永远不被激活。展示公式推导辅助损失如何把 f_i 拉向均匀分布。Z-loss 是 ST-MoE 引入的额外稳定项。
+----------
+训练 MoE 比训练稠密模型要难，不稳定性来自几个地方。
+
+**专家崩塌**我们已经说过了。辅助损失 L_aux = α · N_exp · Σ f_i · p̄_i 是主要的应对手段。α 不能太大，否则它会和主任务损失竞争，影响语言建模能力；也不能太小，否则均衡效果有限。
+
+**Router Z-Loss** 是 ST-MoE 工作 [Zoph et al., 2022] 引入的：L_z = (β / B) Σ_b (log Σ_i e^{x_i^(b)})²。它惩罚路由器 logit 的幅值过大，防止 Softmax 的输入出现极大值，从而避免数值溢出和梯度爆炸。β 默认取 0.01。
+
+除了损失设计，还有几个工程技巧：
+- 专家权重初始化加微小随机扰动，打破对称性，防止所有专家在训练初期的输出完全相同；
+- 全局梯度裁剪，norm 上限设 1.0，防止路由器梯度爆炸；
+- 容量因子作为"溢出阀门"，保证 batch 内不会有专家被无限堆积。
+
+MoE 的训练是一个精妙的平衡——你需要同时让模型学好语言、保持负载均衡、维持数值稳定，三者缺一不可。</aside>
 
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 训练稳定性</h2>
   <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-6">负载均衡损失 · 专家崩塌 · Z-loss</p>
@@ -1468,7 +1593,21 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-16 relative">
-<aside class="notes">小结时回到核心公式。快速重申四个要点，为下一节长上下文做过渡："我们解决了宽度效率，接下来看序列长度问题"。</aside>
+<aside class="notes">小结时回到核心公式。快速重申四个要点，为下一节长上下文做过渡："我们解决了宽度效率，接下来看序列长度问题"。
+----------
+快速回顾一下 MoE 这一节的核心要点。
+
+第一，**稀疏激活**：k/N_exp 的激活比率是 MoE 的效率来源，参数量和计算量被解耦；
+
+第二，**路由机制**：Top-K + 噪声扰动 + 辅助损失，共同维持负载均衡；
+
+第三，**容量限制**：Token dropping 是 MoE 的重要工程细节，capacity_factor 需要仔细调整；
+
+第四，**专家专业化**：自发涌现的分工是 MoE 效果的重要来源，但需要防止过度坍缩。
+
+核心公式：y = Σ_{i ∈ T_k} g_i(x) · FFN_i(x)，这一行就是 MoE 的本质。
+
+接下来我们看两个深潜话题：专家并行和 DeepSeekMoE 的架构创新。</aside>
   <h2 class="text-5xl font-bold mb-8 text-indigo-300">MoE 核心要点回顾</h2>
 
   <!-- 2x2 grid of takeaway cards -->
@@ -1544,7 +1683,21 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">强调 EP 是 MoE 独有的并行维度——只有引入专家才需要 all-to-all。核心点：两次 all-to-all（dispatch + combine）是 EP 的通信代价；实际系统将 EP × TP × PP × DP 四维组合。</aside>
+<aside class="notes">强调 EP 是 MoE 独有的并行维度——只有引入专家才需要 all-to-all。核心点：两次 all-to-all（dispatch + combine）是 EP 的通信代价；实际系统将 EP × TP × PP × DP 四维组合。
+----------
+MoE 引入了一个稠密模型没有的新的并行维度——**专家并行（Expert Parallelism，EP）**。
+
+稠密模型的分布式训练通常用三种并行：数据并行（DP）分 batch，张量并行（TP）分权重矩阵，流水线并行（PP）分层。这三种都是通用的。
+
+EP 是 MoE 专有的：把不同的专家分布到不同的 GPU 上，每张 GPU 负责 N_exp/EP 个专家。
+
+代价是什么？**每个 MoE 层需要两次 all-to-all 通信**。第一次叫 Dispatch：token 的隐状态向量要被发送到对应专家所在的 GPU；第二次叫 Combine：专家计算完毕，输出要被发回 token 原来所在的 GPU。这两次 all-to-all 每次传输量是 k × B × d_model 个元素，k 是每 token 激活专家数，B 是 batch size，d_model 是隐状态维度。
+
+通信量和延迟是 EP 最大的工程挑战。DeepSeek-V2 在实践中用了 EP=32，与 TP/PP/DP 四维并行结合，设计了精细的 overlap 策略让通信和计算尽可能重叠。
+
+对于容量控制，EP 下还需要处理每张 GPU 上专家的 buffer 溢出问题，所以 token capacity 公式 C = ⌈ B / N_exp ⌉ × CF 在 EP 环境下同样有效。
+
+记住这张四维并行对比表：DP 通信是 all-reduce，TP 也是 all-reduce 或 reduce-scatter，PP 是点对点，**EP 是 all-to-all**——all-to-all 是网络里最"昂贵"的集体通信操作之一，这也是为什么 MoE 的分布式训练工程难度很高。</aside>
 
   <h2 class="text-4xl font-bold leading-tight mb-1 text-indigo-300">专家并行（EP）与分布式训练</h2>
   <p class="text-lg text-gray-400 mb-4">MoE 专属的并行维度：将不同专家分布到不同 GPU 组</p>
@@ -1675,7 +1828,25 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">DeepSeekMoE 解决了标准 MoE 中专家"知识混杂"的问题。强调两点创新：细粒度让专家分工更精确；共享专家承担通用知识让路由专家更专。可用"全科医生 vs 各科专科医生"类比。</aside>
+<aside class="notes">DeepSeekMoE 解决了标准 MoE 中专家"知识混杂"的问题。强调两点创新：细粒度让专家分工更精确；共享专家承担通用知识让路由专家更专。可用"全科医生 vs 各科专科医生"类比。
+----------
+DeepSeekMoE [DeepSeek-AI, 2024] 对标准 MoE 做了两个很有意思的改进。
+
+**问题：知识混杂**。在标准 MoE 里，每个专家都是一个完整的 FFN，维度是 d_ff，这个维度相当大。Token 被稀疏路由，但每个专家本身需要覆盖大量通用知识，专业化程度反而不高。
+
+**创新一：细粒度专家分割**。把每个大专家 FFN 拆成 m 个更小的专家，中间维度缩小 m 倍，总专家数扩大 m 倍，激活专家数也等比扩大。
+
+举个例子：原来 4 个大专家，维度 d_ff；分割后变成 8 个小专家（m=2），每个维度 d_ff/2。激活 FLOPs 不变，但知识边界更清晰——每个小专家只需要专注于更窄的领域，专业化程度自然提升。
+
+**创新二：共享专家隔离**。设置 K_s 个专家，不经过路由，**每个 token 都必须激活**。这些共享专家承担所有 token 都需要的通用知识——比如基本的语法结构、常见的句子模式。路由专家就可以从这个"包袱"中解放出来，专心学习专业化知识。
+
+输出公式是：h_t = u_t + Σ_{i=1}^{K_s} FFN_i^s(u_t) + Σ_{i ∈ TopK_r} g_{i,t} · FFN_i^r(u_t)。第二项是共享专家，第三项是路由专家。
+
+DeepSeek-V2 的配置：共享专家 K_s=2，路由专家 N_r=160 中选 K_r=6，总专家 162 个，每 token 激活 8 个。总参数 236B，激活 21B，比率仅 8.9%——用不到 1/10 的参数完成推理。
+
+---
+
+## 第三部分：长上下文技术（约 16 分钟）</aside>
 
   <h2 class="text-4xl font-bold leading-tight mb-1 text-indigo-300">DeepSeekMoE：细粒度专家与共享专家</h2>
   <p class="text-lg text-gray-400 mb-2">解决标准 MoE 的"知识混杂"问题——让每位专家更专</p>
@@ -1810,7 +1981,19 @@
 </div>
 
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">用场景驱动：让听众想象"把整个代码库放进 context"的场景。右下角的演进时间轴展示技术进步速度之快。</aside>
+<aside class="notes">用场景驱动：让听众想象"把整个代码库放进 context"的场景。右下角的演进时间轴展示技术进步速度之快。
+----------
+为什么需要长上下文？从应用场景直接看。
+
+长文档理解：一份法律合同的前后条款相互约束，必须全文在 context 里才能正确解读；一篇学术论文的引言、方法、实验需要联合理解。
+
+代码仓库理解：一个真实的工程项目可能有几十个文件，函数调用跨越多个模块，只看一个文件根本理解不了全局逻辑。
+
+超长对话：客服场景需要回溯完整的服务历史；多轮推理任务里，早期的对话内容会影响后续的判断。
+
+多文档综合：同时处理几十篇文献来写综述，或者跨多个新闻来源交叉验证事实。
+
+右边这条时间轴说明了进展的速度：GPT-2 只有 512 token 的窗口；GPT-3 是 2K；LLaMA 是 4K；GPT-4 推进到 128K；而 Gemini 1.5 Pro 已经达到了惊人的 100 万 token。五年时间，上下文窗口扩大了近 2000 倍。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-emerald-300">长上下文的应用场景</h2>
 
@@ -1936,7 +2119,19 @@
 </div>
 
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">O(L²) 是本节最重要的公式。用"座位表"类比：N个人两两打招呼 = N² 次握手。FlashAttention 不减少握手次数，但让握手效率翻倍。</aside>
+<aside class="notes">O(L²) 是本节最重要的公式。用"座位表"类比：N个人两两打招呼 = N² 次握手。FlashAttention 不减少握手次数，但让握手效率翻倍。
+----------
+问题的根源非常明确：标准 Self-Attention 的**时间和空间复杂度都是 O(L²)**。L 从 4K 翻到 128K，L² 就翻了 1024 倍。这在显存上直接体现为不可承受的开销。
+
+这张表列出了各种应对方案：
+
+Full Attention 是基线，O(L²) 时间，O(L²) 空间；
+FlashAttention 通过 IO 感知的实现，时间还是 O(L²)，但空间降到 O(L)，而且精确——这是目前最重要的工程突破，我们接下来细讲；
+稀疏注意力通过限制每个 token 只看附近的 token，时间和空间都降到 O(L√L)，但是近似的；
+线性注意力通过内积分解，把复杂度降到 O(L)，但表达力有损失；
+Mamba 等状态空间模型是另一条路线，完全不做 Attention，作为参照，本讲不展开。
+
+当前主流选择是 FlashAttention——它在不改变模型行为的前提下极大提升了效率，几乎所有现代 LLM 都在使用。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">注意力机制的二次方瓶颈</h2>
 
@@ -2056,7 +2251,17 @@
 </div>
 
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">三种方案对比，不需要精讲每个公式。重点是"RoPE 现在最流行，YaRN 是快速扩展的实用方案"。</aside>
+<aside class="notes">三种方案对比，不需要精讲每个公式。重点是"RoPE 现在最流行，YaRN 是快速扩展的实用方案"。
+----------
+在讲 FlashAttention 之前，我们先处理长上下文的第一个基础问题：**位置编码在超出训练长度时怎么办？**
+
+三种主流方案：
+
+**RoPE**（旋转位置编码）是目前最广泛使用的方案，LLaMA、Mixtral、DeepSeek 都用它。核心思想是把位置 m 编码为一个旋转矩阵 R_m，对 Q/K 向量做旋转，使得 q_m 和 k_n 的点积只依赖相对距离 m-n，天然捕获相对位置信息。但 RoPE 的问题是外推性差——超出训练长度时，旋转角会进入"从未见过"的值域，模型表现急剧下降。
+
+**ALiBi**（注意力线性偏置）的思路更简单：不用位置向量，直接在 attention logit 上加一个线性惩罚：score_ij = q_i k_j^T - m · |i - j|，距离越远惩罚越大。这个方案外推性很好，因为逻辑很简单——就算距离没见过，线性惩罚也会给一个合理的值。但它需要从头训练，不能直接用在已有的 RoPE 模型上。
+
+**YaRN** 是目前扩展 RoPE 最常用的方案。它的核心洞察是：RoPE 的不同维度对应不同的旋转频率，高频维度感知局部相对位置，低频维度感知长程依赖。YaRN 用一个 ramp 函数对不同维度区别处理：高频维度做插值（压缩到训练过的范围），低频维度外推（不缩放）。Scale factor 约为 8，可以将 4K 训练的模型扩展到 128K，**仅需约 400 步的长文档微调**，成本极低。这也是 tech_spec.json 里记录的参数。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">位置编码与长度外推</h2>
 
@@ -2066,55 +2271,7 @@
 
   <div class="grid grid-cols-3 gap-6 flex-1 min-h-0">
 
-    <!-- Card 1: RoPE -->
-    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-3 overflow-hidden">
-      <h3 class="text-2xl text-emerald-300 font-bold">RoPE<cite class="text-gray-500 text-base not-italic ml-1">[Su et al., 2024]</cite></h3>
-      <p class="text-base text-gray-400">旋转位置编码</p>
-
-      <p class="text-lg text-gray-200 leading-relaxed">
-        将 token 位置编码为向量旋转角度：
-      </p>
-      <div class="text-center text-base">
-        \[\theta_i = 10000^{-2i/d}\]
-      </div>
-      <p class="text-lg text-gray-200 leading-relaxed">
-        点积天然体现相对位置：\(\langle R_m q,\, R_n k \rangle\) 仅依赖 \(m - n\)
-      </p>
-      <p class="text-lg text-gray-300">
-        默认外推性差；Position Interpolation (PI) 通过缩放 \(\theta\) 扩展范围。
-      </p>
-      <p class="text-base text-gray-400">Used in: LLaMA, Mixtral, DeepSeek</p>
-
-      <!-- SVG: two vectors on unit circle -->
-      <svg viewBox="0 0 160 120" width="100%" height="200" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
-        <circle cx="80" cy="65" r="44" stroke="#374151" stroke-width="1" fill="none"/>
-        <line x1="80" y1="65" x2="80" y2="21" stroke="#4b5563" stroke-width="1" stroke-dasharray="3 2"/>
-        <!-- Vector q (position m) -->
-        <line x1="80" y1="65" x2="116" y2="40" stroke="#6ee7b7" stroke-width="2" marker-end="url(#arr-rope-03)"/>
-        <text x="120" y="38" font-size="14" fill="#6ee7b7">q</text>
-        <!-- Vector k (position n) -->
-        <line x1="80" y1="65" x2="52" y2="30" stroke="#a5f3fc" stroke-width="2" marker-end="url(#arr-rope-k-03)"/>
-        <text x="38" y="28" font-size="14" fill="#a5f3fc">k</text>
-        <!-- Arc showing rotation angle m-n -->
-        <path d="M 97 44 A 20 20 0 0 0 68 32" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4 2"/>
-        <text x="72" y="20" font-size="13" fill="#fbbf24">m-n</text>
-        <defs>
-          <marker id="arr-rope-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-            <polygon points="0 0, 7 2.5, 0 5" fill="#6ee7b7"/>
-          </marker>
-          <marker id="arr-rope-k-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-            <polygon points="0 0, 7 2.5, 0 5" fill="#a5f3fc"/>
-          </marker>
-        </defs>
-        <text x="80" y="110" text-anchor="middle" font-size="13" fill="#6b7280">单位圆上的旋转</text>
-      </svg>
-      <a href="demos/rope.html" target="_blank"
-         class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-emerald-300 bg-gray-900 border border-emerald-800 rounded-lg py-2 hover:bg-emerald-900 hover:border-emerald-600 transition-colors">
-        ▶ 动画演示
-      </a>
-    </div>
-
-    <!-- Card 2: ALiBi -->
+    <!-- Card 1: ALiBi -->
     <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-3 overflow-hidden">
       <h3 class="text-2xl text-emerald-300 font-bold">ALiBi<cite class="text-gray-500 text-base not-italic ml-1">[Press et al., 2022]</cite></h3>
       <p class="text-base text-gray-400">Attention with Linear Biases</p>
@@ -2169,7 +2326,57 @@
         <text x="136" y="69" font-size="13" fill="#fbbf24">最高分</text>
       </svg>
       <a href="demos/alibi.html" target="_blank"
+         onclick="this.href='demos/alibi.html?from='+encodeURIComponent(location.href)"
          class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-indigo-300 bg-gray-900 border border-indigo-800 rounded-lg py-2 hover:bg-indigo-900 hover:border-indigo-600 transition-colors">
+        ▶ 动画演示
+      </a>
+    </div>
+
+    <!-- Card 2: RoPE -->
+    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col gap-3 overflow-hidden">
+      <h3 class="text-2xl text-emerald-300 font-bold">RoPE<cite class="text-gray-500 text-base not-italic ml-1">[Su et al., 2024]</cite></h3>
+      <p class="text-base text-gray-400">旋转位置编码</p>
+
+      <p class="text-lg text-gray-200 leading-relaxed">
+        将 token 位置编码为向量旋转角度：
+      </p>
+      <div class="text-center text-base">
+        \[\theta_i = 10000^{-2i/d}\]
+      </div>
+      <p class="text-lg text-gray-200 leading-relaxed">
+        点积天然体现相对位置：\(\langle R_m q,\, R_n k \rangle\) 仅依赖 \(m - n\)
+      </p>
+      <p class="text-lg text-gray-300">
+        默认外推性差；Position Interpolation (PI) 通过缩放 \(\theta\) 扩展范围。
+      </p>
+      <p class="text-base text-gray-400">Used in: LLaMA, Mixtral, DeepSeek</p>
+
+      <!-- SVG: two vectors on unit circle -->
+      <svg viewBox="0 0 160 120" width="100%" height="200" class="mx-auto mt-auto" xmlns="http://www.w3.org/2000/svg" style="background:#111827; border-radius:8px;">
+        <circle cx="80" cy="65" r="44" stroke="#374151" stroke-width="1" fill="none"/>
+        <line x1="80" y1="65" x2="80" y2="21" stroke="#4b5563" stroke-width="1" stroke-dasharray="3 2"/>
+        <!-- Vector q (position m) -->
+        <line x1="80" y1="65" x2="116" y2="40" stroke="#6ee7b7" stroke-width="2" marker-end="url(#arr-rope-03)"/>
+        <text x="120" y="38" font-size="14" fill="#6ee7b7">q</text>
+        <!-- Vector k (position n) -->
+        <line x1="80" y1="65" x2="52" y2="30" stroke="#a5f3fc" stroke-width="2" marker-end="url(#arr-rope-k-03)"/>
+        <text x="38" y="28" font-size="14" fill="#a5f3fc">k</text>
+        <!-- Arc showing rotation angle m-n -->
+        <path d="M 97 44 A 20 20 0 0 0 68 32" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4 2"/>
+        <text x="72" y="20" font-size="13" fill="#fbbf24">m-n</text>
+        <defs>
+          <marker id="arr-rope-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#6ee7b7"/>
+          </marker>
+          <marker id="arr-rope-k-03" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#a5f3fc"/>
+          </marker>
+        </defs>
+        <text x="80" y="110" text-anchor="middle" font-size="13" fill="#6b7280">单位圆上的旋转</text>
+      </svg>
+      <a href="demos/rope.html" target="_blank"
+         onclick="this.href='demos/rope.html?from='+encodeURIComponent(location.href)"
+         class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-emerald-300 bg-gray-900 border border-emerald-800 rounded-lg py-2 hover:bg-emerald-900 hover:border-emerald-600 transition-colors">
         ▶ 动画演示
       </a>
     </div>
@@ -2219,6 +2426,7 @@
         <line x1="82" y1="66" x2="148" y2="66" stroke="#10b981" stroke-width="2"/>
       </svg>
       <a href="demos/yarn.html" target="_blank"
+         onclick="this.href='demos/yarn.html?from='+encodeURIComponent(location.href)"
          class="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-emerald-300 bg-gray-900 border border-emerald-800 rounded-lg py-2 hover:bg-emerald-900 hover:border-emerald-600 transition-colors">
         ▶ 动画演示
       </a>
@@ -2230,7 +2438,21 @@
 </div>
 
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">强调 FlashAttention 是工程优化而非算法创新——精确度不变，仅减少 IO。SRAM vs HBM 的类比：SRAM 是口袋，HBM 是仓库，尽量别去仓库取货。</aside>
+<aside class="notes">强调 FlashAttention 是工程优化而非算法创新——精确度不变，仅减少 IO。SRAM vs HBM 的类比：SRAM 是口袋，HBM 是仓库，尽量别去仓库取货。
+----------
+FlashAttention [Dao et al., 2022] 是近几年 LLM 基础设施领域最重要的工程突破之一。
+
+一个很重要的观察：**注意力计算的瓶颈不是 FLOPs，而是内存 IO**。GPU 的 SRAM（片上缓存）带宽很高，但容量很小；HBM（显存）容量大，但带宽慢很多。标准 Attention 的实现需要把 L×L 的注意力矩阵写入 HBM，然后再读回来做 Softmax，这个来回的 IO 才是耗时的大头。
+
+FlashAttention 的解决方案是两步：
+
+**Tiling（分块计算）**：把 Q、K、V 分成小块，每块能放进 SRAM。在 SRAM 里完成一个块的注意力计算，直接累加到输出，不把中间的 L×L 矩阵写出去。用增量式的 Softmax 归一化（用 log-sum-exp 的技巧保证数值等价）。
+
+**Recomputation（重计算）**：反向传播时不存储完整的注意力矩阵，而是在需要时重新计算。牺牲一点算力，换来大量显存节省。
+
+效果：显存从 O(L²) 降至 O(L)，速度提升 2-4×（FA-1），FA-2 在此基础上再提升约 2×，FA-3 专为 Hopper 架构优化，还能再提升 50%。
+
+最重要的一点：**FlashAttention 是精确算法**，模型的数学行为和标准 Attention 完全一致，不是近似。这是它取代稀疏注意力成为标配的根本原因。</aside>
 
   <h2 class="text-5xl font-bold mb-6 text-emerald-300">FlashAttention：IO 感知的精确注意力</h2>
 
@@ -2385,7 +2607,20 @@
 </div>
 
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">KV Cache 的大小计算可以让听众自己估算一下。GQA/MQA 是现代 LLM 标配，Llama3 用 GQA 已成事实标准。</aside>
+<aside class="notes">KV Cache 的大小计算可以让听众自己估算一下。GQA/MQA 是现代 LLM 标配，Llama3 用 GQA 已成事实标准。
+----------
+推理时，KV Cache 是另一个必须面对的问题。
+
+每处理一个新 token，我们都要用到之前所有 token 的 Key 和 Value 向量。如果不缓存，就要重新计算，非常浪费。所以推理时会缓存每层的 K/V，这就是 KV Cache。
+
+代价是显存：每层 KV Cache 大小为 2 × L × H × d_head 字节（FP16 = 2 bytes）。以 Llama-3 70B 为例，L=131K 时：2 × 131072 × 64 × 128 × 2 = 约 4.3 GB 每层，乘以 80 层，总计 **344 GB**——远超模型参数本身。
+
+为了缓解这个问题，出现了注意力头的变体设计：
+- MHA（多头注意力）：每个 Q 头都有对应的 K/V 头，KV 最多；
+- GQA（分组查询注意力）：多个 Q 头共享同一组 K/V，Llama 3 和 Mixtral 都用这个，KV 压缩数倍；
+- MQA（多查询注意力）：所有 Q 头共享一组 K/V，压缩最多，但质量略有损失。
+
+GQA 是目前最流行的权衡选择，8 个 Q 头共享 1 组 KV 可以减少 8 倍的 KV Cache 开销。</aside>
 
   <h2 class="text-5xl font-bold mb-6 text-emerald-300">KV Cache 与高效注意力变体</h2>
 
@@ -2527,7 +2762,17 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">Ring Attention 是长上下文的"分布式解法"。类比：一个大圆桌上 P 个人互相传菜单（K/V），每个人同时对自己面前的菜单做计算。通信和计算完全重叠，所以没有延迟代价。</aside>
+<aside class="notes">Ring Attention 是长上下文的"分布式解法"。类比：一个大圆桌上 P 个人互相传菜单（K/V），每个人同时对自己面前的菜单做计算。通信和计算完全重叠，所以没有延迟代价。
+----------
+如果序列长到连 FlashAttention + GQA 都撑不住怎么办？答案是 **Ring Attention** [Liu et al., 2023]。
+
+思路很简单：把序列切分给多张 GPU。每张 GPU 持有 L/P 的 token（Q、K、V 都切分），然后按"环形"顺序依次把 K/V 块传递给邻居，每步在本地做 FlashAttention 并把结果累积进来。经过 P 步之后，每张 GPU 都积累到了完整的注意力输出，等价于全局注意力。
+
+关键优势：通信（发送 K/V 块到下一张 GPU）和计算（对本地 K/V 块做 FlashAttention）可以**完全重叠**。通信几乎被"藏"在计算里，接近线性扩展。
+
+显存复杂度从 O(L) 降到 O(L/P)，计算从 O(L²) 降到 O(L²/P)。这使得 1M token 的序列在足够多 GPU 上成为可能。
+
+Ring Attention 和 Expert Parallelism 结合时，工程复杂度极高——两种通信模式需要精心调度，这是当前超长上下文 MoE 训练的核心挑战之一。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">Ring Attention 与序列并行</h2>
   <p class="text-xl text-gray-400 mb-6">将超长序列分布到多个 GPU，打破单卡显存上限</p>
@@ -2628,7 +2873,17 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">能声称"支持 128K"不等于"真的用好了 128K"。NIAH 测试直观：把一句关键信息藏在海量文本中间，模型能找到吗？"中段丢失"效应提醒听众：位置偏差是工程现实，不只是理论问题。</aside>
+<aside class="notes">能声称"支持 128K"不等于"真的用好了 128K"。NIAH 测试直观：把一句关键信息藏在海量文本中间，模型能找到吗？"中段丢失"效应提醒听众：位置偏差是工程现实，不只是理论问题。
+----------
+有了这么多技术，模型真的能"用好"长上下文吗？
+
+**Needle-in-a-Haystack（NIAH）** 是一个直观的测试：把一条关键信息（"needle"）埋在大量无关文本里，测试模型能不能找到它。横轴是序列总长度，纵轴是 needle 在文中的相对深度。许多模型在 needle 位于**文章中段**时准确率骤降——即使上下文窗口技术上已经支持，模型也没真正"读进去"中间的内容。
+
+这就是著名的 **"Lost in the Middle"** 效应 [Liu et al., 2023]：模型对序列头部（首因效应）和尾部（近因效应）的利用率显著高于中段。这有实际意义：如果你用 RAG 检索了 5 个文档，把最重要的那个放在第 3 位，模型可能表现比放在第 1 位或第 5 位差。
+
+**RULER 基准** [Hsieh et al., 2024] 更系统，涵盖检索、多跳推理、聚合等 13 类任务，在 4K 到 128K 多个档位上评测，比 NIAH 更难刷榜。
+
+核心结论：**宣称支持长上下文 ≠ 均匀利用长上下文**。扩展窗口只是第一步，如何让模型真正有效地利用长上下文，需要训练数据、指令微调、位置编码设计等多方面协同。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-emerald-300">长上下文评估：真的用好了吗？</h2>
   <p class="text-xl text-gray-400 mb-6">扩展上下文窗口后，模型真正利用率如何？</p>
@@ -2717,7 +2972,19 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。</aside>
+<aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。
+----------
+我们快速过一下稀疏注意力的历史，因为它是理解 FlashAttention 为何取胜的重要背景。
+
+在 FlashAttention 出现之前，主流应对 O(L²) 的方案是稀疏注意力——通过限制每个 token 能注意的范围，把复杂度从 O(L²) 降到 O(L·w)。
+
+**Longformer** [Beltagy et al., 2020]：每个 token 只注意 ±w/2 个邻居（局部窗口），加上少数全局 token（如 [CLS]）可以双向注意所有位置。注意力矩阵是"带状 + 稀疏全局"的模式。
+
+**BigBird** [Zaheer et al., 2020]：在 Longformer 基础上加入随机注意力点，理论上证明了这种模式在 O(L) 注意力下是图灵完备的。
+
+**Sliding Window**（Mistral 7B）：每个 token 只注意最近 4096 个 token，配合 GQA 实现 32K 上下文，简单高效。
+
+但它们都有一个共同问题：**牺牲精度**，工程上还需要自定义 CUDA kernel。FlashAttention 出现后，精确注意力不再是瓶颈，这条路就基本被淘汰了。Sliding Window 在 Mistral、Gemma 等效率优先的模型中还有使用，但它实际上是在限制模型能看到的历史长度。</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">稀疏注意力模式</h2>
   <p class="text-xl text-gray-400 mb-3">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>
@@ -2901,7 +3168,23 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">Attention Sink 是 2023 年一个意外发现——模型不是在真正"理解"前几个 token，而是把无处可放的注意力权重"倒"在那里。StreamingLLM 利用这一发现实现无限流式推理。KV 内存公式让听众直观感受 128K 上下文的代价。</aside>
+<aside class="notes">Attention Sink 是 2023 年一个意外发现——模型不是在真正"理解"前几个 token，而是把无处可放的注意力权重"倒"在那里。StreamingLLM 利用这一发现实现无限流式推理。KV 内存公式让听众直观感受 128K 上下文的代价。
+----------
+最后讲 KV Cache 管理，以及一个有趣的发现——Attention Sink。
+
+首先看数字：大语言模型的 KV Cache 有多占显存？看这张表：LLaMA-3 70B 在 128K 上下文下，KV Cache 需要约 40 GB；Mixtral 8×7B 需要约 16 GB；而 DeepSeek-V2 用了 MLA，只需约 6 GB。数量级的差距，来自 MLA 对 KV 向量的低秩压缩，后面我们会详细讲。
+
+**Attention Sink 现象** [Xiao et al., 2023] 是个意外发现：无论输入什么内容，前几个 token（位置 0 到 3）的注意力权重始终异常高。这些 token 本身没有特别的语义，可能只是换行符或空格，但模型把大量"多余"的注意力权重倾倒在那里。
+
+为什么？因为 Softmax 无法输出 0，如果模型不确定该关注哪里，就把多余的权重"倒"在这几个初始 token 上作为"泄压阀"。这就是所谓的 attention sink。
+
+**StreamingLLM** [Xiao et al., 2023] 利用这个发现设计了一个极简的无限流式推理方案：只保留 Sink 窗口（前 4 个 token 的 KV）+ 最近窗口（最后 K_r 个 token 的 KV），中间的全部丢弃。这样 KV Cache 的大小是 O(1)，可以支持无限长序列的流式推理，而且无需重新训练。
+
+代价是明显的：中段信息完全丢失，和 "Lost in the Middle" 效应叠加，是长上下文实际利用率低的系统性根源之一。
+
+---
+
+## 第四部分：协同、挑战与展望（约 20 分钟）</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">KV Cache 管理与 Attention Sink</h2>
   <p class="text-xl text-gray-400 mb-3">内存瓶颈、注意力汇聚现象与流式推理策略</p>
@@ -3077,7 +3360,17 @@
 
 <!-- Slide 19: MoE × 长上下文：协同与挑战 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">这张是全讲的"融合点"。强调协同是双向的：MoE 帮助长上下文降低计算成本，长上下文也给 MoE 更多训练信号。</aside>
+<aside class="notes">这张是全讲的"融合点"。强调协同是双向的：MoE 帮助长上下文降低计算成本，长上下文也给 MoE 更多训练信号。
+----------
+MoE 和长上下文相互加强，但也引入了新的冲突。
+
+**MoE 如何助力长上下文**：稀疏激活为每 token 节省了计算预算，这些预算可以用来支持更长的序列；专家的自发分工在长文档中有天然优势——不同段落可能激活不同专家；更大的参数总量意味着更强的"知识容量"，有助于记住长文档中的细节。
+
+**长上下文如何强化 MoE**：更长序列意味着每个专家都能收到更多样的 token，训练信号更丰富；长文档的多样性也有助于防止专家过度拟合到特定的短文本模式。
+
+但挑战也是真实的：KV Cache 和专家参数要同时竞争显存；Expert Parallelism 的 all-to-all 通信延迟和 Ring Attention 的 K/V 传递需要精心调度才不会相互阻塞；负载均衡在超长序列下会失效——同一文档的 token 高度相关，可能大量涌向同一个专家。
+
+这些矛盾的协同解决，是当前研究的前沿。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE × 长上下文：协同与挑战</h2>
 
@@ -3183,7 +3476,17 @@
 
 <!-- Slide 20: 案例分析：DeepSeek-V2 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">DeepSeek-V2 是目前 MoE+长上下文协同最成功的开源案例。重点介绍 MLA：用低秩矩阵压缩 KV，是一个优雅的线性代数技巧。</aside>
+<aside class="notes">DeepSeek-V2 是目前 MoE+长上下文协同最成功的开源案例。重点介绍 MLA：用低秩矩阵压缩 KV，是一个优雅的线性代数技巧。
+----------
+最好的案例是 DeepSeek-V2 [DeepSeek-AI, 2024]。它同时解决了 MoE 和长上下文的核心挑战，是目前工程实践最精致的大模型之一。
+
+两大核心创新：
+
+**MLA（Multi-head Latent Attention）**：标准 MHA 的 KV Cache 随 L 线性增长，代价巨大。MLA 的解决方案是低秩压缩：把 KV 投影到一个低维潜在向量 c_KV，维度 d_c 远小于 H × d_head。推理时只需缓存这个低维向量，需要时再解压缩。KV Cache 减少 5 到 13 倍。
+
+**DeepSeekMoE**：这就是我们刚才讲的——细粒度专家 + 共享专家，N_exp=160，激活 8 个（2 共享 + 6 路由），激活比率仅 8.9%。
+
+规格汇总：总参数 236B，激活参数 21B，上下文长度 128K token。激活参数仅为总参数的 8.9%，这意味着在同等推理成本下，DeepSeek-V2 可以承载比稠密模型多 11 倍的参数——知识容量的巨大优势。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">案例分析：DeepSeek-V2</h2>
 
@@ -3301,7 +3604,20 @@
 
 <!-- Slide 21: MLA 架构详解 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">这是偏深入的细节幻灯片，可根据时间决定深度。核心信息：c_KV 的维度远小于 KV 本身，但效果等价。</aside>
+<aside class="notes">这是偏深入的细节幻灯片，可根据时间决定深度。核心信息：c_KV 的维度远小于 KV 本身，但效果等价。
+----------
+我们快速深入 MLA 的实现细节。
+
+核心步骤：
+1. 给定 token 的隐状态 h_t，先用一个下投影矩阵 W^{DKV} 把它压缩成低维潜在向量 c_KV，维度 d_c；
+2. 推理时只缓存 c_KV，维度 512 vs. 原来的 H × d_head = 128 × 128 = 16384，压缩比约 32×；
+3. 需要时，用上投影矩阵 W^{UKV} 把 c_KV 还原为完整的 K/V。
+
+Q 端也有类似的低秩压缩，同时引入 Decoupled RoPE 来处理位置编码，避免位置信息和内容信息在压缩过程中混叠。
+
+实测效果：标准 MHA 每 token 每层约 2.25 MB，MLA 约 0.18 MB，减少约 12 倍。这使得 DeepSeek-V2 在 128K 上下文下的 KV Cache 仅约 6 GB，而同样配置的 LLaMA 70B 需要约 40 GB。
+
+MLA 是一个很优雅的想法——在不改变注意力数学的前提下，通过低秩结构大幅压缩存储，非常适合长上下文场景。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-purple-300">MLA 架构详解</h2>
   <p class="text-xl text-gray-400 mb-6">上一张幻灯片介绍了 MLA（Multi-head Latent Attention）的作用；本页深入其低秩 KV 压缩的具体实现。</p>
@@ -3491,7 +3807,15 @@
 
 <!-- Slide 22: MoE 推理的工程挑战 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">All-to-all 通信和 KV Cache 是部署 MoE 的两大"工程噩梦"，引发听众对实际系统复杂度的思考。</aside>
+<aside class="notes">All-to-all 通信和 KV Cache 是部署 MoE 的两大"工程噩梦"，引发听众对实际系统复杂度的思考。
+----------
+讲完架构，来看部署层面的三大挑战。
+
+**挑战一，专家并行与通信**：每个 MoE 层需要 all-to-all 通信，通信延迟可占总推理时间的 20% 到 40%。专家数越多，EP degree 越高，通信开销越大。缓解方法是 EP + TP 混合并行，以及减少 MoE 层数（某些模型只在部分层使用 MoE）。
+
+**挑战二，KV Cache 竞争**：128K 上下文下，即使是经过 MLA 优化的 DeepSeek-V2，KV Cache 也需要几 GB 到十几 GB。专家参数和 KV Cache 在有限的 GPU 显存里竞争，需要 PagedAttention、量化等手段压缩。
+
+**挑战三，专家 Cache 预热**：对于 236B 总参数的模型，大部分专家参数无法常驻 GPU，需要 CPU offloading。不同 batch 可能路由到不同专家，导致专家参数频繁在 CPU 和 GPU 之间换入换出，延迟极高。解决思路是利用路由的局部性规律——相似的输入往往激活相似的专家——提前预测并 prefetch 下一批需要的专家参数。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE 推理的工程挑战</h2>
   <p class="text-xl text-gray-400 mb-8 -mt-4">部署 MoE 模型的三大工程挑战</p>
@@ -3623,7 +3947,15 @@
 
 <!-- Slide 23: 核心开放问题 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">开放问题是启发研究方向的好机会。可以邀请听众思考："如果你来设计，会怎么解决路由可解释性？"</aside>
+<aside class="notes">开放问题是启发研究方向的好机会。可以邀请听众思考："如果你来设计，会怎么解决路由可解释性？"
+----------
+MoE 和长上下文都还有很多没有解决的基础问题。
+
+**路由的可解释性**：当前的路由器是黑箱，我们不知道为什么某个 token 被分配到某个专家。能否设计具有明确语义的路由——比如按语言类别、按语法类别显式路由？这不只是可解释性问题，也可能带来更好的专业化。
+
+**超长序列下的负载均衡**：现有的辅助损失假设 batch 内的 token 分布均匀，但长序列里同一文档的 token 高度相关，这个假设失效。需要序列感知的路由策略，或者动态容量分配方案。
+
+**MoE 与长上下文的联合预训练**：大多数 MoE 模型在短上下文预训练，然后再通过微调扩展上下文。但这样做，预训练时形成的专家分工模式可能并不适合长上下文场景。如何在长上下文预训练中同时维持高效的 MoE 路由？这是一个还没有被很好解决的问题。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">核心开放问题</h2>
   <p class="text-xl text-gray-400 mb-8 -mt-4">仍待解决的核心问题</p>
@@ -3752,7 +4084,17 @@
 
 <!-- Slide 24: 未来研究方向 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">Mixture of Depths 是最有潜力的方向之一，简短介绍即可。重点是让听众感受到这个领域还在快速发展。</aside>
+<aside class="notes">Mixture of Depths 是最有潜力的方向之一，简短介绍即可。重点是让听众感受到这个领域还在快速发展。
+----------
+最后看几个令人兴奋的未来方向。
+
+**Mixture of Depths**（MoD）[Raposo et al., 2024]：MoE 在"宽度"方向稀疏化（选哪些专家），MoD 在"深度"方向稀疏化（选哪些层）。某些 token 可以跳过不需要的层，每个 token 自适应选择自己需要的计算深度。在固定 FLOPs 预算下，MoD 超越了等 FLOPs 的基线，说明深度稀疏化和宽度稀疏化是互补的。
+
+**Soft MoE** [Puigcerver et al., 2023]：传统 TopK 路由不可微，梯度估计有噪声。Soft MoE 让每个"计算槽"由所有 token 的加权混合形成，完全可微，梯度流动顺畅，训练稳定性显著提升。代价是 token 边界模糊，不适合需要 token 级别追踪的任务。
+
+**多模态 MoE**：视觉、语言、代码各自有专门的领域知识，MoE 的专家分工和模态分工天然对齐。图像 patch 和文本 token 路由到不同专家，可以实现模态间的自然隔离。MoE 可能是统一多模态模型的最自然的架构选择。
+
+**硬件协同设计**：当前 all-to-all 通信是 EP 的核心瓶颈。下一代 NVLink 和 CXL 高带宽互联会让更大的专家数成为可能。专为 MoE 设计的 HBM 层次化管理——专家参数有自己的 cache 层次——以及芯片内集成路由逻辑，可能从根本上改变 MoE 的效率格局。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">未来方向展望</h2>
 
@@ -3928,7 +4270,15 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">用同等激活参数对比让 MoE 的"效率优势"一目了然。重点是 DeepSeek-V2：只用 21B 激活参数，却达到了远大于 Llama-3 70B（70B 激活）的能力区间。</aside>
+<aside class="notes">用同等激活参数对比让 MoE 的"效率优势"一目了然。重点是 DeepSeek-V2：只用 21B 激活参数，却达到了远大于 Llama-3 70B（70B 激活）的能力区间。
+----------
+这张表直接说明问题。
+
+等效激活参数下，MoE 的 MMLU 和 HumanEval 成绩和同等推理成本的稠密模型相当甚至更强，但它背后有多得多的总参数量作支撑。
+
+DeepSeek-V2 用 21B 激活参数，在 MMLU 上达到 78%，接近 Llama 3 70B 的 82%，但推理成本只是 70B 稠密模型的三分之一不到。
+
+这就是 MoE 的价值主张：**相似的推理成本，更强的知识容量，更好的质量**。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-purple-300">MoE vs 稠密：综合基准对比</h2>
   <p class="text-xl text-gray-400 mb-6">等效激活参数下，MoE 的能力与效率优势</p>
@@ -4017,7 +4367,15 @@
 </div>
 
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">RLHF/SFT 对 MoE 模型的挑战经常被忽略。MoE 在预训练阶段优势明显，但微调时"专家遗忘"和"路由漂移"是已知痛点。提醒听众：部署一个 MoE 不只是训一个 Base 模型。</aside>
+<aside class="notes">RLHF/SFT 对 MoE 模型的挑战经常被忽略。MoE 在预训练阶段优势明显，但微调时"专家遗忘"和"路由漂移"是已知痛点。提醒听众：部署一个 MoE 不只是训一个 Base 模型。
+----------
+MoE 模型做 SFT 和 RLHF 有几个额外挑战值得注意。
+
+**路由漂移**：微调数据分布和预训练差异很大，路由器可能重新学习激活模式，破坏预训练中形成的专家专业化，导致部分专家灾难性遗忘。
+
+**微调数据稀疏**：SFT 数据通常只有几百万到几千万条，对于 N_exp=160 个专家来说，每个专家能见到的训练信号极其有限，容易欠拟合。
+
+应对策略：微调时冻结路由器权重，只更新专家 FFN；用 Expert-wise LoRA，每个专家独立的低秩适配；学习率比稠密模型低 2-5 倍；或者用 Expert Averaging 先把 MoE 合并成稠密模型再做 SFT，部署更简单。</aside>
 
   <h2 class="text-5xl font-bold mb-4 text-purple-300">对齐微调：MoE 的特殊挑战</h2>
   <p class="text-xl text-gray-400 mb-6">SFT / RLHF 阶段与稠密模型的关键差异</p>
@@ -4094,7 +4452,26 @@
 
 <!-- Slide 26: 全文总结 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">总结时回到三个关键 insight。最后的 call to action 停留 5-10 秒，让听众思考"协同设计"的意义后再进入问答。</aside>
+<aside class="notes">总结时回到三个关键 insight。最后的 call to action 停留 5-10 秒，让听众思考"协同设计"的意义后再进入问答。
+----------
+好，最后做个收尾。
+
+今天我们覆盖了三个层次。
+
+**效率 ≠ 牺牲能力**：k/N_exp 的稀疏激活，使得 MoE 在远低于稠密模型推理成本的前提下，能够承载更大的参数总量，达到相近甚至更好的能力。稀疏性是可扩展性的关键。
+
+**IO 是真正的瓶颈**：FlashAttention 证明了一件事——计算量（FLOPs）有时不是问题，内存访问模式才是。优化硬件-算法的接口，往往比减少计算量本身更有效。
+
+**协同优于叠加**：MoE 和长上下文不是两件独立的事拼在一起；DeepSeek-V2 的 MLA 就是联合优化的典范——它同时解决了 Attention 的 KV Cache 瓶颈和 MoE 的参数效率问题，效果远超各自为政。
+
+MoE 与长上下文的协同设计，将是下一代高效大语言模型的核心范式。
+
+谢谢大家。我们来留几分钟的时间做问答。
+
+
+---
+
+## 附录幻灯片（如有问答则展示）</aside>
 
   <h2 class="text-5xl font-bold mb-10 text-purple-300">总结</h2>
 
@@ -4206,7 +4583,9 @@
 
 <!-- Slide 25: 核心公式汇总 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">公式速查表，可以直接跳过，作为参考材料留给听众。或在答疑时使用。</aside>
+<aside class="notes">公式速查表，可以直接跳过，作为参考材料留给听众。或在答疑时使用。
+----------
+这张幻灯片作为参考。所有今天提到的核心公式汇总在这里，包括 MoE 的前向传播、Top-K 门控、激活 FLOPs 比、辅助损失、专家容量，以及长上下文侧的 Attention 复杂度、FlashAttention 显存、KV Cache 大小、RoPE 旋转角和 MLA 压缩公式。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">核心公式速查</h2>
 
@@ -4295,7 +4674,13 @@
 
 <!-- Slide: 参考文献 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-16 py-12">
-<aside class="notes">参考文献页，无需逐条朗读。提示听众可扫描 QR 码或访问讲义获取链接。</aside>
+<aside class="notes">参考文献页，无需逐条朗读。提示听众可扫描 QR 码或访问讲义获取链接。
+----------
+所有引用的文献列在这里，涵盖 MoE 领域的 12 篇核心论文和长上下文领域的 12 篇核心论文，供大家课后查阅。
+
+---
+
+*演讲稿结束。全文约 75 分钟，建议演讲者根据现场节奏在 MoE 路由（幻灯片 9–11）和 DeepSeek-V2 细节（幻灯片 16–17、30–31）处灵活调整详略。*</aside>
 
   <h2 class="text-4xl font-bold mb-6 text-purple-300">参考文献</h2>
 

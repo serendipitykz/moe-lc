@@ -1,5 +1,17 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。</aside>
+<aside class="notes">稀疏注意力是"用近似换效率"的路线，FlashAttention 是"精确但 IO 高效"的路线。两条路线在 2022 年后基本收敛为 FlashAttention 主导。Longformer 和 BigBird 的意义在于证明了理论可行性，Sliding Window 依然在 Mistral 中使用。
+----------
+我们快速过一下稀疏注意力的历史，因为它是理解 FlashAttention 为何取胜的重要背景。
+
+在 FlashAttention 出现之前，主流应对 O(L²) 的方案是稀疏注意力——通过限制每个 token 能注意的范围，把复杂度从 O(L²) 降到 O(L·w)。
+
+**Longformer** [Beltagy et al., 2020]：每个 token 只注意 ±w/2 个邻居（局部窗口），加上少数全局 token（如 [CLS]）可以双向注意所有位置。注意力矩阵是"带状 + 稀疏全局"的模式。
+
+**BigBird** [Zaheer et al., 2020]：在 Longformer 基础上加入随机注意力点，理论上证明了这种模式在 O(L) 注意力下是图灵完备的。
+
+**Sliding Window**（Mistral 7B）：每个 token 只注意最近 4096 个 token，配合 GQA 实现 32K 上下文，简单高效。
+
+但它们都有一个共同问题：**牺牲精度**，工程上还需要自定义 CUDA kernel。FlashAttention 出现后，精确注意力不再是瓶颈，这条路就基本被淘汰了。Sliding Window 在 Mistral、Gemma 等效率优先的模型中还有使用，但它实际上是在限制模型能看到的历史长度。</aside>
 
   <h2 class="text-5xl font-bold mb-2 text-emerald-300">稀疏注意力模式</h2>
   <p class="text-xl text-gray-400 mb-3">通过限制注意力范围将 \(O(L^2)\) 降为 \(O(L \cdot w)\)——精确度换效率</p>

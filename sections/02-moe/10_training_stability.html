@@ -1,5 +1,18 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
-<aside class="notes">强调没有辅助损失时路由会"塌陷"到少数专家，导致大多数专家永远不被激活。展示公式推导辅助损失如何把 f_i 拉向均匀分布。Z-loss 是 ST-MoE 引入的额外稳定项。</aside>
+<aside class="notes">强调没有辅助损失时路由会"塌陷"到少数专家，导致大多数专家永远不被激活。展示公式推导辅助损失如何把 f_i 拉向均匀分布。Z-loss 是 ST-MoE 引入的额外稳定项。
+----------
+训练 MoE 比训练稠密模型要难，不稳定性来自几个地方。
+
+**专家崩塌**我们已经说过了。辅助损失 L_aux = α · N_exp · Σ f_i · p̄_i 是主要的应对手段。α 不能太大，否则它会和主任务损失竞争，影响语言建模能力；也不能太小，否则均衡效果有限。
+
+**Router Z-Loss** 是 ST-MoE 工作 [Zoph et al., 2022] 引入的：L_z = (β / B) Σ_b (log Σ_i e^{x_i^(b)})²。它惩罚路由器 logit 的幅值过大，防止 Softmax 的输入出现极大值，从而避免数值溢出和梯度爆炸。β 默认取 0.01。
+
+除了损失设计，还有几个工程技巧：
+- 专家权重初始化加微小随机扰动，打破对称性，防止所有专家在训练初期的输出完全相同；
+- 全局梯度裁剪，norm 上限设 1.0，防止路由器梯度爆炸；
+- 容量因子作为"溢出阀门"，保证 batch 内不会有专家被无限堆积。
+
+MoE 的训练是一个精妙的平衡——你需要同时让模型学好语言、保持负载均衡、维持数值稳定，三者缺一不可。</aside>
 
   <h2 class="text-5xl font-bold mb-6 text-indigo-300">MoE 训练稳定性</h2>
   <p class="text-base text-gray-500 font-mono uppercase tracking-widest mb-6">负载均衡损失 · 专家崩塌 · Z-loss</p>

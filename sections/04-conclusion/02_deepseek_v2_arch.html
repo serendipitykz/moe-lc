@@ -1,6 +1,16 @@
 <!-- Slide 20: 案例分析：DeepSeek-V2 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">DeepSeek-V2 是目前 MoE+长上下文协同最成功的开源案例。重点介绍 MLA：用低秩矩阵压缩 KV，是一个优雅的线性代数技巧。</aside>
+<aside class="notes">DeepSeek-V2 是目前 MoE+长上下文协同最成功的开源案例。重点介绍 MLA：用低秩矩阵压缩 KV，是一个优雅的线性代数技巧。
+----------
+最好的案例是 DeepSeek-V2 [DeepSeek-AI, 2024]。它同时解决了 MoE 和长上下文的核心挑战，是目前工程实践最精致的大模型之一。
+
+两大核心创新：
+
+**MLA（Multi-head Latent Attention）**：标准 MHA 的 KV Cache 随 L 线性增长，代价巨大。MLA 的解决方案是低秩压缩：把 KV 投影到一个低维潜在向量 c_KV，维度 d_c 远小于 H × d_head。推理时只需缓存这个低维向量，需要时再解压缩。KV Cache 减少 5 到 13 倍。
+
+**DeepSeekMoE**：这就是我们刚才讲的——细粒度专家 + 共享专家，N_exp=160，激活 8 个（2 共享 + 6 路由），激活比率仅 8.9%。
+
+规格汇总：总参数 236B，激活参数 21B，上下文长度 128K token。激活参数仅为总参数的 8.9%，这意味着在同等推理成本下，DeepSeek-V2 可以承载比稠密模型多 11 倍的参数——知识容量的巨大优势。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">案例分析：DeepSeek-V2</h2>
 

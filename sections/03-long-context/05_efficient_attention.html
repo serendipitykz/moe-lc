@@ -1,5 +1,18 @@
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">KV Cache 的大小计算可以让听众自己估算一下。GQA/MQA 是现代 LLM 标配，Llama3 用 GQA 已成事实标准。</aside>
+<aside class="notes">KV Cache 的大小计算可以让听众自己估算一下。GQA/MQA 是现代 LLM 标配，Llama3 用 GQA 已成事实标准。
+----------
+推理时，KV Cache 是另一个必须面对的问题。
+
+每处理一个新 token，我们都要用到之前所有 token 的 Key 和 Value 向量。如果不缓存，就要重新计算，非常浪费。所以推理时会缓存每层的 K/V，这就是 KV Cache。
+
+代价是显存：每层 KV Cache 大小为 2 × L × H × d_head 字节（FP16 = 2 bytes）。以 Llama-3 70B 为例，L=131K 时：2 × 131072 × 64 × 128 × 2 = 约 4.3 GB 每层，乘以 80 层，总计 **344 GB**——远超模型参数本身。
+
+为了缓解这个问题，出现了注意力头的变体设计：
+- MHA（多头注意力）：每个 Q 头都有对应的 K/V 头，KV 最多；
+- GQA（分组查询注意力）：多个 Q 头共享同一组 K/V，Llama 3 和 Mixtral 都用这个，KV 压缩数倍；
+- MQA（多查询注意力）：所有 Q 头共享一组 K/V，压缩最多，但质量略有损失。
+
+GQA 是目前最流行的权衡选择，8 个 Q 头共享 1 组 KV 可以减少 8 倍的 KV Cache 开销。</aside>
 
   <h2 class="text-5xl font-bold mb-6 text-emerald-300">KV Cache 与高效注意力变体</h2>
 

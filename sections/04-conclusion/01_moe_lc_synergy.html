@@ -1,6 +1,16 @@
 <!-- Slide 19: MoE × 长上下文：协同与挑战 -->
 <div class="slide relative flex flex-col h-screen bg-gray-900 text-white px-20 py-16">
-<aside class="notes">这张是全讲的"融合点"。强调协同是双向的：MoE 帮助长上下文降低计算成本，长上下文也给 MoE 更多训练信号。</aside>
+<aside class="notes">这张是全讲的"融合点"。强调协同是双向的：MoE 帮助长上下文降低计算成本，长上下文也给 MoE 更多训练信号。
+----------
+MoE 和长上下文相互加强，但也引入了新的冲突。
+
+**MoE 如何助力长上下文**：稀疏激活为每 token 节省了计算预算，这些预算可以用来支持更长的序列；专家的自发分工在长文档中有天然优势——不同段落可能激活不同专家；更大的参数总量意味着更强的"知识容量"，有助于记住长文档中的细节。
+
+**长上下文如何强化 MoE**：更长序列意味着每个专家都能收到更多样的 token，训练信号更丰富；长文档的多样性也有助于防止专家过度拟合到特定的短文本模式。
+
+但挑战也是真实的：KV Cache 和专家参数要同时竞争显存；Expert Parallelism 的 all-to-all 通信延迟和 Ring Attention 的 K/V 传递需要精心调度才不会相互阻塞；负载均衡在超长序列下会失效——同一文档的 token 高度相关，可能大量涌向同一个专家。
+
+这些矛盾的协同解决，是当前研究的前沿。</aside>
 
   <h2 class="text-5xl font-bold mb-8 text-purple-300">MoE × 长上下文：协同与挑战</h2>
 

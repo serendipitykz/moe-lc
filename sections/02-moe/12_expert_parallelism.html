@@ -1,5 +1,19 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-10 relative">
-<aside class="notes">强调 EP 是 MoE 独有的并行维度——只有引入专家才需要 all-to-all。核心点：两次 all-to-all（dispatch + combine）是 EP 的通信代价；实际系统将 EP × TP × PP × DP 四维组合。</aside>
+<aside class="notes">强调 EP 是 MoE 独有的并行维度——只有引入专家才需要 all-to-all。核心点：两次 all-to-all（dispatch + combine）是 EP 的通信代价；实际系统将 EP × TP × PP × DP 四维组合。
+----------
+MoE 引入了一个稠密模型没有的新的并行维度——**专家并行（Expert Parallelism，EP）**。
+
+稠密模型的分布式训练通常用三种并行：数据并行（DP）分 batch，张量并行（TP）分权重矩阵，流水线并行（PP）分层。这三种都是通用的。
+
+EP 是 MoE 专有的：把不同的专家分布到不同的 GPU 上，每张 GPU 负责 N_exp/EP 个专家。
+
+代价是什么？**每个 MoE 层需要两次 all-to-all 通信**。第一次叫 Dispatch：token 的隐状态向量要被发送到对应专家所在的 GPU；第二次叫 Combine：专家计算完毕，输出要被发回 token 原来所在的 GPU。这两次 all-to-all 每次传输量是 k × B × d_model 个元素，k 是每 token 激活专家数，B 是 batch size，d_model 是隐状态维度。
+
+通信量和延迟是 EP 最大的工程挑战。DeepSeek-V2 在实践中用了 EP=32，与 TP/PP/DP 四维并行结合，设计了精细的 overlap 策略让通信和计算尽可能重叠。
+
+对于容量控制，EP 下还需要处理每张 GPU 上专家的 buffer 溢出问题，所以 token capacity 公式 C = ⌈ B / N_exp ⌉ × CF 在 EP 环境下同样有效。
+
+记住这张四维并行对比表：DP 通信是 all-reduce，TP 也是 all-reduce 或 reduce-scatter，PP 是点对点，**EP 是 all-to-all**——all-to-all 是网络里最"昂贵"的集体通信操作之一，这也是为什么 MoE 的分布式训练工程难度很高。</aside>
 
   <h2 class="text-4xl font-bold leading-tight mb-1 text-indigo-300">专家并行（EP）与分布式训练</h2>
   <p class="text-lg text-gray-400 mb-4">MoE 专属的并行维度：将不同专家分布到不同 GPU 组</p>
