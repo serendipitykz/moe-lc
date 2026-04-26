@@ -1,14 +1,14 @@
 <div class="slide flex flex-col h-screen bg-gray-900 text-white px-20 py-14 relative">
 <aside class="notes">强调 EP 是 MoE 独有的并行维度——只有引入专家才需要 all-to-all。核心点：两次 all-to-all（dispatch + combine）是 EP 的通信代价；实际系统将 EP × TP × PP × DP 四维组合。</aside>
 
-  <h2 class="text-5xl font-bold mb-2 text-indigo-300">专家并行（EP）与分布式训练</h2>
-  <p class="text-xl text-gray-400 mb-6">MoE 专属的并行维度：将不同专家分布到不同 GPU 组</p>
+  <h2 class="text-4xl font-bold mb-1 text-indigo-300">专家并行（EP）与分布式训练</h2>
+  <p class="text-lg text-gray-400 mb-4">MoE 专属的并行维度：将不同专家分布到不同 GPU 组</p>
 
   <div class="flex gap-8 flex-1 min-h-0">
 
     <!-- Left: All-to-All SVG -->
     <div class="flex-1 flex flex-col gap-3">
-      <h3 class="text-xl font-semibold text-indigo-200">All-to-All 调度流程（EP = 4）</h3>
+      <h3 class="text-base font-semibold text-indigo-200">All-to-All 调度流程（EP = 4）</h3>
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex-1 flex items-center justify-center">
         <svg viewBox="0 0 420 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <!-- Token batch row -->
@@ -75,7 +75,7 @@
 
     <!-- Right: parallelism table + capacity -->
     <div class="w-72 flex flex-col gap-4">
-      <h3 class="text-xl font-semibold text-indigo-200">四维并行对比</h3>
+      <h3 class="text-base font-semibold text-indigo-200">四维并行对比</h3>
       <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
         <table class="w-full text-sm">
           <thead>
@@ -111,7 +111,7 @@
       </div>
 
       <div class="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex flex-col gap-3">
-        <h4 class="text-base font-semibold text-indigo-200">Token 容量（防溢出）</h4>
+        <h4 class="text-sm font-semibold text-indigo-200">Token 容量（防溢出）</h4>
         <div class="text-center">
           \[C = \left\lceil \frac{B}{N_{exp}} \right\rceil \times CF\]
         </div>
