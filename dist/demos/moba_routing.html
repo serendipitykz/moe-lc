@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>MoBA: Block Routing Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a;
+      color: #f1f5f9;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 40px;
+    }
+
+    /* ── Back button ── */
+    .back-btn {
+      position: fixed; top: 14px; left: 14px;
+      background: #1e293b; border: 1px solid #334155;
+      color: #94a3b8; padding: 6px 14px; border-radius: 8px;
+      cursor: pointer; font-size: 13px; transition: background 0.15s, color 0.15s;
+    }
+    .back-btn:hover { background: #334155; color: #f1f5f9; }
+
+    /* ── Header ── */
+    h1 { font-size: 22px; font-weight: 700; color: #a78bfa; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 28px; text-align: center; }
+
+    /* ── Main layout ── */
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+      padding: 20px 24px; width: 100%; max-width: 780px; margin-bottom: 16px;
+    }
+    .section-label {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #475569; margin-bottom: 10px; font-weight: 600;
+    }
+
+    /* ── Block sequence row ── */
+    .blocks-row {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    }
+    .block {
+      width: 62px; height: 62px; border-radius: 10px;
+      border: 2px solid #334155; background: #0f172a;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      cursor: pointer; transition: all 0.25s; user-select: none;
+    }
+    .block .blabel { font-size: 13px; font-weight: 700; }
+    .block .bsub   { font-size: 9px;  color: #475569; }
+    .block:hover   { border-color: #64748b; }
+
+    .block.inactive .blabel { color: #475569; }
+    .block.inactive .bsub   { color: #334155; }
+
+    .block.current {
+      background: #431407; border-color: #f59e0b; border-width: 2.5px;
+    }
+    .block.current .blabel { color: #fbbf24; }
+    .block.current .bsub   { color: #d97706; }
+
+    .block.selected {
+      background: #1e1b4b; border-color: #7c3aed; border-width: 2.5px;
+    }
+    .block.selected .blabel { color: #c4b5fd; }
+    .block.selected .bsub   { color: #7c3aed; }
+
+    /* ── Score bars ── */
+    .scores-section { margin-top: 14px; }
+    .scores-row {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .score-col {
+      width: 62px; display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+    }
+    .bar-track {
+      width: 26px; height: 72px; background: #0f172a;
+      border-radius: 5px; position: relative; overflow: hidden;
+    }
+    .bar-fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      border-radius: 5px;
+      transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  background 0.3s ease;
+    }
+    .bar-fill.inactive  { background: #334155; }
+    .bar-fill.selected  { background: #7c3aed; }
+    .bar-fill.current   { background: #f59e0b; height: 100% !important; }
+    .score-num {
+      font-size: 10px; font-family: monospace; color: #475569;
+      transition: color 0.2s;
+    }
+    .score-num.selected { color: #a78bfa; }
+    .score-num.current  { color: #f59e0b; }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .ctrl-label { font-size: 13px; color: #94a3b8; }
+    input[type=range] {
+      width: 100%; max-width: 540px;
+      accent-color: #7c3aed; cursor: pointer;
+    }
+
+    /* ── Formula ── */
+    .formula-row {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      justify-content: center; margin-top: 2px;
+    }
+    .formula-chip {
+      background: #1e1b4b; border: 1px solid #4c1d95;
+      border-radius: 8px; padding: 8px 16px;
+      font-family: monospace; font-size: 13px; color: #c4b5fd;
+    }
+    .formula-note { font-size: 12px; color: #64748b; text-align: center; margin-top: 6px; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #94a3b8; }
+    .leg-dot { width: 13px; height: 13px; border-radius: 4px; flex-shrink: 0; }
+
+    /* ── Status banner ── */
+    .status-banner {
+      font-size: 13px; color: #94a3b8; text-align: center; padding: 6px 0;
+      min-height: 22px;
+    }
+    .status-banner .hi { color: #c4b5fd; font-weight: 600; }
+    .status-banner .lo { color: #fbbf24; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <button class="back-btn" onclick="goBack()">← Back</button>
+
+  <h1>MoBA: Mixture of Block Attention</h1>
+  <p class="subtitle">
+    Interactive block routing — click any block or drag the slider to move the query position.<br>
+    Top-<span id="topk-label">2</span> blocks are selected by gate score; the current block is always active.
+  </p>
+
+  <!-- Block sequence -->
+  <div class="card">
+    <div class="section-label">Block sequence (10 blocks · 64 tokens each)</div>
+    <div class="blocks-row" id="blocks-row"></div>
+    <div class="scores-section">
+      <div class="section-label" style="margin-top:12px">Gate scores  s_i = q · mean_pool(K[block_i])</div>
+      <div class="scores-row" id="scores-row"></div>
+    </div>
+    <div class="status-banner" id="status-banner"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="card controls">
+    <div class="ctrl-label" id="ctrl-label">Query position: Block 1</div>
+    <input type="range" id="query-slider" min="0" max="9" value="0" />
+    <div style="display:flex;gap:12px;align-items:center;margin-top:4px">
+      <label style="font-size:12px;color:#64748b">Top-k blocks:</label>
+      <input type="range" id="topk-slider" min="1" max="4" value="2"
+             style="width:120px;accent-color:#7c3aed"/>
+      <span id="topk-display" style="font-size:13px;color:#c4b5fd;font-family:monospace">k = 2</span>
+    </div>
+  </div>
+
+  <!-- Formula + legend -->
+  <div class="card">
+    <div class="formula-row">
+      <div class="formula-chip">s_i = q · mean_pool(K[block_i])</div>
+      <div class="formula-chip">select top-k + always B_current</div>
+    </div>
+    <div class="formula-note">
+      Routing is content-dependent, not positional — different queries activate different block subsets.<br>
+      Training: 90% MoBA + 10% full attention · Sparsity @32K: 95.31% · Prefill @1M: 6.5× faster
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="leg-dot" style="background:#f59e0b"></div>
+      <span>Current block (always active — analogous to MoE shared expert)</span>
+    </div>
+    <div class="legend-item">
+      <div class="leg-dot" style="background:#7c3aed"></div>
+      <span>Top-k selected by gate score</span>
+    </div>
+    <div class="legend-item">
+      <div class="leg-dot" style="background:#334155"></div>
+      <span>Not selected (evicted — ~95% of blocks)</span>
+    </div>
+  </div>
+
+  <script>
+    const N = 10;
+
+    // Deterministic pseudo-random: same (queryIdx, blockIdx) always gives same score
+    function seededRand(a, b) {
+      const x = Math.sin(a * 127.1 + b * 311.7 + 1.4142) * 43758.5453;
+      return x - Math.floor(x);
+    }
+
+    function getScores(q) {
+      return Array.from({ length: N }, (_, i) =>
+        i === q ? null : seededRand(q, i)
+      );
+    }
+
+    function getTopK(scores, q, k) {
+      return new Set(
+        scores
+          .map((s, i) => ({ s, i }))
+          .filter(x => x.s !== null)
+          .sort((a, b) => b.s - a.s)
+          .slice(0, k)
+          .map(x => x.i)
+      );
+    }
+
+    function render() {
+      const q    = parseInt(document.getElementById('query-slider').value);
+      const k    = parseInt(document.getElementById('topk-slider').value);
+      const scores = getScores(q);
+      const topK   = getTopK(scores, q, k);
+
+      document.getElementById('ctrl-label').textContent =
+        `Query position: Block ${q + 1}`;
+      document.getElementById('topk-display').textContent = `k = ${k}`;
+      document.getElementById('topk-label').textContent = k;
+
+      // Build block cells
+      const blocksRow = document.getElementById('blocks-row');
+      blocksRow.innerHTML = '';
+      for (let i = 0; i < N; i++) {
+        const isCurrent  = i === q;
+        const isSelected = topK.has(i);
+        const cls = isCurrent ? 'block current'
+                  : isSelected ? 'block selected'
+                  : 'block inactive';
+
+        const sub = isCurrent  ? 'query ★'
+                  : isSelected ? 'active ✓'
+                  : '—';
+
+        const div = document.createElement('div');
+        div.className = cls;
+        div.innerHTML = `<span class="blabel">B${i + 1}</span>
+                         <span class="bsub">${sub}</span>`;
+        div.addEventListener('click', () => {
+          document.getElementById('query-slider').value = i;
+          render();
+        });
+        blocksRow.appendChild(div);
+      }
+
+      // Build score bars
+      const scoresRow = document.getElementById('scores-row');
+      scoresRow.innerHTML = '';
+      for (let i = 0; i < N; i++) {
+        const isCurrent  = i === q;
+        const isSelected = topK.has(i);
+
+        const col = document.createElement('div');
+        col.className = 'score-col';
+
+        const track = document.createElement('div');
+        track.className = 'bar-track';
+
+        const fill = document.createElement('div');
+        const fillCls = isCurrent ? 'bar-fill current'
+                       : isSelected ? 'bar-fill selected'
+                       : 'bar-fill inactive';
+        fill.className = fillCls;
+        const pct = isCurrent ? 100 : Math.round(scores[i] * 100);
+        fill.style.height = `${pct}%`;
+
+        const num = document.createElement('div');
+        const numCls = isCurrent ? 'score-num current'
+                     : isSelected ? 'score-num selected'
+                     : 'score-num';
+        num.className = numCls;
+        num.textContent = isCurrent ? 'self' : scores[i].toFixed(2);
+
+        track.appendChild(fill);
+        col.appendChild(track);
+        col.appendChild(num);
+        scoresRow.appendChild(col);
+      }
+
+      // Status banner
+      const selectedNames = [...topK].sort((a, b) => a - b).map(i => `B${i+1}`).join(', ');
+      document.getElementById('status-banner').innerHTML =
+        `Attending to <span class="lo">B${q+1}</span> (current) + ` +
+        `<span class="hi">${selectedNames}</span> (top-${k} by score) = ` +
+        `<strong>${1 + k}</strong> / ${N} blocks active`;
+    }
+
+    document.getElementById('query-slider').addEventListener('input', render);
+    document.getElementById('topk-slider').addEventListener('input', render);
+
+    render();
+
+    // ── Back navigation (CLAUDE.md §7) ──
+    function goBack() {
+      if (window.opener && !window.opener.closed) {
+        window.opener.focus();
+        window.close();
+      } else {
+        const from = new URLSearchParams(location.search).get('from');
+        if (from) location.href = from;
+        else history.back();
+      }
+    }
+  </script>
+</body>
+</html>
