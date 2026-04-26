@@ -106,5 +106,9 @@ Ring Attention 和 Expert Parallelism 结合时，工程复杂度极高——两
 
   </div>
 
+  <p class="absolute bottom-4 left-20 text-base text-gray-500">
+    Ring Attention 通过设备间 KV 传递实现超长序列分布式训练，每设备仅持有 \(L/P\) 的序列片段。<cite class="not-italic ml-1">[Liu et al., 2023]</cite>
+  </p>
+
   <span class="absolute bottom-16 right-10 text-base text-gray-500 font-mono">0 / 0</span>
 </div>

@@ -30,47 +30,50 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
 
 核心原因是**稀疏检索能力**。有些任务需要从百万 token 里精确召回特定信息，这需要 softmax 的尖锐注意力分布。7 层线性注意力负责积累"背景知识"，1 层 Softmax 负责精确检索，分工明确。这是工程实践中的最优权衡点。</aside>
 
-  <h2 class="text-4xl font-bold mb-1 text-cyan-300">线性注意力与混合架构</h2>
-  <p class="text-lg text-gray-400 mb-3">将 O(L²) 降至 O(L)——历史累积器形式 · 混合 Softmax 补足精确检索能力</p>
+  <h2 class="text-5xl font-bold mb-1 text-cyan-300">线性注意力与混合架构</h2>
+  <p class="text-xl text-gray-400 mb-3">将 O(L²) 降至 O(L)——历史累积器形式 · 混合 Softmax 补足精确检索能力</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
     <!-- Left: Linear Attention -->
     <div class="flex-[5] flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-cyan-800 p-5 flex flex-col gap-3">
-        <h3 class="text-lg font-semibold text-cyan-200">线性注意力</h3>
-        <p class="text-sm text-gray-300">改变矩阵乘法运算顺序，把 \(O(n^2 d)\) 降到 \(O(n d^2)\)：</p>
-        <div class="text-center text-sm">
+        <h3 class="text-xl font-semibold text-cyan-200">线性注意力</h3>
+
+        <!-- φ definition at top: substitution explanation -->
+        <div class="bg-gray-900 rounded-xl border border-cyan-900 p-3 flex flex-col gap-1">
+          <p class="text-base font-semibold text-cyan-300">核心：用特征映射 \(\phi\) 替代 Softmax 核</p>
+          <div class="text-center text-base">
+            \[\operatorname{softmax}(QK^\top)V \;\xrightarrow{\;\phi\;}\; \phi(Q)\,\bigl(\phi(K)^\top V\bigr)\]
+          </div>
+          <p class="text-base text-gray-400">\(\phi\)（如 ELU+1）将 Q/K 映射到非负空间，近似 Softmax 核，使括号调换合法。</p>
+        </div>
+
+        <!-- Image: vanilla vs linearized self-attention -->
+        <figure class="flex flex-col gap-1">
+          <img src="../pictures/LinearAttention.png"
+               alt="Left: Vanilla self-attention computes N×N attention matrix, O(N²). Right: Linearized attention reorders to compute K'^T·V as a d×d matrix first, reducing to O(N)."
+               class="rounded-lg w-full border border-gray-700"
+               style="max-height:160px; object-fit:contain; background:#1f2937;" />
+          <figcaption class="text-sm text-gray-500 text-center">左：Vanilla Attention O(N²)，先算 N×N 矩阵；右：Linear Attention O(N)，先算 d×d 小矩阵</figcaption>
+        </figure>
+
+        <!-- Reordering formula with complexity labels -->
+        <p class="text-base text-gray-300">改变运算顺序，\(O(n^2 d)\) → \(O(n d^2)\)：</p>
+        <div class="text-center text-base">
           \[\underbrace{(\phi(Q)\phi(K)^{\top})V}_{O(n^2 d)} \;\longrightarrow\; \underbrace{\phi(Q)\,(\phi(K)^{\top}V)}_{O(nd^2)}\]
         </div>
-        <p class="text-sm text-gray-300">等价递推（可流式推理）：</p>
-        <div class="text-center text-sm">
+
+        <!-- Recursive form -->
+        <p class="text-base text-gray-300">等价递推（可流式推理）：</p>
+        <div class="text-center text-base">
           \[\mathbf{C}_t = \mathbf{C}_{t-1} + \phi(k_t)\,v_t^{\top}, \quad \text{out}_t = \phi(q_t)\,\mathbf{C}_t\]
         </div>
-        <p class="text-sm text-gray-400">\(\mathbf{C}_t \in \mathbb{R}^{d\times d}\)——历史积累器，替代完整 KV Cache；Flash-Linear Attention 库提供融合 kernel。</p>
-
-        <!-- Complexity comparison SVG -->
-        <svg viewBox="0 0 260 80" width="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <marker id="ax-lc" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-              <polygon points="0 0,6 2,0 4" fill="#4b5563"/>
-            </marker>
-          </defs>
-          <line x1="20" y1="65" x2="252" y2="65" stroke="#4b5563" stroke-width="1" marker-end="url(#ax-lc)"/>
-          <line x1="20" y1="65" x2="20"  y2="8"  stroke="#4b5563" stroke-width="1" marker-end="url(#ax-lc)"/>
-          <text x="136" y="75" text-anchor="middle" font-size="8" fill="#9ca3af">sequence length L</text>
-          <text x="14"  y="38" text-anchor="middle" font-size="8" fill="#9ca3af" transform="rotate(-90,14,38)">compute</text>
-          <!-- Quadratic curve -->
-          <path d="M 20 64 Q 80 60 136 38 Q 192 14 240 8" stroke="#ef4444" stroke-width="2" fill="none"/>
-          <foreignObject x="226" y="2" width="34" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#ef4444;text-align:left">\(O(L^2)\)</span></foreignObject>
-          <!-- Linear line -->
-          <path d="M 20 64 L 240 52" stroke="#06b6d4" stroke-width="2" fill="none"/>
-          <foreignObject x="226" y="46" width="34" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#06b6d4;text-align:left">\(O(L)\)</span></foreignObject>
-        </svg>
+        <p class="text-base text-gray-400">\(\mathbf{C}_t \in \mathbb{R}^{d\times d}\)——历史积累器，替代完整 KV Cache；Flash-Linear Attention 提供融合 kernel。</p>
 
         <div class="bg-gray-900 rounded-xl border border-gray-700 p-3">
-          <p class="text-sm font-semibold text-red-400 mb-1">局限：近似精度损失</p>
-          <p class="text-sm text-gray-400">φ 函数无法重现 Softmax 的"尖峰"注意力——精确 NIAH 检索性能下降明显。需与 Softmax 层混合使用。</p>
+          <p class="text-base font-semibold text-red-400 mb-1">局限：近似精度损失</p>
+          <p class="text-base text-gray-400">φ 函数无法重现 Softmax 的"尖峰"注意力——精确 NIAH 检索性能下降明显。需与 Softmax 层混合使用。</p>
         </div>
       </div>
     </div>
@@ -78,41 +81,41 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
     <!-- Right: Hybrid Lightning Attention (MiniMax-01) -->
     <div class="flex-[5] flex flex-col gap-4">
       <div class="bg-gray-800 rounded-2xl border border-violet-800 p-5 flex flex-col gap-3">
-        <h3 class="text-lg font-semibold text-violet-200">混合 Lightning Attention <cite class="text-gray-500 text-sm not-italic">[MiniMax-01, 2025]</cite></h3>
-        <p class="text-sm text-gray-300">80 层模型，每 8 层一个周期：<span class="text-violet-300 font-semibold">7 层 Lightning</span> + <span class="text-amber-300 font-semibold">1 层 Softmax</span>，比例 7:1。</p>
+        <h3 class="text-xl font-semibold text-violet-200">混合 Lightning Attention <cite class="text-gray-500 text-sm not-italic">[MiniMax-01, 2025]</cite></h3>
+        <p class="text-base text-gray-300"><span class="text-violet-200 font-semibold">Lightning Attention</span>：chunk 内部因果 Softmax（局部精度，\(O(\text{chunk}^2)\)）＋ chunk 间线性递推（全局 \(O(n)\)），RoPE 仅加在 Softmax 层。80 层模型中每 8 层一周期：<span class="text-violet-300 font-semibold">7 层 Lightning</span> + <span class="text-amber-300 font-semibold">1 层 Softmax</span>（比例 7:1）。</p>
 
         <!-- 8-layer cycle SVG -->
-        <svg viewBox="0 0 260 72" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 260 82" width="100%" xmlns="http://www.w3.org/2000/svg">
           <!-- Repeat unit label -->
           <text x="130" y="10" text-anchor="middle" font-size="8" fill="#9ca3af">one 8-layer cycle (×10 in 80-layer model)</text>
           <!-- 7 Lightning layers -->
           <rect x="4"   y="16" width="28" height="40" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.2"/>
-          <text x="18"  y="40" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,18,40)">Lightning</text>
+          <text x="18"  y="36" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,18,36)">Lightning</text>
           <rect x="36"  y="16" width="28" height="40" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.2"/>
-          <text x="50"  y="40" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,50,40)">Lightning</text>
+          <text x="50"  y="36" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,50,36)">Lightning</text>
           <rect x="68"  y="16" width="28" height="40" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.2"/>
-          <text x="82"  y="40" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,82,40)">Lightning</text>
+          <text x="82"  y="36" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,82,36)">Lightning</text>
           <rect x="100" y="16" width="28" height="40" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.2"/>
-          <text x="114" y="40" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,114,40)">Lightning</text>
+          <text x="114" y="36" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,114,36)">Lightning</text>
           <rect x="132" y="16" width="28" height="40" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.2"/>
-          <text x="146" y="40" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,146,40)">Lightning</text>
+          <text x="146" y="36" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,146,36)">Lightning</text>
           <rect x="164" y="16" width="28" height="40" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.2"/>
-          <text x="178" y="40" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,178,40)">Lightning</text>
+          <text x="178" y="36" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,178,36)">Lightning</text>
           <rect x="196" y="16" width="28" height="40" rx="3" fill="#312e81" stroke="#7c3aed" stroke-width="1.2"/>
-          <text x="210" y="40" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,210,40)">Lightning</text>
+          <text x="210" y="36" text-anchor="middle" font-size="7" fill="#c4b5fd" transform="rotate(-90,210,36)">Lightning</text>
           <!-- 1 Softmax layer -->
           <rect x="228" y="12" width="28" height="48" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1.8"/>
-          <text x="242" y="40" text-anchor="middle" font-size="7" fill="#fbbf24" font-weight="bold" transform="rotate(-90,242,40)">Softmax</text>
-          <!-- Label -->
-          <foreignObject x="34" y="56" width="160" height="14"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:8px;color:#7c3aed;text-align:center">\(7\times\) Linear \(O(n)\)  →  cheap</span></foreignObject>
-          <text x="242" y="66" text-anchor="middle" font-size="7.5" fill="#f59e0b">1× exact  →  precision</text>
+          <text x="242" y="36" text-anchor="middle" font-size="7" fill="#fbbf24" font-weight="bold" transform="rotate(-90,242,36)">Softmax</text>
+          <!-- Labels -->
+          <foreignObject x="34" y="58" width="160" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:8px;color:#7c3aed;text-align:center">\(7\times\) Linear \(O(n)\)  →  cheap</span></foreignObject>
+          <text x="222" y="72" text-anchor="middle" font-size="7.5" fill="#f59e0b">1× exact  →  precision</text>
         </svg>
 
-        <p class="text-sm text-gray-300">Lightning 内部：chunk 内 Softmax（因果，O(chunk²)）+ chunk 间线性递推（无掩码，O(n)）。RoPE 仅加在 Softmax 层。</p>
+        <p class="text-base text-gray-300">RoPE 位置编码仅施加于 Softmax 层（线性注意力不需要精确位置感知）。</p>
 
         <div class="border border-violet-900 rounded-xl p-3 flex flex-col gap-1.5">
-          <p class="text-sm font-semibold text-violet-200">设计哲学</p>
-          <div class="grid grid-cols-2 gap-x-4 text-sm">
+          <p class="text-base font-semibold text-violet-200">设计哲学</p>
+          <div class="grid grid-cols-2 gap-x-4 text-base">
             <span class="text-violet-300">7 Lightning 层</span>
             <span class="text-gray-300">积累背景知识（O(n) 高效）</span>
             <span class="text-amber-300">1 Softmax 层</span>
@@ -121,8 +124,8 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
         </div>
 
         <div class="bg-emerald-900 bg-opacity-20 rounded-xl border border-emerald-700 p-3">
-          <p class="text-sm text-emerald-200 font-semibold">实测效果</p>
-          <p class="text-sm text-gray-300 mt-0.5">long-context "big needle" 任务准确率接近全 Softmax 模型，支持百万级上下文，计算复杂度大幅低于全 Softmax。</p>
+          <p class="text-base text-emerald-200 font-semibold">实测效果</p>
+          <p class="text-base text-gray-300 mt-0.5">long-context "big needle" 任务准确率接近全 Softmax 模型，支持百万级上下文，计算复杂度大幅低于全 Softmax。</p>
         </div>
       </div>
     </div>

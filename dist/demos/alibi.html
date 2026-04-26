@@ -41,6 +41,9 @@
 <body>
   <h1>ALiBi: Attention with Linear Biases</h1>
   <video src="alibi.mp4" controls autoplay></video>
-  <a class="back-btn" href="../index.html#/16">← Back to slides</a>
+  <a class="back-btn" href="#"
+     onclick="if(window.opener){window.opener.focus();window.close();return false;}
+              var f=new URLSearchParams(location.search).get('from');
+              if(f){location.href=f;return false;}">← Back to slides</a>
 </body>
 </html>

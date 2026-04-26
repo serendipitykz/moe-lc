@@ -35,33 +35,33 @@ DeepSeek-V2 的配置：共享专家 K_s=2，路由专家 N_r=160 中选 K_r=6�
       <div class="bg-gray-800 rounded-2xl border border-indigo-700 p-4 flex-1 flex flex-col gap-3">
         <h3 class="text-lg font-semibold text-indigo-200">创新 1：细粒度专家分割</h3>
         <p class="text-sm text-gray-300">将每个专家 FFN 拆分为 <span class="text-yellow-300">m</span> 个更小专家（中间维度缩小 m 倍），总专家数扩大 m 倍，激活数同比扩大。</p>
-        <div class="flex justify-center gap-8 py-2">
+        <div class="flex justify-center gap-6 py-3">
           <!-- Before -->
-          <div class="flex flex-col items-center gap-1">
-            <p class="text-xs text-gray-500 mb-1">标准 MoE</p>
-            <div class="flex gap-1">
-              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₀</div>
-              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₁</div>
-              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₂</div>
-              <div class="w-10 h-14 rounded bg-indigo-800 border border-indigo-600 flex items-center justify-center text-xs text-indigo-300">E₃</div>
+          <div class="flex flex-col items-center gap-2">
+            <p class="text-sm text-gray-500 mb-1">标准 MoE</p>
+            <div class="flex gap-2">
+              <div class="w-16 h-24 rounded-lg bg-indigo-800 border border-indigo-600 flex items-center justify-center text-base font-semibold text-indigo-300">E₀</div>
+              <div class="w-16 h-24 rounded-lg bg-indigo-800 border border-indigo-600 flex items-center justify-center text-base font-semibold text-indigo-300">E₁</div>
+              <div class="w-16 h-24 rounded-lg bg-indigo-800 border border-indigo-600 flex items-center justify-center text-base font-semibold text-indigo-300">E₂</div>
+              <div class="w-16 h-24 rounded-lg bg-indigo-800 border border-indigo-600 flex items-center justify-center text-base font-semibold text-indigo-300">E₃</div>
             </div>
-            <p class="text-xs text-gray-500">4 experts, dim=d<sub>ff</sub></p>
+            <p class="text-sm text-gray-500">4 experts, dim=d<sub>ff</sub></p>
           </div>
-          <div class="flex items-center text-2xl text-gray-400">→</div>
+          <div class="flex items-center text-3xl text-gray-400">→</div>
           <!-- After -->
-          <div class="flex flex-col items-center gap-1">
-            <p class="text-xs text-gray-500 mb-1">细粒度 (m=2)</p>
-            <div class="flex gap-1 flex-wrap justify-center" style="max-width:96px">
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₀</div>
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₁</div>
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₂</div>
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₃</div>
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₄</div>
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₅</div>
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₆</div>
-              <div class="w-9 h-7 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-xs text-emerald-300">e₇</div>
+          <div class="flex flex-col items-center gap-2">
+            <p class="text-sm text-gray-500 mb-1">细粒度 (m=2)</p>
+            <div class="flex gap-1 flex-wrap justify-center" style="max-width:208px">
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₀</div>
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₁</div>
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₂</div>
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₃</div>
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₄</div>
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₅</div>
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₆</div>
+              <div class="w-12 h-11 rounded bg-emerald-900 border border-emerald-600 flex items-center justify-center text-sm text-emerald-300">e₇</div>
             </div>
-            <p class="text-xs text-gray-500">8 experts, dim=d<sub>ff</sub>/2</p>
+            <p class="text-sm text-gray-500">8 experts, dim=d<sub>ff</sub>/2</p>
           </div>
         </div>
         <p class="text-sm text-gray-500">相同激活 FLOPs，但更细的专家粒度使知识边界更清晰。</p>
@@ -74,39 +74,39 @@ DeepSeek-V2 的配置：共享专家 K_s=2，路由专家 N_r=160 中选 K_r=6�
         <h3 class="text-lg font-semibold text-amber-300">创新 2：共享专家隔离</h3>
         <p class="text-sm text-gray-300">保留 <span class="text-amber-300">\(K_s\)</span> 个专家始终激活（共享专家），承担所有 token 共同需要的通用知识，让路由专家专注于专业化知识。</p>
 
-        <svg viewBox="0 0 280 175" width="100%" class="mt-1" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 280 205" width="100%" class="mt-1" xmlns="http://www.w3.org/2000/svg">
           <!-- Token input -->
-          <rect x="110" y="5" width="60" height="24" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
-          <foreignObject x="110" y="8" width="60" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#a5b4fc;text-align:center">token \(u_t\)</span></foreignObject>
+          <rect x="110" y="5" width="60" height="26" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
+          <foreignObject x="110" y="9" width="60" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#a5b4fc;text-align:center">token \(u_t\)</span></foreignObject>
 
           <!-- Arrow down to split -->
-          <line x1="140" y1="29" x2="140" y2="45" stroke="#6b7280" stroke-width="1.5"/>
-          <line x1="140" y1="45" x2="50"  y2="55" stroke="#fbbf24" stroke-width="1.2"/>
-          <line x1="140" y1="45" x2="230" y2="55" stroke="#6ee7b7" stroke-width="1.2"/>
+          <line x1="140" y1="31" x2="140" y2="48" stroke="#6b7280" stroke-width="1.5"/>
+          <line x1="140" y1="48" x2="62"  y2="60" stroke="#fbbf24" stroke-width="1.2"/>
+          <line x1="140" y1="48" x2="230" y2="60" stroke="#6ee7b7" stroke-width="1.2"/>
 
           <!-- Shared experts (always active) -->
-          <rect x="10"  y="55" width="80" height="50" rx="5" fill="#78350f" fill-opacity="0.4" stroke="#f59e0b" stroke-width="1.5"/>
-          <text x="50" y="74"  text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">Shared Experts</text>
-          <foreignObject x="10" y="80" width="80" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:10px;color:#fbbf24;text-align:center">\(K_s\), always active</span></foreignObject>
-          <text x="50" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">general knowledge</text>
+          <rect x="5"  y="60" width="115" height="68" rx="5" fill="#78350f" fill-opacity="0.4" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="62" y="80"  text-anchor="middle" font-size="12" fill="#fbbf24" font-weight="bold">Shared Experts</text>
+          <foreignObject x="5" y="86" width="115" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#fbbf24;text-align:center">\(K_s\), always active</span></foreignObject>
+          <text x="62" y="119" text-anchor="middle" font-size="11" fill="#9ca3af">general knowledge</text>
 
           <!-- Routed experts -->
-          <rect x="155" y="55" width="115" height="50" rx="5" fill="#064e3b" fill-opacity="0.5" stroke="#10b981" stroke-width="1.5"/>
-          <text x="213" y="74"  text-anchor="middle" font-size="11" fill="#6ee7b7" font-weight="bold">Routed Experts</text>
-          <foreignObject x="155" y="80" width="115" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:10px;color:#6ee7b7;text-align:center">Top-\(K_r\) of \(N_r\)</span></foreignObject>
-          <text x="213" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">specialized</text>
+          <rect x="150" y="60" width="125" height="68" rx="5" fill="#064e3b" fill-opacity="0.5" stroke="#10b981" stroke-width="1.5"/>
+          <text x="213" y="80"  text-anchor="middle" font-size="12" fill="#6ee7b7" font-weight="bold">Routed Experts</text>
+          <foreignObject x="150" y="86" width="125" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#6ee7b7;text-align:center">Top-\(K_r\) of \(N_r\)</span></foreignObject>
+          <text x="213" y="119" text-anchor="middle" font-size="11" fill="#9ca3af">specialized</text>
 
           <!-- Arrows to combine -->
-          <line x1="50"  y1="105" x2="110" y2="130" stroke="#fbbf24" stroke-width="1.2"/>
-          <line x1="213" y1="105" x2="170" y2="130" stroke="#6ee7b7" stroke-width="1.2"/>
+          <line x1="62"  y1="128" x2="110" y2="153" stroke="#fbbf24" stroke-width="1.2"/>
+          <line x1="213" y1="128" x2="170" y2="153" stroke="#6ee7b7" stroke-width="1.2"/>
 
           <!-- Combine box -->
-          <rect x="85" y="130" width="110" height="28" rx="4" fill="#1f2937" stroke="#374151" stroke-width="1"/>
-          <foreignObject x="85" y="133" width="110" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:10px;color:#d1d5db;text-align:center">\(h_t = u_t + \Sigma_{\mathrm{sh}} + \Sigma_{\mathrm{rt}}\)</span></foreignObject>
+          <rect x="80" y="153" width="120" height="34" rx="4" fill="#1f2937" stroke="#374151" stroke-width="1"/>
+          <foreignObject x="80" y="158" width="120" height="24"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#d1d5db;text-align:center">\(h_t = u_t + \Sigma_{\mathrm{sh}} + \Sigma_{\mathrm{rt}}\)</span></foreignObject>
 
           <!-- Labels -->
-          <text x="50"  y="50" text-anchor="middle" font-size="10" fill="#fbbf24">always</text>
-          <text x="213" y="50" text-anchor="middle" font-size="10" fill="#6ee7b7">routed</text>
+          <text x="62"  y="55" text-anchor="middle" font-size="11" fill="#fbbf24">always</text>
+          <text x="213" y="55" text-anchor="middle" font-size="11" fill="#6ee7b7">routed</text>
         </svg>
       </div>
     </div>

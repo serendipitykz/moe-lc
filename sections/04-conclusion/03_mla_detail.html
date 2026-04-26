@@ -89,20 +89,26 @@ MLA 是一个很优雅的想法——在不改变注意力数学的前提下，�
 
         <!-- h_t input -->
         <rect x="60" y="35" width="100" height="32" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
-        <text x="110" y="56" text-anchor="middle" fill="#e5e7eb" font-size="13" font-weight="bold">h_t</text>
+        <foreignObject x="60" y="38" width="100" height="22"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:13px;color:#e5e7eb;font-weight:bold;text-align:center">\(h_t\)</span></foreignObject>
 
         <!-- Arrow down to W_Q, W_K, W_V -->
         <line x1="110" y1="67" x2="110" y2="85" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
 
         <!-- Three projections W_Q, W_K, W_V side by side -->
         <rect x="30" y="85" width="52" height="28" rx="5" fill="#1f2937" stroke="#6b7280" stroke-width="1.2"/>
-        <text x="56" y="104" text-anchor="middle" fill="#d1d5db" font-size="12">W_Q</text>
+        <foreignObject x="28" y="94" width="56" height="16">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:12px;color:#d1d5db;text-align:center">\(W_Q\)</span>
+        </foreignObject>
 
         <rect x="84" y="85" width="52" height="28" rx="5" fill="#1f2937" stroke="#6b7280" stroke-width="1.2"/>
-        <text x="110" y="104" text-anchor="middle" fill="#d1d5db" font-size="12">W_K</text>
+        <foreignObject x="82" y="94" width="56" height="16">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:12px;color:#d1d5db;text-align:center">\(W_K\)</span>
+        </foreignObject>
 
         <rect x="138" y="85" width="52" height="28" rx="5" fill="#1f2937" stroke="#6b7280" stroke-width="1.2"/>
-        <text x="164" y="104" text-anchor="middle" fill="#d1d5db" font-size="12">W_V</text>
+        <foreignObject x="136" y="94" width="56" height="16">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:12px;color:#d1d5db;text-align:center">\(W_V\)</span>
+        </foreignObject>
 
         <!-- Q, K, V boxes -->
         <line x1="56" y1="113" x2="56" y2="133" stroke="#6b7280" stroke-width="1.2"/>
@@ -130,31 +136,39 @@ MLA 是一个很优雅的想法——在不改变注意力数学的前提下，�
         <!-- KV Cache large block (red = large) -->
         <rect x="40" y="285" width="140" height="52" rx="8" fill="#7f1d1d" fill-opacity="0.5" stroke="#ef4444" stroke-width="2"/>
         <text x="110" y="307" text-anchor="middle" fill="#fca5a5" font-size="14" font-weight="bold">KV Cache</text>
-        <text x="110" y="327" text-anchor="middle" fill="#f87171" font-size="13">H × d_head × L</text>
+        <foreignObject x="38" y="315" width="144" height="18">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:13px;color:#f87171;text-align:center">\(H \times d_{\text{head}} \times L\)</span>
+        </foreignObject>
 
         <!-- ===== MLA (right half) ===== -->
         <text x="370" y="22" text-anchor="middle" fill="#a78bfa" font-size="15" font-weight="bold">MLA</text>
 
         <!-- h_t input -->
         <rect x="320" y="35" width="100" height="32" rx="6" fill="#374151" stroke="#7c3aed" stroke-width="1.5"/>
-        <text x="370" y="56" text-anchor="middle" fill="#e5e7eb" font-size="13" font-weight="bold">h_t</text>
+        <foreignObject x="320" y="38" width="100" height="22"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:13px;color:#e5e7eb;font-weight:bold;text-align:center">\(h_t\)</span></foreignObject>
 
         <!-- Arrow down -->
         <line x1="370" y1="67" x2="370" y2="85" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
 
         <!-- W_DKV projection -->
         <rect x="320" y="85" width="100" height="28" rx="5" fill="#4c1d95" fill-opacity="0.5" stroke="#7c3aed" stroke-width="1.5"/>
-        <text x="370" y="104" text-anchor="middle" fill="#c4b5fd" font-size="13">W^{DKV}</text>
+        <foreignObject x="318" y="93" width="104" height="18">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:13px;color:#c4b5fd;text-align:center">\(W^{DKV}\)</span>
+        </foreignObject>
 
         <!-- c_KV compressed (emerald) -->
         <line x1="370" y1="113" x2="370" y2="133" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
         <rect x="320" y="133" width="100" height="32" rx="6" fill="#064e3b" fill-opacity="0.6" stroke="#34d399" stroke-width="2"/>
-        <text x="370" y="152" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">c_KV ∈ ℝ^{d_c}</text>
+        <foreignObject x="318" y="141" width="104" height="18">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:13px;color:#6ee7b7;font-weight:bold;text-align:center">\(c_{KV} \in \mathbb{R}^{d_c}\)</span>
+        </foreignObject>
 
         <!-- KV Cache small block (emerald = small!) -->
         <rect x="310" y="175" width="120" height="44" rx="8" fill="#064e3b" fill-opacity="0.4" stroke="#34d399" stroke-width="2"/>
         <text x="370" y="194" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="bold">KV Cache</text>
-        <text x="370" y="212" text-anchor="middle" fill="#34d399" font-size="13">只存 c_KV (d_c 维)</text>
+        <foreignObject x="308" y="200" width="124" height="18">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:13px;color:#34d399;text-align:center">只存 \(c_{KV}\) (\(d_c\) 维)</span>
+        </foreignObject>
 
         <!-- Arrow down: c_KV -> W_UKV -->
         <line x1="370" y1="165" x2="370" y2="175" stroke="#34d399" stroke-width="1.5"/>
@@ -162,7 +176,9 @@ MLA 是一个很优雅的想法——在不改变注意力数学的前提下，�
         <!-- W_UKV projection -->
         <line x1="370" y1="219" x2="370" y2="239" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
         <rect x="320" y="239" width="100" height="28" rx="5" fill="#4c1d95" fill-opacity="0.5" stroke="#7c3aed" stroke-width="1.5"/>
-        <text x="370" y="258" text-anchor="middle" fill="#c4b5fd" font-size="13">W^{UKV}</text>
+        <foreignObject x="318" y="247" width="104" height="18">
+          <span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:13px;color:#c4b5fd;text-align:center">\(W^{UKV}\)</span>
+        </foreignObject>
 
         <!-- K, V recovered -->
         <line x1="350" y1="267" x2="340" y2="287" stroke="#7c3aed" stroke-width="1.2"/>

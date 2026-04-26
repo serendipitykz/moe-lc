@@ -29,22 +29,22 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
 
 这两个工作的出现，把稀疏注意力的范式从"静态手工设计"推进到了"动态端到端学习"。这是 2025 年长上下文领域最重要的趋势之一。</aside>
 
-  <h2 class="text-4xl font-bold mb-1 text-emerald-300">现代稀疏注意力：NSA 与 MoBA</h2>
-  <p class="text-lg text-gray-400 mb-3">动态可学习稀疏——从静态手工规则到端到端路由（2025）</p>
+  <h2 class="text-5xl font-bold mb-1 text-emerald-300">现代稀疏注意力：NSA 与 MoBA</h2>
+  <p class="text-xl text-gray-400 mb-3">动态可学习稀疏——从静态手工规则到端到端路由（2025）</p>
 
   <div class="flex gap-6 flex-1 min-h-0">
 
     <!-- Left: NSA -->
     <div class="flex-[5] flex flex-col gap-3">
       <div class="bg-gray-800 rounded-2xl border border-cyan-800 p-4 flex flex-col gap-3 h-full">
-        <h3 class="text-base font-semibold text-cyan-200">NSA <span class="text-gray-400 text-sm font-normal">DeepSeek-AI + PKU, Feb 2025</span></h3>
-        <p class="text-sm text-gray-300">三路并行注意力 + 可学习门控融合，GQA 兼容 Triton kernel，端到端可训练</p>
+        <h3 class="text-lg font-semibold text-cyan-200">NSA <span class="text-gray-400 text-sm font-normal">DeepSeek-AI + PKU, Feb 2025</span></h3>
+        <p class="text-base text-gray-300">三路并行注意力 + 可学习门控融合，GQA 兼容 Triton kernel，端到端可训练</p>
 
         <!-- NSA 3-branch SVG (all text in English) -->
         <svg viewBox="0 0 260 180" width="100%" xmlns="http://www.w3.org/2000/svg">
           <!-- Input token -->
           <rect x="80" y="2" width="100" height="18" rx="3" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.2"/>
-          <text x="130" y="14" text-anchor="middle" font-size="8" fill="#93c5fd">query token  q_t</text>
+          <foreignObject x="80" y="3" width="100" height="14"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;line-height:14px;font-size:8px;color:#93c5fd;text-align:center">query token \(q_t\)</span></foreignObject>
 
           <!-- Branch lines to 3 boxes -->
           <line x1="100" y1="20" x2="38"  y2="44" stroke="#6b7280" stroke-width="1"/>
@@ -55,7 +55,7 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
           <rect x="4"   y="44" width="68" height="40" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="1.2"/>
           <text x="38"  y="57" text-anchor="middle" font-size="7.5" fill="#6ee7b7" font-weight="bold">Compression</text>
           <text x="38"  y="68" text-anchor="middle" font-size="6.5" fill="#9ca3af">MLP per chunk</text>
-          <text x="38"  y="78" text-anchor="middle" font-size="6.5" fill="#9ca3af">l=32 tokens → 1</text>
+          <foreignObject x="4" y="71" width="68" height="12"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;line-height:12px;font-size:6.5px;color:#9ca3af;text-align:center">\(l\!=\!32\) tokens → 1</span></foreignObject>
 
           <!-- Branch 2: Selection -->
           <rect x="96"  y="44" width="68" height="40" rx="3" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
@@ -67,7 +67,7 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
           <rect x="188" y="44" width="68" height="40" rx="3" fill="#451a03" stroke="#f97316" stroke-width="1.2"/>
           <text x="222" y="57" text-anchor="middle" font-size="7.5" fill="#fdba74" font-weight="bold">Sliding Window</text>
           <text x="222" y="68" text-anchor="middle" font-size="6.5" fill="#9ca3af">local context</text>
-          <text x="222" y="78" text-anchor="middle" font-size="6.5" fill="#9ca3af">w = 512</text>
+          <foreignObject x="188" y="71" width="68" height="12"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;line-height:12px;font-size:6.5px;color:#9ca3af;text-align:center">\(w = 512\)</span></foreignObject>
 
           <!-- Gate labels -->
           <line x1="38"  y1="84" x2="38"  y2="104" stroke="#6b7280" stroke-width="0.8"/>
@@ -94,11 +94,11 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
         <!-- Benchmark cards -->
         <div class="grid grid-cols-2 gap-2 mt-auto">
           <div class="bg-cyan-950 bg-opacity-40 border border-cyan-800 rounded-xl p-2">
-            <p class="text-xs text-cyan-300 font-semibold">速度 @64K context</p>
+            <p class="text-sm text-cyan-300 font-semibold">速度 @64K context</p>
             <p class="text-sm text-white font-mono">9× prefill · 11.6× decode</p>
           </div>
           <div class="bg-cyan-950 bg-opacity-40 border border-cyan-800 rounded-xl p-2">
-            <p class="text-xs text-cyan-300 font-semibold">通用任务质量</p>
+            <p class="text-sm text-cyan-300 font-semibold">通用任务质量</p>
             <p class="text-sm text-white">7 / 9 超全注意力基线</p>
           </div>
         </div>
@@ -108,8 +108,8 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
     <!-- Right: MoBA -->
     <div class="flex-[5] flex flex-col gap-3">
       <div class="bg-gray-800 rounded-2xl border border-violet-800 p-4 flex flex-col gap-3 h-full">
-        <h3 class="text-base font-semibold text-violet-200">MoBA <span class="text-gray-400 text-sm font-normal">Moonshot AI + Tsinghua, Feb 2025</span></h3>
-        <p class="text-sm text-gray-300">Block 级门控路由——top-k 块选择 + 当前块恒选（直接对应 MoE shared expert）</p>
+        <h3 class="text-lg font-semibold text-violet-200">MoBA <span class="text-gray-400 text-sm font-normal">Moonshot AI + Tsinghua, Feb 2025</span></h3>
+        <p class="text-base text-gray-300">Block 级门控路由——top-k 块选择 + 当前块恒选（直接对应 MoE shared expert）</p>
 
         <!-- MoBA block routing SVG -->
         <svg viewBox="0 0 260 175" width="100%" xmlns="http://www.w3.org/2000/svg">
@@ -134,7 +134,7 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
 
           <!-- Current block (always active, amber) -->
           <rect x="204" y="14" width="52" height="36" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="2"/>
-          <text x="230" y="31" text-anchor="middle" font-size="7" fill="#fbbf24" font-weight="bold">B_cur</text>
+          <foreignObject x="204" y="21" width="52" height="14"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;line-height:14px;font-size:9px;color:#fbbf24;font-weight:bold;text-align:center">\(B_{\text{cur}}\)</span></foreignObject>
           <text x="230" y="43" text-anchor="middle" font-size="6.5" fill="#f59e0b">always active</text>
 
           <!-- Query token -->
@@ -148,7 +148,7 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
 
           <!-- Gate formula -->
           <foreignObject x="20" y="94" width="220" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#c4b5fd;text-align:center">\(s_i = q \cdot \mathrm{mean\_pool}(K[\mathrm{block}_i])\)</span></foreignObject>
-          <text x="130" y="116" text-anchor="middle" font-size="7" fill="#9ca3af">route to top-k blocks + always include B_cur</text>
+          <foreignObject x="20" y="112" width="220" height="13"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;line-height:13px;font-size:7px;color:#9ca3af;text-align:center">route to top-k blocks + always include \(B_{\text{cur}}\)</span></foreignObject>
 
           <!-- Stats boxes -->
           <rect x="4"   y="126" width="122" height="44" rx="4" fill="#1e1b4b" stroke="#6366f1" stroke-width="1"/>
@@ -164,8 +164,8 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
 
         <!-- MoE analogy -->
         <div class="bg-violet-950 bg-opacity-30 border border-violet-800 rounded-xl p-3 mt-auto">
-          <p class="text-sm text-violet-200 font-semibold mb-1">MoE 类比</p>
-          <div class="grid grid-cols-2 gap-x-4 text-sm">
+          <p class="text-base text-violet-200 font-semibold mb-1">MoE 类比</p>
+          <div class="grid grid-cols-2 gap-x-4 text-base">
             <span class="text-violet-300">top-k 块路由</span><span class="text-gray-300">← routed experts</span>
             <span class="text-amber-300">当前块恒激活</span><span class="text-gray-300">← shared expert</span>
           </div>
