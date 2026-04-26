@@ -73,9 +73,9 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
           <line x1="38"  y1="84" x2="38"  y2="104" stroke="#6b7280" stroke-width="0.8"/>
           <line x1="130" y1="84" x2="130" y2="104" stroke="#6b7280" stroke-width="0.8"/>
           <line x1="222" y1="84" x2="222" y2="104" stroke="#6b7280" stroke-width="0.8"/>
-          <text x="38"  y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^c</text>
-          <text x="130" y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^s</text>
-          <text x="222" y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^w</text>
+          <foreignObject x="18" y="85" width="40" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6b7280;text-align:center">\(g_t^c\)</span></foreignObject>
+          <foreignObject x="110" y="85" width="40" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6b7280;text-align:center">\(g_t^s\)</span></foreignObject>
+          <foreignObject x="202" y="85" width="40" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6b7280;text-align:center">\(g_t^w\)</span></foreignObject>
 
           <!-- Merge lines to fusion box -->
           <line x1="38"  y1="104" x2="105" y2="124" stroke="#6b7280" stroke-width="0.8"/>
@@ -84,10 +84,10 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
 
           <!-- Gated fusion -->
           <rect x="75" y="124" width="110" height="22" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1.2"/>
-          <text x="130" y="139" text-anchor="middle" font-size="8" fill="#fbbf24" font-weight="bold">gated fusion  o_t*</text>
+          <foreignObject x="75" y="126" width="110" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#fbbf24;text-align:center;font-weight:bold">gated fusion  \(o_t^*\)</span></foreignObject>
 
           <!-- Formula -->
-          <text x="130" y="158" text-anchor="middle" font-size="7" fill="#d1d5db">o_t* = Σ_c  g_t^c · Attn( q_t, K_t^c, V_t^c )</text>
+          <foreignObject x="5" y="148" width="250" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#d1d5db;text-align:center">\(o_t^* = \sum_c g_t^c \cdot \mathrm{Attn}(q_t,\,K_t^c,\,V_t^c)\)</span></foreignObject>
           <text x="130" y="170" text-anchor="middle" font-size="6.5" fill="#6b7280">gates learned end-to-end · no manual sparsity patterns</text>
         </svg>
 
@@ -147,7 +147,7 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
           <line x1="145" y1="68" x2="230" y2="50" stroke="#f59e0b" stroke-width="1.2"/>
 
           <!-- Gate formula -->
-          <text x="130" y="104" text-anchor="middle" font-size="8" fill="#c4b5fd">s_i  =  q · mean_pool( K[block_i] )</text>
+          <foreignObject x="20" y="94" width="220" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#c4b5fd;text-align:center">\(s_i = q \cdot \mathrm{mean\_pool}(K[\mathrm{block}_i])\)</span></foreignObject>
           <text x="130" y="116" text-anchor="middle" font-size="7" fill="#9ca3af">route to top-k blocks + always include B_cur</text>
 
           <!-- Stats boxes -->

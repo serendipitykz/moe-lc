@@ -845,7 +845,7 @@ MoE Layer 内部包含两件事：第一，一个门控网络，它是一个简�
           <!-- 门控网络 W_g -->
           <rect x="120" y="102" width="100" height="52" rx="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
           <text x="170" y="125" font-size="14" fill="#a5b4fc" text-anchor="middle" font-family="sans-serif">门控网络</text>
-          <text x="170" y="143" font-size="13" fill="#818cf8" text-anchor="middle" font-family="monospace">W_g</text>
+          <foreignObject x="130" y="130" width="80" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#818cf8;text-align:center">\(W_g\)</span></foreignObject>
 
           <!-- Arrow to Softmax -->
           <line x1="220" y1="128" x2="240" y2="128" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
@@ -894,7 +894,7 @@ MoE Layer 内部包含两件事：第一，一个门控网络，它是一个简�
           <!-- 加权求和 -->
           <rect x="682" y="104" width="100" height="44" rx="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
           <text x="732" y="124" font-size="13" fill="#c7d2fe" text-anchor="middle" font-family="sans-serif">加权求和</text>
-          <text x="732" y="141" font-size="12" fill="#818cf8" text-anchor="middle" font-family="monospace">Σ g_i·FFN_i</text>
+          <foreignObject x="686" y="128" width="92" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#818cf8;text-align:center">\(\sum_i g_i \cdot \mathrm{FFN}_i\)</span></foreignObject>
 
           <!-- Arrow to output -->
           <line x1="782" y1="126" x2="800" y2="126" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowR)"/>
@@ -1906,7 +1906,7 @@ DeepSeek-V2 的配置：共享专家 K_s=2，路由专家 N_r=160 中选 K_r=6�
         <svg viewBox="0 0 280 175" width="100%" class="mt-1" xmlns="http://www.w3.org/2000/svg">
           <!-- Token input -->
           <rect x="110" y="5" width="60" height="24" rx="4" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
-          <text x="140" y="21" text-anchor="middle" font-size="12" fill="#a5b4fc">token u_t</text>
+          <foreignObject x="110" y="8" width="60" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:11px;color:#a5b4fc;text-align:center">token \(u_t\)</span></foreignObject>
 
           <!-- Arrow down to split -->
           <line x1="140" y1="29" x2="140" y2="45" stroke="#6b7280" stroke-width="1.5"/>
@@ -1916,13 +1916,13 @@ DeepSeek-V2 的配置：共享专家 K_s=2，路由专家 N_r=160 中选 K_r=6�
           <!-- Shared experts (always active) -->
           <rect x="10"  y="55" width="80" height="50" rx="5" fill="#78350f" fill-opacity="0.4" stroke="#f59e0b" stroke-width="1.5"/>
           <text x="50" y="74"  text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">Shared Experts</text>
-          <text x="50" y="89"  text-anchor="middle" font-size="10" fill="#fbbf24">K_s, always active</text>
+          <foreignObject x="10" y="80" width="80" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:10px;color:#fbbf24;text-align:center">\(K_s\), always active</span></foreignObject>
           <text x="50" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">general knowledge</text>
 
           <!-- Routed experts -->
           <rect x="155" y="55" width="115" height="50" rx="5" fill="#064e3b" fill-opacity="0.5" stroke="#10b981" stroke-width="1.5"/>
           <text x="213" y="74"  text-anchor="middle" font-size="11" fill="#6ee7b7" font-weight="bold">Routed Experts</text>
-          <text x="213" y="89"  text-anchor="middle" font-size="10" fill="#6ee7b7">Top-K_r of N_r</text>
+          <foreignObject x="155" y="80" width="115" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:10px;color:#6ee7b7;text-align:center">Top-\(K_r\) of \(N_r\)</span></foreignObject>
           <text x="213" y="103" text-anchor="middle" font-size="10" fill="#9ca3af">specialized</text>
 
           <!-- Arrows to combine -->
@@ -1931,7 +1931,7 @@ DeepSeek-V2 的配置：共享专家 K_s=2，路由专家 N_r=160 中选 K_r=6�
 
           <!-- Combine box -->
           <rect x="85" y="130" width="110" height="28" rx="4" fill="#1f2937" stroke="#374151" stroke-width="1"/>
-          <text x="140" y="148" text-anchor="middle" font-size="11" fill="#d1d5db">h_t = u_t + Σshared + Σrouted</text>
+          <foreignObject x="85" y="133" width="110" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:10px;color:#d1d5db;text-align:center">\(h_t = u_t + \Sigma_{\mathrm{sh}} + \Sigma_{\mathrm{rt}}\)</span></foreignObject>
 
           <!-- Labels -->
           <text x="50"  y="50" text-anchor="middle" font-size="10" fill="#fbbf24">always</text>
@@ -3046,9 +3046,9 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
           <line x1="38"  y1="84" x2="38"  y2="104" stroke="#6b7280" stroke-width="0.8"/>
           <line x1="130" y1="84" x2="130" y2="104" stroke="#6b7280" stroke-width="0.8"/>
           <line x1="222" y1="84" x2="222" y2="104" stroke="#6b7280" stroke-width="0.8"/>
-          <text x="38"  y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^c</text>
-          <text x="130" y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^s</text>
-          <text x="222" y="97"  text-anchor="middle" font-size="7" fill="#6b7280">g_t^w</text>
+          <foreignObject x="18" y="85" width="40" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6b7280;text-align:center">\(g_t^c\)</span></foreignObject>
+          <foreignObject x="110" y="85" width="40" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6b7280;text-align:center">\(g_t^s\)</span></foreignObject>
+          <foreignObject x="202" y="85" width="40" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6b7280;text-align:center">\(g_t^w\)</span></foreignObject>
 
           <!-- Merge lines to fusion box -->
           <line x1="38"  y1="104" x2="105" y2="124" stroke="#6b7280" stroke-width="0.8"/>
@@ -3057,10 +3057,10 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
 
           <!-- Gated fusion -->
           <rect x="75" y="124" width="110" height="22" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1.2"/>
-          <text x="130" y="139" text-anchor="middle" font-size="8" fill="#fbbf24" font-weight="bold">gated fusion  o_t*</text>
+          <foreignObject x="75" y="126" width="110" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#fbbf24;text-align:center;font-weight:bold">gated fusion  \(o_t^*\)</span></foreignObject>
 
           <!-- Formula -->
-          <text x="130" y="158" text-anchor="middle" font-size="7" fill="#d1d5db">o_t* = Σ_c  g_t^c · Attn( q_t, K_t^c, V_t^c )</text>
+          <foreignObject x="5" y="148" width="250" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#d1d5db;text-align:center">\(o_t^* = \sum_c g_t^c \cdot \mathrm{Attn}(q_t,\,K_t^c,\,V_t^c)\)</span></foreignObject>
           <text x="130" y="170" text-anchor="middle" font-size="6.5" fill="#6b7280">gates learned end-to-end · no manual sparsity patterns</text>
         </svg>
 
@@ -3120,7 +3120,7 @@ MoBA 的设计直接借鉴了 MoE 的 top-k 路由思想：把长序列划分为
           <line x1="145" y1="68" x2="230" y2="50" stroke="#f59e0b" stroke-width="1.2"/>
 
           <!-- Gate formula -->
-          <text x="130" y="104" text-anchor="middle" font-size="8" fill="#c4b5fd">s_i  =  q · mean_pool( K[block_i] )</text>
+          <foreignObject x="20" y="94" width="220" height="18"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#c4b5fd;text-align:center">\(s_i = q \cdot \mathrm{mean\_pool}(K[\mathrm{block}_i])\)</span></foreignObject>
           <text x="130" y="116" text-anchor="middle" font-size="7" fill="#9ca3af">route to top-k blocks + always include B_cur</text>
 
           <!-- Stats boxes -->
@@ -3206,19 +3206,19 @@ MLA 的解法是架构级低秩压缩。标准 MHA 要缓存每层每头的完�
           <!-- Down-projection -->
           <line x1="100" y1="20" x2="100" y2="34" stroke="#6b7280" stroke-width="1"/>
           <rect x="50"  y="34" width="100" height="16" rx="3" fill="#1c1917" stroke="#f59e0b" stroke-width="1"/>
-          <text x="100" y="45" text-anchor="middle" font-size="7.5" fill="#fbbf24">W^DKV  ↓  compress</text>
+          <foreignObject x="50" y="34" width="100" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#fbbf24;text-align:center">\(W^{DKV}\) ↓ compress</span></foreignObject>
 
           <!-- c_KV (the cached latent) -->
           <line x1="100" y1="50" x2="100" y2="64" stroke="#6b7280" stroke-width="1"/>
           <rect x="55"  y="64" width="90" height="22" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
-          <text x="100" y="78" text-anchor="middle" font-size="8.5" fill="#6ee7b7" font-weight="bold">c_KV  (dim = 512)</text>
+          <foreignObject x="55" y="65" width="90" height="20"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:10px;color:#6ee7b7;text-align:center;font-weight:bold">\(c_{KV}\) (dim = 512)</span></foreignObject>
           <rect x="148" y="68" width="46" height="14" rx="2" fill="#065f46" stroke="#10b981" stroke-width="0.8"/>
           <text x="171" y="78" text-anchor="middle" font-size="6.5" fill="#34d399">cached ✓</text>
 
           <!-- Up-projection (on demand at inference) -->
           <line x1="100" y1="86" x2="100" y2="100" stroke="#6b7280" stroke-width="1"/>
           <rect x="40"  y="100" width="120" height="16" rx="3" fill="#1c1917" stroke="#f59e0b" stroke-width="1"/>
-          <text x="100" y="111" text-anchor="middle" font-size="7.5" fill="#fbbf24">W^UKV  ↑  on-demand</text>
+          <foreignObject x="40" y="100" width="120" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#fbbf24;text-align:center">\(W^{UKV}\) ↑ on-demand</span></foreignObject>
 
           <!-- K, V outputs -->
           <line x1="80"  y1="116" x2="55"  y2="130" stroke="#6b7280" stroke-width="1"/>
@@ -3376,8 +3376,8 @@ MLA 的解法是架构级低秩压缩。标准 MHA 要缓存每层每头的完�
           <rect x="34"  y="16" width="110" height="26" fill="#1f2937" stroke="#374151" stroke-width="0.8" rx="3"/>
           <text x="89"  y="32" text-anchor="middle" font-size="7" fill="#4b5563">evicted  ✗</text>
           <rect x="144" y="16" width="74"  height="26" fill="#064e3b" fill-opacity="0.8" stroke="#10b981" stroke-width="1.2" rx="3"/>
-          <text x="181" y="32" text-anchor="middle" font-size="7" fill="#6ee7b7">recent  K_r</text>
-          <text x="18"  y="54" text-anchor="middle" font-size="6.5" fill="#fbbf24">K_s ≈ 4</text>
+          <foreignObject x="149" y="22" width="64" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6ee7b7;text-align:center">recent \(K_r\)</span></foreignObject>
+          <foreignObject x="0" y="44" width="36" height="14"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:8px;color:#fbbf24;text-align:center">\(K_s{\approx}4\)</span></foreignObject>
           <text x="89"  y="54" text-anchor="middle" font-size="6.5" fill="#4b5563">unbounded (dropped)</text>
           <text x="181" y="54" text-anchor="middle" font-size="6.5" fill="#6ee7b7">sliding window</text>
         </svg>
@@ -3489,10 +3489,10 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
           <text x="14"  y="38" text-anchor="middle" font-size="8" fill="#9ca3af" transform="rotate(-90,14,38)">compute</text>
           <!-- Quadratic curve -->
           <path d="M 20 64 Q 80 60 136 38 Q 192 14 240 8" stroke="#ef4444" stroke-width="2" fill="none"/>
-          <text x="244" y="11" font-size="7.5" fill="#ef4444">O(L²)</text>
+          <foreignObject x="226" y="2" width="34" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#ef4444;text-align:left">\(O(L^2)\)</span></foreignObject>
           <!-- Linear line -->
           <path d="M 20 64 L 240 52" stroke="#06b6d4" stroke-width="2" fill="none"/>
-          <text x="244" y="55" font-size="7.5" fill="#06b6d4">O(L)</text>
+          <foreignObject x="226" y="46" width="34" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#06b6d4;text-align:left">\(O(L)\)</span></foreignObject>
         </svg>
 
         <div class="bg-gray-900 rounded-xl border border-gray-700 p-3">
@@ -3531,7 +3531,7 @@ Lightning Attention 的实现也有一个技巧：把序列切成 chunk，chunk 
           <rect x="228" y="12" width="28" height="48" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1.8"/>
           <text x="242" y="40" text-anchor="middle" font-size="7" fill="#fbbf24" font-weight="bold" transform="rotate(-90,242,40)">Softmax</text>
           <!-- Label -->
-          <text x="114" y="66" text-anchor="middle" font-size="7.5" fill="#7c3aed">7 × Linear O(n)  →  cheap</text>
+          <foreignObject x="34" y="56" width="160" height="14"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:8px;color:#7c3aed;text-align:center">\(7\times\) Linear \(O(n)\)  →  cheap</span></foreignObject>
           <text x="242" y="66" text-anchor="middle" font-size="7.5" fill="#f59e0b">1× exact  →  precision</text>
         </svg>
 
@@ -3656,17 +3656,17 @@ SuffixDecoding 完全不需要 draft 模型，也不需要额外的 KV Cache—�
           <!-- RAG retrieval -->
           <line x1="120" y1="22" x2="120" y2="36" stroke="#6b7280" stroke-width="1"/>
           <rect x="40" y="36" width="160" height="20" rx="3" fill="#064e3b" stroke="#10b981" stroke-width="1.2"/>
-          <text x="120" y="50" text-anchor="middle" font-size="8" fill="#6ee7b7">RAG retrieval  →  C_S  (4K)</text>
+          <foreignObject x="30" y="40" width="180" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#6ee7b7;text-align:center">RAG retrieval  →  \(C_S\)  (4K)</span></foreignObject>
 
           <!-- Draft model (small) -->
           <line x1="120" y1="56" x2="120" y2="70" stroke="#6b7280" stroke-width="1"/>
           <rect x="60" y="70" width="120" height="20" rx="3" fill="#312e81" stroke="#6366f1" stroke-width="1.2"/>
-          <text x="120" y="84" text-anchor="middle" font-size="8" fill="#a5b4fc">small draft model q_ψ(x|C_S)</text>
+          <foreignObject x="30" y="74" width="180" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#a5b4fc;text-align:center">small draft model \(q_\psi(x \mid C_S)\)</span></foreignObject>
 
           <!-- Target model verification -->
           <line x1="120" y1="90" x2="120" y2="104" stroke="#6b7280" stroke-width="1"/>
           <rect x="40" y="104" width="160" height="14" rx="3" fill="#78350f" stroke="#f59e0b" stroke-width="1"/>
-          <text x="120" y="114" text-anchor="middle" font-size="8" fill="#fbbf24">target verify: r ≤ min(1, p_φ/q_ψ)</text>
+          <foreignObject x="40" y="103" width="160" height="16"><span xmlns="http://www.w3.org/1999/xhtml" style="display:block;font-size:9px;color:#fbbf24;text-align:center">target verify: \(r \le \min(1,\; p_\phi / q_\psi)\)</span></foreignObject>
         </svg>
 
         <p class="text-sm text-gray-400">接受准则纳入检索置信度：r ≤ min(1, p_φ(x|C) / q_ψ(x|C_S))。</p>
